@@ -1,0 +1,13 @@
+!split
+!name parts
+
+!join sep=;
+!name semijoined
+
+!ref parts
+!join sep=.
+!name dotjoined
+#!unravel
+
+!json
+!print
