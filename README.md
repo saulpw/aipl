@@ -115,7 +115,7 @@ Commands can take arguments and/or keyword arguments, separated by whitespace.
 
 Keyword arguments have an `=` between the key and the value, and non-keyword arguments are those without a `=` in them.
 
-- `!cmd` will call the Python function `op_cmd` with the arguments given, as an operator on the current Box.
+- `!cmd` will call the Python function registered to the `cmd` operator with the arguments given, as an operator on the current Box.
 
 - Any text following the command line is dedented (and stripped) and added verbatim as a `prompt=` keyword.
 - Argument values may include Python formatting like `{input}`
@@ -142,54 +142,53 @@ These are replaced after parameter parsing, and thus can include whitespace.
 
 ## currently available operators
 
-- `!set-input`: replace current input with inline input
 - `!fetch-url`: url -> html
+- `!fetch-file`: path -> text
 - `!extract-text`: html -> text
-- `!split`: text -> text[]
-- `!join`: text[] -> text
+- `!extract-links`: html -> url[]
+- `!split sep=\n`: text -> text[]
+- `!join sep=,`: text[] -> text
 - `!llm`: text or prompt -> text
-- `!flatten`: collapse into 1D array of scalar strings
-- `!match <arg>`: text -> 0 if not found in match arg/p or 1 if match
-- `!filter`: text -> 0 if not found in match arg/p or 1 if match
-
-- `!vd`: open in visidata
+- `!unravel`: collapse into 1D array of scalar strings
+- `!choose n=3`: choose n random elements
+- `!json`: convert row to json
+- `!format`: format prompt as Python string template and set as input
+- `!print`: print to stdout
+- `!name foo`: set name of current column
 
 ## operator implementation
 
-It's really easy to define a new operator that can be used right away.
-For instance, here's how the `!fetch-url` operator could be defined (in actuality it includes a few extra niceties, like removing the anchor from the url):
+It's pretty easy to define a new operator that can be used right away.
+For instance, here's how the `!join` operator might be defined:
 
 ```
-@op_scalar
-@expensive
-def fetch_url(db:Database, df:LazyDataframe, row:LazyRow, **kwargs) -> str:
-    import trafilatura
-    return trafilatura.fetch_url(row.input, **kwargs)
+@defop('join', rankin=1, rankout=0, arity=1)
+def op_join(aipl:AIPLInterpreter, v:List[str], sep=' ') -> str:
+    return sep.join(v)
 ```
 
-- `@op_scalar` means that it applies to a single row, and returns a single output; a simple mapping.
-- `@expensive` because it has to actually go to the network; so we want to persistently cache the results in our database.
-   - thus running the same inputs through a pipeline multiple times won't keep refetching the same data impolitely, and won't run up a large GPT bill during development.
-- Even a scalar operation can access to the Database and the entire Dataframe.
+- `@defop` registers the decorated function as the named operator.
+   - `rankin` is what the function takes as input:
+     - `0`: a scalar (number or string)
+     - `0.5`: a whole row
+     - `1`: a whole column of values
+     - `2`: the whole table
+   - `rankout` is what the function returns
+     - `0`: a scalar value
+     - `0.5`: a dict of values
+     - `1`: a column of values
+     - `2`: a whole table
+   - `arity` for how many operands it takes; only `0` and `1` supported currently
 
-### operator types
+The join operator is `rankin=1 rankout=0` which means that it takes a list of strings and outputs a single string.  Which it does.
 
-- `@op_scalar`: take a single value, return a single value
-- `@op_expand`: take a single value, can generate multiple values
-   - result is a new dataframe for each input row
-   - scalar functions iterate on the rows in the deepest dataframe
-- `@op_reduce`: take a dataframe and reduce it to a single value
-- `@op_replace`: take a dataframe and replace it with a new dataframe with a different schema (e.g. grouping)
-- (soon) `@op_scan`: take incremental slices of a dataframe and generate a single value
+- Add the `@expensive` decorator if it has to actually go to the network or use an LLM; this will persistently cache the results in a sqlite database.
+   - so running the same inputs through a pipeline multiple times won't keep refetching the same data impolitely, and won't run up a large GPT bill during development.
 
 # Future
 
 ## new operators
 
-- `!format`: prompt template -> text
-- `!llm-embedding`: text -> embedding
-
-- `!name` and `!ref`
 - `!define`: create a subchain of operators
 
 - `!group`
@@ -199,8 +198,6 @@ def fetch_url(db:Database, df:LazyDataframe, row:LazyRow, **kwargs) -> str:
 - `!dbtable`: use entire table as input
 - `!dbquery`: sql template -> table
 
-- `!extract-links`: html -> url[]
-
 ## single-step debugging
 
 - show results of each step in e.g. VisiData
@@ -208,7 +205,7 @@ def fetch_url(db:Database, df:LazyDataframe, row:LazyRow, **kwargs) -> str:
 
 ## simple website scraping
 
-- recursively apply `!extract-links` and `!fetch` to scrape an entire website
+- recursively apply `!extract-links` and `!fetch-url` to scrape an entire website
   - need operators to remove already-scraped urls and urls outside a particular domain/urlbase
 
 ## License
@@ -216,6 +213,5 @@ def fetch_url(db:Database, df:LazyDataframe, row:LazyRow, **kwargs) -> str:
 I don't know yet.
 
 You can use this and play with it, and if you want to do anything more serious with it, please get in touch.
-The [rest](bluebird.sh) [of my](xd.saul.pw) [work](visidata.org) is fiercely open source, but I also appreciate a good capitalist scheme.
-Come chat with me on Discord [saul.pw/chat](saul.pw/chat) or Mastodon [@saulpw@fosstodon.org]() and let's jam.
-All ages and genders and races welcome.
+The [rest](https://bluebird.sh) [of my](https://xd.saul.pw) [work](https://visidata.org) is fiercely open source, but I also appreciate a good capitalist scheme.
+Come chat with me on Discord [saul.pw/chat](saul.pw/chat) or Mastodon [@saulpw@fosstodon.org](https://fosstodon.org/@saulpw) and let's jam.
