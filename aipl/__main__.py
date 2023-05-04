@@ -2,6 +2,9 @@ import os
 import sys
 
 from .interpreter import AIPLInterpreter
+from .op_text import *
+from .op_web import *
+from .op_llm import *
 
 
 def duptty():

@@ -2,7 +2,7 @@ import sys
 
 def stderr(*args, **kwargs):
 #    args = [strify(x) for x in args]
-    print(*args, file=sys.stderr, **kwargs)
+    print(*args, file=sys.stderr, flush=True, **kwargs)
 
 
 def trynum(x):

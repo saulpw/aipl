@@ -1,6 +1,7 @@
 from typing import List, Dict
 from dataclasses import dataclass
 from functools import wraps
+import json
 
 from .table import Table, LazyRow
 from .db import Database
@@ -63,6 +64,7 @@ class AIPLInterpreter(Database):
                     prompt = prompt.strip()
                     if prompt:
                         ret[-1].args.append(prompt)
+                        prompt = ''
 
                 ret.append(self.parse_cmdline(line, linenum))
 
@@ -107,19 +109,22 @@ class AIPLInterpreter(Database):
 def expensive(func):
     'Decorator to persistently cache result from func(r, kwargs).'
     @wraps(func)
-    def cachingfunc(db:Database, r:LazyRow, **kwargs):
-        key = f'{kwargs} {repr(r)}'
+    def cachingfunc(db:Database, *args, **kwargs):
+        key = f'{args} {kwargs}'
         tbl = 'cached_'+func.__name__
 
         ret = db.query(f'SELECT * from {tbl} WHERE key=?', key)
         if ret:
             row = ret[-1]
             if 'json' in row:
-                return json.loads(row.json)
+                return json.loads(row['json'])
+            if 'output' in row:
+                return row['output']
 
-            return row.output
+            del row['key']
+            return row
 
-        result = func(db, df, r, **kwargs)
+        result = func(db, *args, **kwargs)
 
         if isinstance(result, dict):
             db.insert(tbl, key=key, **result)
@@ -138,12 +143,12 @@ def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
         f.rankin = rankin
         f.rankout = rankout
         f.arity = arity
-        AIPLInterpreter.operators[opname] = f
+        AIPLInterpreter.operators[clean_to_id(opname)] = f
         return f
     return _decorator
 
 
-@defop('print', 0, 0, 1)
+@defop('print', 0, -1, 1)
 def op_print(aipl, v:str):
     print(v)
 
@@ -153,15 +158,6 @@ def op_json(aipl, d:LazyRow):
     import json
     r = d._asdict()
     return json.dumps(r)
-
-
-@defop('split', 0, 1, 1)
-def op_split(aipl, v:str, sep=' '):
-    return v.split(sep)
-
-@defop('join', 1, 0, 1)
-def op_join(aipl, v:List[str], sep=' '):
-    return sep.join(v)
 
 def _unravel(t:Table):
     for row in t:

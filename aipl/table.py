@@ -6,8 +6,8 @@ class Row(dict):  # dup from Database
 
 
 class Column:
-    def __init__(self, key):
-        self.name = ''
+    def __init__(self, key, name=''):
+        self.name = name
         self.key = key
         self.table = None
 
@@ -72,7 +72,7 @@ class Table:
             self.add_row(row)
 
     @property
-    def value(self):
+    def values(self):
         return [r.value for r in self]
 
     @property
@@ -104,7 +104,10 @@ class Table:
 
     def add_row(self, row:Row):
         self.rows.append(row)
-        for k in row:
+        self.add_new_columns(row)
+
+    def add_new_columns(self, d:dict):
+        for k in d:
             if not str(k).startswith('__') and k not in self.colnames:
                 self.add_column(Column(k))
 
@@ -118,7 +121,10 @@ class Table:
             self.columns.pop()
         self.columns.append(col)
 
-    def get_column(self, name) -> Column:
+    def get_column(self, name:str) -> Column:
+        if name == 'input':
+            return self.columns[-1]
+
         for c in self.columns:
             if c.name == name:
                 return c
@@ -126,41 +132,59 @@ class Table:
         raise Exception(f'no column "{name}"')
 
     def apply(self, aipl, opfunc, args, kwargs):
-        k = aipl.unique_key
+        newkey = aipl.unique_key
+        lastcolname = self.columns[-1].name
 
-        if opfunc.rankin == 2:  # table
-            ret = opfunc(aipl, self, *args, **kwargs)
-            if opfunc.rankout == 2:
-                return ret
+        ret = None
+        results = None
 
-        elif opfunc.rankin == 1:  # column
-            if self.rank < 1:
-                raise Exception('rank not high enough')
-            elif self.rank == 1:
-                ret = opfunc(aipl, self.value, *args, **kwargs)
-                if opfunc.rankout == 0:
-                    return ret
-                elif opfunc.rankout == 1:
-                    return Table(ret)
-            else:
-                results = [(row, row.value.apply(aipl, opfunc, args, kwargs)) for row in self]
+        if self.rank == 0:
+            raise Exception('no rows')
 
-        elif opfunc.rankin == 0.5:  # row
-            results = [(row, opfunc(aipl, row, *args, **kwargs)) for row in self]
+        elif self.rank > 1:  # go out to edge
+            results = [(row, row.value.apply(aipl, opfunc, args, kwargs)) for row in self]
 
-        elif opfunc.rankin == 0:  # scalar
-            results = [(row, opfunc(aipl, row.value, *args, **kwargs)) for row in self]
+        else:  # self.rank == 1   # a simple array (column of scalars)
+            if opfunc.rankin == 2:  # table
+                ret = opfunc(aipl, self, *args, **kwargs)
 
+            elif opfunc.rankin == 1:  # column
+                ret = opfunc(aipl, self.values, *args, **kwargs)
 
-        # now deal with output
+            elif opfunc.rankin == 0.5:  # row
+                results = [(row, opfunc(aipl, row, *args, **kwargs)) for row in self]
+
+            elif opfunc.rankin == 0:  # scalar
+                results = [(row, opfunc(aipl, row.value, *args, **kwargs)) for row in self]
+
+        # now deal with the result
 
         if opfunc.rankout == 0:  # returns scalar
-            self.add_column(Column(k))
-            for row, v in results:
-                row._row[k] = v
-        elif opfunc.rankout == 1:  # returns vector; turn into table
-            self.add_column(Column(k))
-            for row, v in results:
-                row._row[k] = Table([{'__parent':row, k:r} for r in v])
+            if ret:
+                return Table([dict([(lastcolname, ret)])])
 
-        return self
+            self.add_column(Column(newkey))
+            for row, v in results:
+                row._row[newkey] = v
+
+        elif opfunc.rankout == 0.5:  # returns Bag; add to table
+            if ret:
+                return Table([ret])
+
+            for row, v in results:
+                for k in v:
+                    nk = f'{newkey}_{k}'
+                    row._row[nk] = v[k]
+
+            for k in v:  # just use last row, they should all have the same keys
+                nk = f'{newkey}_{k}'
+                self.add_column(Column(nk, name=k))
+
+        elif opfunc.rankout == 1:  # returns vector; turn into table
+            assert ret is None, ret
+
+            self.add_column(Column(newkey))
+            for row, v in results:
+                row._row[newkey] = Table([{'__parent':row, newkey:r} for r in v])
+
+        return self  # rankout == -1 or rankout >= 2
