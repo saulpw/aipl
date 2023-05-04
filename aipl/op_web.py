@@ -36,11 +36,11 @@ def op_extract_text(aipl, html:str, **kwargs) -> str:
 @defop('extract-links', 0, 1, 1)
 def op_extract_links(aipl, html:str, baseurl='', **kwargs) -> List[Bag]:
     'Extract links (href attribute from <a> tags) from HTML'
-    if not r.input:
+    if not html:
         return
 
     from bs4 import BeautifulSoup
-    soup = BeautifulSoup(r.input, 'html.parser')
+    soup = BeautifulSoup(html, 'html.parser')
     for link in soup.find_all('a', href=True):
         href = link['href']
         if baseurl:
