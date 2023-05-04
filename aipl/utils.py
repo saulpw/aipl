@@ -1,11 +1,38 @@
+from typing import Mapping, List
+from collections import ChainMap
 import sys
+
+
+def reprify(s) -> str:
+    if isinstance(s, str):
+        return s
+    return repr(s)
 
 def stderr(*args, **kwargs):
 #    args = [strify(x) for x in args]
+    args = [reprify(x) for x in args]
     print(*args, file=sys.stderr, flush=True, **kwargs)
 
 
-def trynum(x):
+def fmtarg(v:str, r:Mapping=None) -> str:
+    if isinstance(v, str):
+        v = v.encode('utf-8').decode('unicode-escape')
+        if r:
+            return v.format_map(r)
+    return v
+
+
+def fmtargs(args, contexts:List[Mapping]):
+    d = ChainMap(*reversed(contexts))
+    return [fmtarg(arg, d) for arg in args]
+
+
+def fmtkwargs(kwargs, contexts:List[Mapping]):
+    d = ChainMap(*contexts)
+    return {k:(fmtarg(v, d) if k != 'prompt' else v) for k,v in kwargs.items()}
+
+
+def trynum(x:str) -> int|float|str:
     try:
         return int(x)
     except Exception:

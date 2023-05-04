@@ -6,8 +6,8 @@ from .utils import stderr, Bag
 
 
 @defop('fetch-file', 0, 0, 1)
-def op_fetch_file(aipl, v:str) -> str:
-    return open(row.input).read()
+def op_fetch_file(aipl, fn:str) -> str:
+    return open(fn).read()
 
 
 @defop('fetch-url', 0, 0.5, 1)

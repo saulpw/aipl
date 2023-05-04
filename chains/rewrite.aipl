@@ -1,0 +1,15 @@
+# Rewrite the contents of each given file.
+
+!name filename
+!fetch-file
+!split sep=\n\n maxsize=3000
+!format
+Rewrite this content, keeping the structure the same as a drop-in replacement:
+
+"""
+{input}
+"""
+
+!llm model=gpt-3.5-turbo
+!join
+!save {filename}.out

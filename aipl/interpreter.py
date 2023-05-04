@@ -63,7 +63,7 @@ class AIPLInterpreter(Database):
                 if ret:
                     prompt = prompt.strip()
                     if prompt:
-                        ret[-1].args.append(prompt)
+                        ret[-1].kwargs['prompt'] = prompt
                         prompt = ''
 
                 ret.append(self.parse_cmdline(line, linenum))
@@ -74,7 +74,7 @@ class AIPLInterpreter(Database):
         if ret:
             prompt = prompt.strip()
             if prompt:
-                ret[-1].args.append(prompt)
+                ret[-1].kwargs['prompt'] = prompt
 
         return ret
 
@@ -148,16 +148,10 @@ def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
     return _decorator
 
 
-@defop('print', 0, -1, 1)
-def op_print(aipl, v:str):
-    print(v)
-
-
 @defop('json', 0.5, 0, 1)
 def op_json(aipl, d:LazyRow):
     import json
-    r = d._asdict()
-    return json.dumps(r)
+    return json.dumps(d._asdict())
 
 def _unravel(t:Table):
     for row in t:
@@ -177,6 +171,7 @@ def op_name(aipl, t:Table, name):
 
 @defop('ref', 2, 2, 1)
 def op_ref(aipl, t:Table, name):
+    'Move column on table to end of columns list (becoming the new .value)'
     col = t.get_column(name)
     t.columns.remove(col)
     t.add_column(col)

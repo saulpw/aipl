@@ -1,5 +1,7 @@
 from typing import Mapping, List
 
+from .utils import fmtargs, fmtkwargs
+
 
 class Row(dict):  # dup from Database
     pass
@@ -33,7 +35,11 @@ class LazyRow(Mapping):
         return self.__getitem__(k)
 
     def __getitem__(self, k):
-        return self._table.get_column(k).get_value(self._row)
+        obj = self
+        while not obj._table.get_column(k):
+            obj = obj._row['__parent']
+
+        return obj._table.get_column(k).get_value(self._row)
 
     @property
     def value(self):
@@ -94,6 +100,9 @@ class Table:
         return [c.name for c in self.columns]
 
     def __str__(self):
+        raise Exception('no str for table')
+
+    def __repr__(self):
         shapestr = 'x'.join(map(str, self.shape))
         colnamestr = ','.join(self.colnames)
         return f'[{shapestr} {colnamestr}]'
@@ -113,10 +122,6 @@ class Table:
 
     def add_column(self, col:Column):
         col.table = self
-#        assert col.name not in self.colnames, col.name
-#        if self.rows:
-#            v = col.get_value(self.rows[0])
-#            assert v, (v, col)
         if self.columns and not self.columns[-1].name:
             self.columns.pop()
         self.columns.append(col)
@@ -129,38 +134,48 @@ class Table:
             if c.name == name:
                 return c
 
-        raise Exception(f'no column "{name}"')
+#        colnamestr = ','.join(self.colnames)
+#        raise Exception(f'no column "{name}" in {colnamestr}')
 
-    def apply(self, aipl, opfunc, args, kwargs):
+    def apply(self, aipl, opfunc, args, kwargs, contexts=[]):
         newkey = aipl.unique_key
         lastcolname = self.columns[-1].name
 
-        ret = None
-        results = None
+        ret = None  # directly returnable from rank >= 1
+        results = None  # (parent_row, result_value)
 
         if self.rank == 0:
             raise Exception('no rows')
 
         elif self.rank > 1:  # go out to edge
-            results = [(row, row.value.apply(aipl, opfunc, args, kwargs)) for row in self]
+            results = [
+                (row, row.value.apply(aipl, opfunc, args, kwargs,
+                                      contexts=contexts+[row]))
+                for row in self
+            ]
 
         else:  # self.rank == 1   # a simple array (column of scalars)
             if opfunc.rankin == 2:  # table
-                ret = opfunc(aipl, self, *args, **kwargs)
+                ret = opfunc(aipl, self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
 
             elif opfunc.rankin == 1:  # column
-                ret = opfunc(aipl, self.values, *args, **kwargs)
+                ret = opfunc(aipl, self.values, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
 
             elif opfunc.rankin == 0.5:  # row
-                results = [(row, opfunc(aipl, row, *args, **kwargs)) for row in self]
+                results = [(row, opfunc(aipl, row,
+                                        *fmtargs(args, contexts+[row]),
+                                        **fmtkwargs(kwargs, contexts+[row])))
+                            for row in self]
 
             elif opfunc.rankin == 0:  # scalar
-                results = [(row, opfunc(aipl, row.value, *args, **kwargs)) for row in self]
+                results = [(row, opfunc(aipl, row.value,
+                                        *fmtargs(args, contexts+[row]),
+                                        **fmtkwargs(kwargs, contexts+[row]))) for row in self]
 
         # now deal with the result
 
         if opfunc.rankout == 0:  # returns scalar
-            if ret:
+            if ret is not None:
                 return Table([dict([(lastcolname, ret)])])
 
             self.add_column(Column(newkey))
