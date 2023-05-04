@@ -215,3 +215,5 @@ I don't know yet.
 You can use this and play with it, and if you want to do anything more serious with it, please get in touch.
 The [rest](https://bluebird.sh) [of my](https://xd.saul.pw) [work](https://visidata.org) is fiercely open source, but I also appreciate a good capitalist scheme.
 Come chat with me on Discord [saul.pw/chat](saul.pw/chat) or Mastodon [@saulpw@fosstodon.org](https://fosstodon.org/@saulpw) and let's jam.
+
+If you want to get updates about I'm playing with, you can [sign up for my AI mailing list](https://landing.mailerlite.com/webforms/landing/y9b3w8).
