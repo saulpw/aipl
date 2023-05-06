@@ -42,6 +42,13 @@ def op_print(aipl, v:str):
     print(v)
 
 
+@defop('match', 0, 0, 1)
+def op_match(aipl, v:str, regex:str) -> bool:
+    import re
+    m = re.search(regex, v)
+    return m is not None
+
+
 @defop('save', 0, -1, 1)
 def op_save(aipl, v:str, filename=''):
     'Save to given filename.'
