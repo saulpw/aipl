@@ -33,7 +33,7 @@ def op_extract_text(aipl, html:str, **kwargs) -> str:
     return trafilatura.extract(html, **parms)
 
 
-@defop('extract-links', 0, 1, 1)
+@defop('extract-links', 0, 2, 1)
 def op_extract_links(aipl, html:str, baseurl='', **kwargs) -> List[Bag]:
     'Extract links (href attribute from <a> tags) from HTML'
     if not html:
