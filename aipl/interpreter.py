@@ -29,8 +29,9 @@ class AIPLInterpreter(Database):
         self.next_unique_key += 1
         return self.next_unique_key
 
-#    def __init__(self, dbfn='aipl-output.sqlite'):
-#        super().__init__(dbfn)
+    def __init__(self, dbfn='aipl-output.sqlite', single_step=None):
+        super().__init__(dbfn)
+        self.single_step = single_step  # func(Table, Command) to call between steps
 
     def parse_cmdline(self, line:str, linenum:int=0) -> Command:
         'Parse single command line into Command.'
@@ -87,7 +88,10 @@ class AIPLInterpreter(Database):
                 if not func:
                     raise Exception(f'no such operator "!{cmd.opname}"')
 
-                stderr(inputs, '->', cmd.opname, end='')
+                stderr(inputs, '->', cmd.line)
+
+                if self.single_step:
+                    self.single_step(inputs, cmd)
 
                 result = inputs.apply(self, func, cmd.args, cmd.kwargs)
                 if isinstance(result, Table):
@@ -95,7 +99,6 @@ class AIPLInterpreter(Database):
                 else:
                     inputs = Table([dict(output=result)])
 
-                stderr(' ->', inputs)
             except Exception as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
                 raise
