@@ -163,9 +163,16 @@ def _unravel(t:Table):
 def op_unravel(aipl, v:Table, sep=' '):
     return Table(list(_unravel(v)))
 
+@defop('filter', 2, 2, 1)
+def op_filter(aipl, t:Table):
+    for row in t:
+        if row.value:
+            yield row
+
 @defop('name', 2, 2, 1)
 def op_name(aipl, t:Table, name):
-    t.columns[-1].name = name
+    c = t.columns[-1]
+    c.name = name
     return t
 
 @defop('ref', 2, 2, 1)
@@ -179,5 +186,14 @@ def op_ref(aipl, t:Table, name):
 @defop('select', 2, 2, 1)
 def op_select(aipl, t:Table, *colnames):
     'Set table columns to only those named as args.'
-    t.columns = [t.get_column(name) for name in colnames]
+    newcols = []
+    for name in colnames:
+        c = t.get_column(name)
+        if not c:
+            colnamestr = ','.join(self.colnames)
+            raise Exception(f'no column "{name}" in {colnamestr}')
+
+        newcols.add_column(c)
+
+    t.columns = newcols
     return t
