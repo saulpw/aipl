@@ -1,0 +1,73 @@
+#!/usr/bin/env python3 -m aipl
+
+# Cluster embeddings in database into 10 categories; summarize a random sample
+# of each; query GPT for a theme and subreddit; store all in db.
+
+# the input is some urls
+!name sourceurl
+!fetch-url
+!extract-links baseurl={sourceurl}
+
+# get only urls below the given url and remove the #fragment
+!name url
+!match ^{sourceurl}
+!filter
+!ref url
+!defrag
+
+!fetch-url
+!extract-text
+
+!name text
+
+# get an embedding for each
+# XXX: how to exclude for URLs we've already done?
+!llm-embedding model=text-embedding-ada-002
+!name embedding
+
+!dbdrop embeddings
+!dbinsert embeddings
+
+!cluster n=10
+!name label
+!select url text label
+
+!dbdrop categorized
+!dbinsert categorized
+
+# make a 2-column table with first being the 
+!group
+
+# find topic and subreddit
+!sample n=3
+
+# get the text extraction from above
+!ref text
+
+# split into LLM-sized chunks
+!split
+
+# take the first chunk
+!take 1
+
+# prompt engineer that shit
+!format
+
+URL: {url}
+"""
+{input}
+"""
+
+!join
+!format
+What specific topic would these webpages fall under?
+Suggest a theme of only a few words, suitable as a title for the list containing these pages.
+Also suggest the subreddit that would most welcome the content.
+
+Summaries:
+
+{input}
+
+Theme and subreddit:
+
+!llm max-tokens=64

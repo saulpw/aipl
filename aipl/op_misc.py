@@ -1,9 +1,10 @@
 from typing import List
 
 from .interpreter import defop
+from .table import Table
 
 
-@defop('choose', 1, 0, 1)
-def op_choose(aipl, v:List[str], n:int=1):
+@defop('sample', 2, 2, 1)
+def op_sample(aipl, t:Table, n:int=1):
     import random
-    return random.sample(v, n)
+    return Table(random.sample(t.rows, n))

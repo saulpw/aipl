@@ -3,5 +3,5 @@
 !name baseurl
 !fetch-url
 !extract-links {baseurl}
-!choose 1
+!sample 1
 !print

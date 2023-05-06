@@ -61,4 +61,4 @@ def op_cluster(aipl, v:List[List[float]], n=10):
     kmeans = KMeans(n_clusters=n, init='k-means++', random_state=42, n_init='auto')
     kmeans.fit(matrix)
 
-    return kmeans.labels_
+    return [int(x) for x in kmeans.labels_]

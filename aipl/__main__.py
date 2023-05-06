@@ -7,6 +7,7 @@ from .op_web import *
 from .op_llm import *
 from .op_misc import *
 from .op_db import *
+from .op_func import *
 
 
 def duptty():
@@ -40,7 +41,7 @@ def vd_singlestep(inputs:List[LazyRow], cmd):
     sheet.help = '{sheet.recentcmd}'
     argstr = ' '.join(str(x) for x in cmd.args)
     kwargstr = ' '.join(f'{k}={v}' for k, v in cmd.kwargs.items())
-    sheet.recentcmd = '!' + ' '.join([cmd.opname, argstr, kwargstr])
+    sheet.recentcmd = f'[line {cmd.linenum+1}] !' + ' '.join([cmd.opname, argstr, kwargstr])
     sheet.addCommand('Q', 'quit-really', 'uberquit()')
     visidata.vd.run(sheet)
 

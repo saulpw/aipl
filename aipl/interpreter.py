@@ -88,7 +88,7 @@ class AIPLInterpreter(Database):
                 if not func:
                     raise Exception(f'no such operator "!{cmd.opname}"')
 
-                stderr(inputs, '->', cmd.line)
+                stderr(inputs, f'-> {cmd.opname} (line {cmd.linenum})')
 
                 if self.single_step:
                     self.single_step(inputs, cmd)
@@ -163,11 +163,10 @@ def _unravel(t:Table):
 def op_unravel(aipl, v:Table, sep=' '):
     return Table(list(_unravel(v)))
 
-@defop('filter', 2, 2, 1)
-def op_filter(aipl, t:Table):
-    for row in t:
-        if row.value:
-            yield row
+@defop('filter', 0.5, 0.5, 1)
+def op_filter(aipl, r:LazyRow):
+    if r.value:
+        return r
 
 @defop('name', 2, 2, 1)
 def op_name(aipl, t:Table, name):
@@ -179,6 +178,8 @@ def op_name(aipl, t:Table, name):
 def op_ref(aipl, t:Table, name):
     'Move column on table to end of columns list (becoming the new .value)'
     col = t.get_column(name)
+    if col not in t.columns:
+        stderr(f'no such column {name}')
     t.columns.remove(col)
     t.add_column(col)
     return t
@@ -193,7 +194,7 @@ def op_select(aipl, t:Table, *colnames):
             colnamestr = ','.join(self.colnames)
             raise Exception(f'no column "{name}" in {colnamestr}')
 
-        newcols.add_column(c)
+        newcols.append(c)
 
     t.columns = newcols
     return t

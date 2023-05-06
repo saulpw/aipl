@@ -4,10 +4,10 @@ from .interpreter import defop
 from .table import LazyRow
 
 
-@defop('format', 0.5, 0, 1)
+@defop('format', 0.5, 0.5, 1)
 def op_format(aipl, row:LazyRow, prompt:str=''):
     'Format prompt text as template, substituting values from row'
-    return prompt.format_map(row)
+    return dict(formatted=prompt.format_map(row))
 
 
 @defop('split', 0, 1, 1)

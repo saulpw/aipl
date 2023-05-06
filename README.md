@@ -52,13 +52,13 @@ At the very least, AIPL should be a useful tool to learn, explore, and prototype
 
 ## Usage
 
-    python3 -m aipl <inputs> < chain/<script>.aipl
+    cat <script>.aipl | python3 -m aipl <inputs>
 
-
+This will run the particular script over the given inputs.
 
 ### `summarize.aipl`
 
-Here's a seminal example, a multi-level summarizer in the "map-reduce" style of langchain:
+Here's the seminal example, a multi-level summarizer in the "map-reduce" style of langchain:
 
 
 ```

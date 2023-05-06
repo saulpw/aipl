@@ -57,3 +57,8 @@ def op_urlparse(aipl, url:str) -> Bag:
                params=r.params,
                query=r.query,
                fragment=r.fragment)
+
+
+@defop('defrag', 0, 0, 1)
+def op_defrag(aipl, url:str) -> str:
+    return urlunparse(urlparse(url)._replace(fragment=''))
