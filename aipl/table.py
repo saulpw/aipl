@@ -1,9 +1,9 @@
 from typing import Mapping, List
 
-from .utils import fmtargs, fmtkwargs
+from .utils import fmtargs, fmtkwargs, stderr, strify
 
 
-class Row(dict):  # dup from Database
+class Row(dict):
     pass
 
 
@@ -14,10 +14,19 @@ class Column:
         self.table = None
 
     def get_value(self, row:Row):
-        return row[self.key]
+        return row.get(self.key)
 
     def __str__(self):
         return f'[Column {self.name}]'
+
+    @property
+    def deepname(self):
+        if self.table.rows:
+            r = self.get_value(self.table.rows[0])
+            if isinstance(r, Table):
+                return self.name+':'+r.deepcolnames
+
+        return self.name or self.key
 
 
 class LazyRow(Mapping):
@@ -36,10 +45,17 @@ class LazyRow(Mapping):
 
     def __getitem__(self, k):
         obj = self
-        while not obj._table.get_column(k):
+        while True:
+            c = obj._table.get_column(k)
+            if c:
+                return c.get_value(self._row)
+
+            if '__parent__' not in obj._row:
+                break
+
             obj = obj._row['__parent']
 
-        return obj._table.get_column(k).get_value(self._row)
+        raise KeyError(k)
 
     @property
     def value(self):
@@ -62,11 +78,7 @@ class LazyRow(Mapping):
         return d
 
     def __repr__(self):
-        return str(self._asdict())
-
-    def __str__(self):
         return strify(self._asdict())
-
 
 
 class Table:
@@ -99,13 +111,16 @@ class Table:
     def colnames(self):
         return [c.name for c in self.columns]
 
+    @property
+    def deepcolnames(self) -> str:
+        return ','.join(str(c.deepname) for c in self.columns)
+
     def __str__(self):
         raise Exception('no str for table')
 
     def __repr__(self):
         shapestr = 'x'.join(map(str, self.shape))
-        colnamestr = ','.join(self.colnames)
-        return f'[{shapestr} {colnamestr}]'
+        return f'[{shapestr} {self.deepcolnames}]'
 
     def __iter__(self):
         for r in self.rows:
@@ -133,9 +148,6 @@ class Table:
         for c in self.columns:
             if c.name == name:
                 return c
-
-#        colnamestr = ','.join(self.colnames)
-#        raise Exception(f'no column "{name}" in {colnamestr}')
 
     def apply(self, aipl, opfunc, args, kwargs, contexts=[]):
         newkey = aipl.unique_key

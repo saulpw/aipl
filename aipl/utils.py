@@ -51,7 +51,7 @@ class Bag(dict):
 
 
 def strify(x, maxlen=0):
-    if isinstance(x, list):
+    if isinstance(x, (list, tuple)):
         if not x:
             return '[]'
         return f'[{len(x)}: {strify(x[0], maxlen=15)}]'
@@ -59,5 +59,5 @@ def strify(x, maxlen=0):
         return '{' + ' '.join(f'{k}={strify(v, maxlen=15)}' for k, v in x.items()) + '}'
     x = str(x).replace("\n", '\\n')
     if maxlen and len(x) > maxlen:
-        x = x[:maxlen] + f'...({len(x)} bytes total)'
+        x = x[:maxlen] + f'...({len(x)} bytes)'
     return x
