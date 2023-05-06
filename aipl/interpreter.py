@@ -116,11 +116,9 @@ def expensive(func):
         key = f'{args} {kwargs}'
         tbl = 'cached_'+func.__name__
 
-        ret = db.query(f'SELECT * from {tbl} WHERE key=?', key)
+        ret = db.select(tbl, key=key)
         if ret:
             row = ret[-1]
-            if 'json' in row:
-                return json.loads(row['json'])
             if 'output' in row:
                 return row['output']
 
@@ -131,8 +129,6 @@ def expensive(func):
 
         if isinstance(result, dict):
             db.insert(tbl, key=key, **result)
-        elif isinstance(result, (list, tuple)):
-            db.insert(tbl, key=key, json=json.dumps(result))
         else:
             db.insert(tbl, key=key, output=result)
 
