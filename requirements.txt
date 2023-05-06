@@ -2,3 +2,4 @@ openai
 scikit-learn
 numpy
 discord
+trafilatura

@@ -52,6 +52,7 @@ At the very least, AIPL should be a useful tool to learn, explore, and prototype
 
 ## Usage
 
+    export OPENAI_API_KEY=<API_KEY>
     cat <script>.aipl | python3 -m aipl <inputs>
 
 This will run the particular script over the given inputs.
