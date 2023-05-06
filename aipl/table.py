@@ -174,15 +174,26 @@ class Table:
                 ret = opfunc(aipl, self.values, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
 
             elif opfunc.rankin == 0.5:  # row
-                results = [(row, opfunc(aipl, row,
+                results = []
+                for row in self:
+                    try:
+                        r = opfunc(aipl, row,
                                         *fmtargs(args, contexts+[row]),
-                                        **fmtkwargs(kwargs, contexts+[row])))
-                            for row in self]
+                                        **fmtkwargs(kwargs, contexts+[row]))
+                        results.append((row, r))
+                    except Exception as e:
+                        stderr(e) # and skip output row
 
             elif opfunc.rankin == 0:  # scalar
-                results = [(row, opfunc(aipl, row.value,
+                results = []
+                for row in self:
+                    try:
+                        r = opfunc(aipl, row.value,
                                         *fmtargs(args, contexts+[row]),
-                                        **fmtkwargs(kwargs, contexts+[row]))) for row in self]
+                                        **fmtkwargs(kwargs, contexts+[row]))
+                        results.append((row, r))
+                    except Exception as e:
+                        stderr(e) # and skip output row
 
         # now deal with the result
 
