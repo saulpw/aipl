@@ -1,6 +1,6 @@
 # AIPL (Array-Inspired Pipeline Language)
 
-A smolchain to make it easier to explore and experiment with AI pipelines.
+A tiny DSL to make it easier to explore and experiment with AI pipelines.
 
 ## Features
 
@@ -33,23 +33,22 @@ It can be expanded or optimized or parallelized as needed.
 ### Very Little Overhead
 
 AIPL is array-oriented and concatenative, drawing inspiration from APL and Forth, both of which have powerful operators and very simple syntax.
-Passing data implicitly between operators allows for efficient representation of data flows, and avoids [one of the hardest problems in computer science](naming things).
-The implicit looping of array languages makes it easier to scale interactivity.
+Passing data implicitly between operators allows for efficient representation of data flows, and avoids [one of the hardest problems in computer science](https://www.namingthings.co/).
+And the implicit looping of array languages makes it easier to scale interactivity.
 
 ### Take Advantage of Python Ecosystem
 
-AIPL is also intended to be practical (if only at small scale), so all operators are written using the existing cadre of Python libraries, and allow options and parameters passed to them verbatim.
+AIPL is also intended to be practical (if only at small scale), so operators are easy to write using the existing cadre of Python libraries, and allow options and parameters passed to them verbatim.
 
 ### Keep It Simple
 
 The implementation is intentionally homespun, to remove layers of abstraction and reduce the friction of setup and operation.
 It doesn't parallelize anything yet but it still should be able to handle hundreds of items even as it is, enough to prove a concept.
-I expect to be able to scale it up to a million items if something takes off.
+I expect it to be straightforward to scale it to mag 5 (up to a million items) if something takes off.
 
 ### Learn and Explore
 
 At the very least, AIPL should be a useful tool to learn, explore, and prototype small-scale data pipelines that have expensive operations like API calls and LLM generation.
-
 
 ## Usage
 
