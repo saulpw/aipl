@@ -209,8 +209,8 @@ class Table:
         # now deal with the result
 
         if opfunc.rankout == 0 and self.rank == 1:  # returns scalar
-            if array_output is not None: return Table([dict([(lastcolname,
-                array_output)])])
+            if array_output is not None:
+                return Table([dict([(lastcolname, array_output)])])
 
             self.add_column(Column(newkey))
 
