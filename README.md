@@ -114,7 +114,7 @@ Commands can take arguments and/or keyword arguments, separated by whitespace.
 
 Keyword arguments have an `=` between the key and the value, and non-keyword arguments are those without a `=` in them.
 
-- `!cmd` will call the Python function registered to the `cmd` operator with the arguments given, as an operator on the current Box.
+- `!cmd` will call the Python function registered to the `cmd` operator with the arguments given, as an operator on the current value.
 
 - Any text following the command line is dedented (and stripped) and added verbatim as a `prompt=` keyword.
 - Argument values may include Python formatting like `{input}`
@@ -142,18 +142,29 @@ These are replaced after parameter parsing, and thus can include whitespace.
 ## currently available operators
 
 - `!fetch-url`: url -> html
+- `!split-url`: url -> dict(scheme, netloc, path, params, query, fragment)
 - `!fetch-file`: path -> text
 - `!extract-text`: html -> text
-- `!extract-links`: html -> url[]
-- `!split sep=\n`: text -> text[]
+- `!extract-links`: html -> dict(linktext, title, href)[]
+- `!split sep=\n maxsize=0`: text -> text[], staying under maxsize if possible
 - `!join sep=,`: text[] -> text
-- `!llm`: text or prompt -> text
+- `!llm`: text -> text
 - `!unravel`: collapse into 1D array of scalar strings
-- `!choose n=3`: choose n random elements
+- `!sample n=3`: choose sample of n random elements
 - `!json`: convert row to json
 - `!format`: format prompt as Python string template and set as input
 - `!print`: print to stdout
+- `!save filename.txt`: write to file
 - `!name foo`: set name of current column
+- `!dbinsert <tablename> extrakey=value`: insert each row into database
+- `!dbdrop <tablename>`: drop database
+- `!take n=1`: take first n rows
+- `!match <regex>`: text -> bool
+- `!filter`: filter rows by bool, keeping TrueS
+- `!llm-embedding`: text or prompt -> embedding
+- `!cluster n=10`: cluster rows by embedding into n clusters; add label column
+- `!select colname1 colname2`: new table with only these columns
+
 
 ## operator implementation
 
@@ -169,20 +180,92 @@ def op_join(aipl:AIPLInterpreter, v:List[str], sep=' ') -> str:
 - `@defop` registers the decorated function as the named operator.
    - `rankin` is what the function takes as input:
      - `0`: a scalar (number or string)
-     - `0.5`: a whole row
+     - `0.5`: a whole row (dict)
      - `1`: a whole column of values
-     - `2`: the whole table
+     - `1.5`: the whole table (array of rows)
    - `rankout` is what the function returns
      - `0`: a scalar value
      - `0.5`: a dict of values
-     - `1`: a column of values
-     - `2`: a whole table
+     - `1`: a whole column of values
+     - `1.5`: the whole table
    - `arity` for how many operands it takes; only `0` and `1` supported currently
 
 The join operator is `rankin=1 rankout=0` which means that it takes a list of strings and outputs a single string.  Which it does.
 
 - Add the `@expensive` decorator if it has to actually go to the network or use an LLM; this will persistently cache the results in a sqlite database.
    - so running the same inputs through a pipeline multiple times won't keep refetching the same data impolitely, and won't run up a large GPT bill during development.
+
+# Architecture
+
+The fundamental data structure is a Table: an array of hashmaps ("rows"), with named Columns that key into each Row to get its value.
+
+A value can be a string or a number or another Table.
+
+The value of a row is the value in the rightmost column of its table.
+The rightmost column of a table is a vector of values representing the whole table.
+
+A simple vector has only strings or numbers.
+A simple table has a simple rightmost value vector and is Rank 0.
+Each nesting of tables in the rightmost value vector increases its Rank by 1.
+
+## operators
+Each operator consumes 0 or 1 or 2 operands (its `arity`), and produces one result, which becomes the operand for the next operator.
+
+Each operator has an "in rank" and an "out rank", which is the rank of the operands they input and output.
+
+By default, each operator is applied across the deepest nested table.
+The result of each operator is then placed in the deepest nested table (or its parent).
+
+### rankin=0: one scalar at a time
+
+With `rankin=0` and `rankout` of:
+
+- -1: no change (like 'print')
+- 0: scalar operation (like 'translate')
+- 0.5: scalar to simple row (like 'split-url')
+- 1: scalar to simple vector (like 'split-text')
+- 1.5: scalar to table (like 'extract-links')
+
+### rankin=0.5: consume whole row
+
+With `rankin=0.5`, and `rankout` of:
+
+- -1: no change to row (like 'dbinsert')
+- 0: add a new value to row (like 'pyexpr')
+- 0.5: replace or remove row (like 'filter')
+- 1: transform whole vector (like 'sort' or 'normalize')
+- 1.5: row to table
+
+### rankin=1: consume the rightmost column
+
+With `rankin=1`, and `rankout` of:
+
+- -1: no change to row (like 'dbinsert')
+- 0: reduce to scalar (like 'join')
+- 0.5: reduce to simple row (like 'stats')
+- 1: transform whole vector (like 'normalize'); or return None to remove column
+- 1.5: vector to table
+
+### rankin=1.5: consume whole table
+
+With `rankin=2`, and `rankout` of:
+
+- -1: no change to table
+- 0: reduce table to scalar
+- 0.5: reduce table to single row (like 'collapse')
+- 1: reduce table to single vector ??
+- 1.5: replace table with returned table (like 'sort')
+
+## arguments and formatting
+
+In addition to operands, operators also take parameters, both positional and named (`args` and `kwargs` in Python).
+These cannot have spaces, but they can have Python format strings like `{value}`.
+
+The identifiers available to Python format strings come from a chain of contexts:
+
+- column names in the current table are replaced with the value in the current row (for rankin=0 or 0.5).
+   - from each nested table, in priority from innermost to outermost
+- row will also defer to their "parent" row if they don't have the column
 
 # Future
 
@@ -191,9 +274,7 @@ The join operator is `rankin=1 rankout=0` which means that it takes a list of st
 - `!define`: create a subchain of operators
 
 - `!group`
-- `!first`
 
-- `!dbinsert`: insert row into database
 - `!dbtable`: use entire table as input
 - `!dbquery`: sql template -> table
 

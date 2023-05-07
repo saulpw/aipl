@@ -5,7 +5,6 @@ from .utils import stderr
 from .interpreter import defop
 from .table import Table
 
-
 @defop('group', 2, 2, 1)
 def op_group(aipl, t:Table):
     r = defaultdict(list)

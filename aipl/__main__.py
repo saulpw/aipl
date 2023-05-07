@@ -56,7 +56,14 @@ def main(*args):
         print('no script on stdin: nothing to do', file=sys.stderr)
         return
 
+    opts = [x for x in args if x.startswith('-')]
+    args = [x for x in args if not x.startswith('-')]
+
     aipl = AIPLInterpreter('aipl-cache.sqlite')
+
+    if '-d' in opts:
+        aipl.single_step = vd_singlestep
+
     aipl.run(script, *args)
 
 
