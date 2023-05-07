@@ -48,10 +48,10 @@ def op_extract_links(aipl, html:str, baseurl='', **kwargs) -> List[Bag]:
         yield Bag(linktext=link.text, title=link.get('title', ''), href=href)
 
 
-@defop('urlparse', 0, 0.5, 1)
-def op_urlparse(aipl, url:str) -> Bag:
+@defop('split-url', 0, 0.5)
+def op_split_url(aipl, url:str) -> dict:
     r = urlparse(url)
-    return Bag(scheme=r.scheme,
+    return dict(scheme=r.scheme,
                netloc=r.netloc,
                path=r.path,
                params=r.params,
