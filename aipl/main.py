@@ -71,6 +71,9 @@ def main(*args):
     if '-d' in opts:
         aipl.single_step = vd_singlestep
 
+    if '-x' in opts:
+        aipl.single_step = lambda *args, **kwargs: breakpoint()
+
     aipl.globals = kwargs
 
     for fn in scripts:

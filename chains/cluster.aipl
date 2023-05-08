@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -m aipl
+#!/usr/bin/env bin/aipl
 
 # Cluster embeddings in database into 10 categories; summarize a random sample
 # of each; query GPT for a theme and subreddit; store all in db.

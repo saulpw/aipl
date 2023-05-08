@@ -155,7 +155,7 @@ class Table:
         if not self.rows:
             contentstr += '(nothing)'
         else:
-            contentstr += str(self[0])[:20]
+            contentstr += strify(self[0], maxlen=20)
         if len(self.rows) > 1:
             contentstr += ' ...'
         return f'[{shapestr} {self.deepcolnames}] {contentstr}'

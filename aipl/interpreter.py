@@ -225,7 +225,7 @@ def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
                 if isinstance(r, Table):
                     return r
                 k = aipl.unique_key
-                return Table({'__parent':t, k:x.value} for x in r)
+                return Table({'__parent':t, **x} for x in r)
             elif rankout < 0:
                 return t
 
