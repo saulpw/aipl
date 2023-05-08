@@ -53,9 +53,14 @@ At the very least, AIPL should be a useful tool to learn, explore, and prototype
 ## Usage
 
     export OPENAI_API_KEY=<API_KEY>
-    cat <script>.aipl | python3 -m aipl <inputs>
+    echo '<inputs>' | python3 -m aipl [options] [key=value ...] chains/<script>.aipl
 
-This will run the particular script over the given inputs.
+This will run the particular script over the given newline-separated inputs.
+
+Options:
+
+- `-x`: breakpoint (drop into pdb) before each command
+- `-d`: show inputs in visidata before each command
 
 ### `summarize.aipl`
 
@@ -126,7 +131,7 @@ The syntax will continue to evolve and become clearer over time as it's used.
 
 Notes:
 
-- an AIPL source file documents an entire pipeline from the input CLI args (or `!set-input`) to the end of the pipeline (often `!print` or `!print-json`).
+- an AIPL source file documents an entire pipeline from newline-delimited inputs on stdin (or via `!set-input`) to the end of the pipeline (often `!print`).
 
 - commands always run consecutively and across all inputs.
 

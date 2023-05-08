@@ -37,6 +37,7 @@ class AIPLInterpreter(Database):
     def __init__(self, dbfn='aipl-output.sqlite', single_step=None):
         super().__init__(dbfn)
         self.single_step = single_step  # func(Table, Command) to call between steps
+        self.globals = {}  # base context
 
     def parse_cmdline(self, line:str, linenum:int=0) -> List[Command]:
         'Parse single command line into one or more Commands.'
@@ -101,7 +102,7 @@ class AIPLInterpreter(Database):
                 self.single_step(inputs, cmd)
 
             try:
-                result = self.eval_op(op, inputs, cmd.args, cmd.kwargs)
+                result = self.eval_op(op, inputs, cmd.args, cmd.kwargs, contexts=[self.globals])
                 if isinstance(result, Table):
                     inputs = result
                 else:
@@ -122,7 +123,7 @@ class AIPLInterpreter(Database):
         input_rank = rank(t)
         oprank = opfunc.rankin
 
-        if rank(t) <= oprank:  # apply to operand directly
+        if input_rank <= oprank:  # apply to operand directly
             return opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
 
         elif input_rank > oprank:  # implicit loop over rows in outer table

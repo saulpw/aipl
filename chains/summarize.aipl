@@ -1,4 +1,4 @@
-#!/usr/bin/env aipl
+#!/usr/bin/env bin/aipl
 
 # fetch url, split webpage into chunks, summarize each chunk, then summarize the summaries.
 
