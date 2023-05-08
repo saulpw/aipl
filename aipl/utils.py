@@ -54,7 +54,7 @@ def strify(x, maxlen=0):
     if isinstance(x, (list, tuple)):
         if not x:
             return '[]'
-        return f'[{len(x)}: {strify(x[0], maxlen=15)}]'
+        return f'[({len(x)}) {strify(x[0], maxlen=15)}]'
     if isinstance(x, dict):
         return '{' + ' '.join(f'{k}={strify(v, maxlen=15)}' for k, v in x.items()) + '}'
     x = str(x).replace("\n", '\\n')

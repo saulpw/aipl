@@ -9,11 +9,19 @@ class Row(dict):
 
 class Column:
     def __init__(self, key, name=''):
-        self.name = name
+        self.name = name or key
         self.key = key
         self.table = None
 
     def get_value(self, row:Row):
+        if isinstance(self.key, (list, tuple)):
+            obj = row
+            for k in self.key:
+                obj = obj.get(k)
+                if obj is None:
+                    return None
+            return obj
+
         return row.get(self.key)
 
     def __str__(self):
@@ -24,7 +32,7 @@ class Column:
         if self.table.rows:
             r = self.get_value(self.table.rows[0])
             if isinstance(r, Table):
-                return self.name+':'+r.deepcolnames
+                return f'{self.name}:{r.deepcolnames}'
 
         return self.name or self.key
 
@@ -38,7 +46,8 @@ class LazyRow(Mapping):
         return len(self._table.columns)
 
     def __iter__(self):
-        return iter(self._asdict())
+        assert isinstance(self.value, Table), type(self.value)
+        return iter(self.value)
 
     def __getattr__(self, k):
         return self.__getitem__(k)
@@ -67,17 +76,15 @@ class LazyRow(Mapping):
     def _asdict(self):
         d = {}
         for c in self._table.columns:
-            k = c.name
-            if not k and c is self._table.columns[-1]:
-                k = 'value'
-
-            if not k:
+            if c.name.startswith('_') and c is not self._table.columns[-1]:
+                # skip anonymous columns except the last
                 continue
 
             v = c.get_value(self._row)
             if isinstance(v, Table):
                 v = [r._asdict() for r in v]
-            d[k] = v
+            if v is not None:
+                d[c.name] = v
         return d
 
     def __repr__(self):
@@ -85,12 +92,24 @@ class LazyRow(Mapping):
 
 
 class Table:
-    def __init__(self, rows:List[Mapping|LazyRow]):
+    def __init__(self, rows:List[Mapping|LazyRow]=[]):
         self.rows = []  # list of Row
         self.columns = []  # list of Column
 
         for row in rows:
             self.add_row(row)
+
+    def __copy__(self):
+        ret = Table()
+
+        for c in self.columns:
+            if c.name.startswith('_') and c is not self.columns[-1]:
+                continue
+
+            ret.add_column(c)
+
+        ret.rows = self.rows
+        return ret
 
     @property
     def values(self):
@@ -116,14 +135,30 @@ class Table:
 
     @property
     def deepcolnames(self) -> str:
-        return ','.join(str(c.deepname) for c in self.columns)
+        return ','.join(f'{c.deepname}' for c in self.columns)
 
-    def __str__(self):
-        raise Exception('no str for table')
+    def __getitem__(self, k:int):
+        #return LazyRow(self, self.rows[k])
+        if not self.columns:
+            raise Exception('no columns!')
+        if k >= len(self.rows):
+            raise Exception('not enough rows!')
+
+        return self.columns[-1].get_value(self.rows[k])
+
+    def _asdict(self):
+        return [r._asdict() for r in self]
 
     def __repr__(self):
         shapestr = 'x'.join(map(str, self.shape))
-        return f'[{shapestr} {self.deepcolnames}]'
+        contentstr = ''
+        if not self.rows:
+            contentstr += '(nothing)'
+        else:
+            contentstr += str(self[0])[:20]
+        if len(self.rows) > 1:
+            contentstr += ' ...'
+        return f'[{shapestr} {self.deepcolnames}] {contentstr}'
 
     def __iter__(self):
         for r in self.rows:
@@ -162,14 +197,14 @@ class Table:
         array_output = None  # directly returnable from rank >= 1
         row_outputs = None  # (parent_row, result_value)
 
-        if opfunc.rankin == -1 or opfunc.arity == 0:
+        if opfunc.rankin == -1 or opfunc.arity == 0:  # generator
             assert opfunc.rankin == -1 and opfunc.arity == 0
             array_output = opfunc(aipl, *args, **kwargs)
 
         elif self.rank == 0:
             raise Exception('no rows')
 
-        elif self.rank > 1:  # go out to edge
+        elif self.rank > opfunc.rankin+1:  # go out to edge
             row_outputs = [
                 (row, row.value.apply(aipl, opfunc, args, kwargs,
                                       contexts=contexts+[row]))
@@ -256,7 +291,9 @@ class Table:
         elif opfunc.rankout == 2:  # returns List[dict|LazyRow] or Table
             if array_output:
                 if isinstance(array_output, Table):
+                    assert self.rank == 1
                     return array_output
+
                 rows = list(array_output)
                 assert rows
                 if isinstance(rows[0], dict):
@@ -266,8 +303,8 @@ class Table:
                 else:
                     assert False, type(rows[0])
 
-            if self.rank != 1:
-                return self  # ???
+#            if self.rank != 1:
+#                return self  # ???
 
             for row, rows in row_outputs:
                 if not isinstance(rows, Table):

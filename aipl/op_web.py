@@ -2,7 +2,7 @@ from typing import List, Dict
 from urllib.parse import urljoin, urlparse, urlunparse
 
 from .interpreter import defop, expensive
-from .utils import stderr, Bag
+from .utils import stderr
 
 
 @defop('fetch-file', 0, 0, 1)
@@ -12,13 +12,13 @@ def op_fetch_file(aipl, fn:str) -> str:
 
 @defop('fetch-url', 0, 0.5, 1)
 @expensive
-def op_fetch_url(aipl, url:str) -> Bag:
+def op_fetch_url(aipl, url:str) -> dict:
     url = urlunparse(urlparse(url)._replace(fragment=''))
 
     stderr(f'fetching {url}...')
 
     import trafilatura
-    return Bag(url=url, contents=trafilatura.fetch_url(url))
+    return dict(url=url, contents=trafilatura.fetch_url(url))
 
 
 @defop('extract-text', 0, 0, 1)
@@ -33,8 +33,8 @@ def op_extract_text(aipl, html:str, **kwargs) -> str:
     return trafilatura.extract(html, **parms)
 
 
-@defop('extract-links', 0, 2, 1)
-def op_extract_links(aipl, html:str, baseurl='', **kwargs) -> List[Bag]:
+@defop('extract-links', 0, 1.5)
+def op_extract_links(aipl, html:str, baseurl='', **kwargs) -> List[dict]:
     'Extract links (href attribute from <a> tags) from HTML'
     if not html:
         return
@@ -45,7 +45,7 @@ def op_extract_links(aipl, html:str, baseurl='', **kwargs) -> List[Bag]:
         href = link['href']
         if baseurl:
             href = urljoin(baseurl, href)
-        yield Bag(linktext=link.text, title=link.get('title', ''), href=href)
+        yield dict(linktext=link.text, title=link.get('title', ''), href=href)
 
 
 @defop('split-url', 0, 0.5)

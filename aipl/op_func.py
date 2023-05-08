@@ -5,7 +5,7 @@ from .utils import stderr
 from .interpreter import defop
 from .table import Table
 
-@defop('group', 2, 2, 1)
+@defop('group', 1.5, 1.5)
 def op_group(aipl, t:Table):
     r = defaultdict(list)
     for row in t:
@@ -17,6 +17,9 @@ def op_group(aipl, t:Table):
         yield dict(key=k, items=ret)
 
 
-@defop('take', 2, 2, 1)
+@defop('take', 1.5, 1.5)
 def op_take(aipl, t:Table, n=1):
+#    ret = copy(t)
+#    ret.rows = t.rows[:n]
+#    return ret
     return Table(t.rows[:n])

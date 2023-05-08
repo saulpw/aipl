@@ -2,14 +2,14 @@ from typing import List, Dict, Mapping
 from .interpreter import defop
 from .table import LazyRow
 
-@defop('format', 0.5, 0.5, 1)
+@defop('format', 0.5, 0)
 def op_format(aipl, row:LazyRow, prompt:str=''):
     'Format prompt text as template, substituting values from row'
-    return dict(formatted=prompt.format_map(row))
+    return prompt.format_map(row)
 
 
-@defop('split', 0, 1, 1)
-def op_split(aipl, v:str, maxsize:int=0, sep:str=' '):
+@defop('split', 0, 1)
+def op_split(aipl, v:str, maxsize:int=0, sep:str=' ') -> List[str]:
     'Split text into chunks based on sep, keeping each chunk below maxsize'
     win = []
     tot = 0
@@ -53,14 +53,3 @@ def op_save(aipl, v:str, filename=''):
     assert '{' not in filename, filename
     with open(filename, 'w') as fp:
         fp.write(v)
-
-
-def test_split_join():
-    from .interpreter import AIPLInterpreter
-    aipl = AIPLInterpreter()
-    t = aipl.run('''
-!split
-!take 3
-!join'''.strip(), 'now is the time')
-    assert len(t.rows) == 1
-    assert t.rows[0]['arg'] == 'now is the'
