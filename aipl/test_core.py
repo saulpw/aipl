@@ -50,5 +50,10 @@ def test_op_multiple_dicts(aipl):
 
 
 def test_format(aipl):
-    t = aipl.run('!split sep=, !parse-keyval !combine-dict !format\n{first} {last}', 'first=mike,last=smith')
+    t = aipl.run('!split sep=, !parse-keyval !combine-dict !format\n{first} {last}', 'last=smith,first=mike')
     assert t[0] == 'mike smith'
+
+
+def test_match_filter(aipl):
+    t = aipl.run('!split !name keep !match ^z !filter !join', 'ab zh cd zq azzz z')
+    assert t[0] == 'zh zq z'

@@ -1,3 +1,4 @@
+from copy import copy
 from typing import List, Dict
 from collections import defaultdict
 
@@ -38,7 +39,9 @@ def op_unravel(aipl, v:Table, sep=' '):
     return Table(list(_unravel(v)))
 
 
-@defop('filter', 0.5, 0.5)
-def op_filter(aipl, r:LazyRow):
-    if r.value:
-        return r
+@defop('filter', 1.5, 1.5)
+def op_filter(aipl, t:Table):
+    ret = copy(t)
+    ret.rows = [r._row for r in t if r.value]
+    ret.columns = ret.columns[:-1]  # discard bool column
+    return ret
