@@ -1,11 +1,13 @@
-from functools import cached_property
+from functools import cached_property, wraps
 import sys
 import json
 import sqlite3
 
+from .utils import AttrDict
+
 
 def dict_factory(cursor, row):
-    return dict((k, v) for (k, *_), v in zip(cursor.description, row))
+    return AttrDict((k, v) for (k, *_), v in zip(cursor.description, row))
 
 
 def sqlite_to_pyobj(v, t:str):
@@ -80,9 +82,9 @@ class Database:
         results = self.query(f'SELECT * FROM {tblname} WHERE {wherestr}',
                               *tuple(kwargs.values()))
 
-        return [{k:sqlite_to_pyobj(v, tinfo[k]['type'])
+        return [AttrDict((k, sqlite_to_pyobj(v, tinfo[k]['type']))
                     for k, v in row.items()
-                } for row in results]
+                ) for row in results]
 
     def query(self, qstr, *args):
         try:
@@ -97,18 +99,29 @@ class Database:
         return self.con.execute(qstr)
 
 
-def test_db():
-    import tempfile
-    with tempfile.NamedTemporaryFile() as f:
-        with Database(f.name) as db:
-            db.insert('people', id=10, name='James Jones')
-            db.insert('people', id=11, name='Maria Garcia')
-            db.insert('people', id=12, name='Michael Smith')
+def expensive(func):
+    'Decorator to persistently cache result from func(r, kwargs).'
+    @wraps(func)
+    def cachingfunc(db:Database, *args, **kwargs):
+        key = f'{args} {kwargs}'
+        tbl = 'cached_'+func.__name__
 
-        db = Database(f.name)
-        assert len(db.table('people')) == 3
-        assert db.query('SELECT * FROM people WHERE id=?', 12)[0].name == 'Michael Smith'
+        ret = db.select(tbl, key=key)
+        if ret:
+            row = ret[-1]
+            if 'output' in row:
+                return row['output']
 
+            del row['key']
+            return row
 
-if __name__ == '__test__':
-    test_db()
+        result = func(db, *args, **kwargs)
+
+        if isinstance(result, dict):
+            db.insert(tbl, key=key, **result)
+        else:
+            db.insert(tbl, key=key, output=result)
+
+        return result
+
+    return cachingfunc

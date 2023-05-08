@@ -165,34 +165,6 @@ class AIPLInterpreter(Database):
             return ret
 
 
-def expensive(func):
-    'Decorator to persistently cache result from func(r, kwargs).'
-    @wraps(func)
-    def cachingfunc(db:Database, *args, **kwargs):
-        key = f'{args} {kwargs}'
-        tbl = 'cached_'+func.__name__
-
-        ret = db.select(tbl, key=key)
-        if ret:
-            row = ret[-1]
-            if 'output' in row:
-                return row['output']
-
-            del row['key']
-            return row
-
-        result = func(db, *args, **kwargs)
-
-        if isinstance(result, dict):
-            db.insert(tbl, key=key, **result)
-        else:
-            db.insert(tbl, key=key, output=result)
-
-        return result
-
-    return cachingfunc
-
-
 def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
     def _decorator(f):
         @wraps(f)
@@ -241,22 +213,6 @@ def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
 def op_json(aipl, d:LazyRow):
     import json
     return json.dumps(d._asdict())
-
-def _unravel(t:Table):
-    for row in t:
-        if isinstance(row.value, Table):
-            yield from _unravel(row.value)
-        else:
-            yield dict(value=row.value)
-
-@defop('unravel', 1.5, 1.5)
-def op_unravel(aipl, v:Table, sep=' '):
-    return Table(list(_unravel(v)))
-
-@defop('filter', 0.5, 0.5)
-def op_filter(aipl, r:LazyRow):
-    if r.value:
-        return r
 
 @defop('name', 1.5, 1.5)
 def op_name(aipl, t:Table, name):

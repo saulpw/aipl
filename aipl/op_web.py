@@ -1,7 +1,7 @@
 from typing import List, Dict
 from urllib.parse import urljoin, urlparse, urlunparse
 
-from .interpreter import defop, expensive
+from . import defop, expensive
 from .utils import stderr
 
 

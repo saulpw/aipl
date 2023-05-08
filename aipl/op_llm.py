@@ -1,7 +1,7 @@
 from typing import List, Dict
 
 from .utils import stderr
-from .interpreter import defop, expensive
+from . import defop, expensive
 
 
 def _parse_msg(s:str):

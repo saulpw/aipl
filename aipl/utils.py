@@ -42,7 +42,7 @@ def trynum(x:str) -> int|float|str:
             return x
 
 
-class Bag(dict):
+class AttrDict(dict):
     def __getattr__(self, k):
         return self[k]
 

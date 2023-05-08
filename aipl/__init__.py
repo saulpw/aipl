@@ -1,4 +1,5 @@
-from .interpreter import AIPLInterpreter
+from .interpreter import AIPLInterpreter, defop
+from .db import Database, expensive
 from .op_text import *
 from .op_web import *
 from .op_llm import *

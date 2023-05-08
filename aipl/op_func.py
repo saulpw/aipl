@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from .utils import stderr
 from .interpreter import defop
-from .table import Table
+from .table import Table, LazyRow
 
 @defop('group', 1.5, 1.5)
 def op_group(aipl, t:Table):
@@ -23,3 +23,22 @@ def op_take(aipl, t:Table, n=1):
 #    ret.rows = t.rows[:n]
 #    return ret
     return Table(t.rows[:n])
+
+
+def _unravel(t:Table):
+    for row in t:
+        if isinstance(row.value, Table):
+            yield from _unravel(row.value)
+        else:
+            yield dict(value=row.value)
+
+
+@defop('unravel', 1.5, 1.5)
+def op_unravel(aipl, v:Table, sep=' '):
+    return Table(list(_unravel(v)))
+
+
+@defop('filter', 0.5, 0.5)
+def op_filter(aipl, r:LazyRow):
+    if r.value:
+        return r
