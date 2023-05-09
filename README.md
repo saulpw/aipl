@@ -64,15 +64,15 @@ Options:
 
 ### `summarize.aipl`
 
-Here's the seminal example, a multi-level summarizer in the "map-reduce" style of langchain:
+Here's a prime example, a multi-level summarizer in the "map-reduce" style of langchain:
 
 
 ```
-#!/usr/bin/env aipl
+#!/usr/bin/env bin/aipl
 
-# fetch url(s), split webpage into chunks, summarize each chunk, then summarize the summaries.
-# Usage: $0 <url> [...]
+# fetch url, split webpage into chunks, summarize each chunk, then summarize the summaries.
 
+# the inputs are urls
 !fetch-url
 
 # extract text from html
@@ -81,26 +81,40 @@ Here's the seminal example, a multi-level summarizer in the "map-reduce" style o
 # split into chunks of lines that can fit in the context window
 !split maxsize=8000 sep=\n
 
-# have GPT summarize each chunk
-!llm model=gpt-3.5-turbo
+# have GPT summary each chunk
+!format
 
-Please read the following section of a webpage (500-1000 words) and provide a concise and precise summary in a few sentences, optimized for keywords and main content topics. Write only the summary, and do not include phrases like "the article" or "this webpage" or "this section" or "the author". Ensure the tone is precise and concise, and provide an overview of the entire section:
+Please read the following section of a webpage (500-1000 words) and provide a
+concise and precise summary in a few sentences, optimized for keywords and main
+content topics. Write only the summary, and do not include phrases like "the
+article" or "this webpage" or "this section" or "the author". Ensure the tone
+is precise and concise, and provide an overview of the entire section:
 
 """
 {input}
 """
+
+!llm model=gpt-3.5-turbo
 
 # join the section summaries together
 !join sep=\n-
 
 # have GPT summarize the combined summaries
-
 !format
-Based on the summaries of each section provided, create a one-paragraph summary of approximately 100 words. Begin with a topic sentence that introduces the overall content topic, followed by several sentences describing the most relevant subsections. Provide an overview of all section summaries and include a conclusion or recommendations only if they are present in the original webpage. Maintain a precise and concise tone, and make the overview coherent and readable, while preserving important keywords and main content topics.  Remove all unnecessary text like "The document" and "the author".
+
+Based on the summaries of each section provided, create a one-paragraph summary
+of approximately 100 words. Begin with a topic sentence that introduces the
+overall content topic, followed by several sentences describing the most
+relevant subsections. Provide an overview of all section summaries and include
+a conclusion or recommendations only if they are present in the original
+webpage. Maintain a precise and concise tone, and make the overview coherent
+and readable, while preserving important keywords and main content topics.
+Remove all unnecessary text like "The document" and "the author".
 
 """
 {input}
 """
+
 !llm model=gpt-3.5-turbo
 
 !print
