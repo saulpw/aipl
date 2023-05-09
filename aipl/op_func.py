@@ -26,17 +26,17 @@ def op_take(aipl, t:Table, n=1):
     return Table(t.rows[:n])
 
 
-def _unravel(t:Table):
-    for row in t:
-        if isinstance(row.value, Table):
-            yield from _unravel(row.value)
-        else:
-            yield dict(value=row.value)
+def _unravel(v):
+    if isinstance(v, Table):
+        for row in v:
+            yield from _unravel(v)
+    else:
+        yield v
 
 
-@defop('unravel', 1.5, 1.5)
+@defop('unravel', 2, 1)
 def op_unravel(aipl, v:Table, sep=' '):
-    return Table(list(_unravel(v)))
+    return list(_unravel(v))
 
 
 @defop('filter', 1.5, 1.5)

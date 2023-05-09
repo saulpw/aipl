@@ -120,9 +120,9 @@ class Table:
         if not self.rows:
             return []
         dims = [len(self.rows)]
-        firstrow = LazyRow(self, self.rows[0])
-        if isinstance(firstrow.value, Table):
-            dims += firstrow.value.shape
+        firstrowval = self.columns[-1].get_value(self.rows[0])
+        if isinstance(firstrowval, Table):
+            dims += firstrowval.shape
         return dims
 
     @property

@@ -20,6 +20,10 @@
 
 !name text
 
+!split maxsize=4000
+!take 1
+!unravel
+
 # get an embedding for each
 # XXX: how to exclude for URLs we've already done?
 !llm-embedding model=text-embedding-ada-002

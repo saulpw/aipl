@@ -57,3 +57,8 @@ def test_format(aipl):
 def test_match_filter(aipl):
     t = aipl.run('!split !name keep !match ^z !filter !join', 'ab zh cd zq azzz z')
     assert t[0] == 'zh zq z'
+
+
+def test_unravel(aipl):
+    t = aipl.run('!split !take 2 !unravel !join', 'a b c d', 'e f g')
+    assert t[0] == 'a b e f'

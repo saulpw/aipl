@@ -105,7 +105,7 @@ class AIPLInterpreter(Database):
                 result = self.eval_op(op, inputs, cmd.args, cmd.kwargs, contexts=[self.globals])
                 if isinstance(result, Table):
                     inputs = result
-                else:
+                elif op.rankout >= 0:  # otherwise keep former inputs
                     inputs = Table([dict(output=result)])
 
             except Exception as e:
@@ -123,8 +123,13 @@ class AIPLInterpreter(Database):
         input_rank = rank(t)
         oprank = opfunc.rankin
 
-        if input_rank <= oprank:  # apply to operand directly
-            return opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
+        if oprank < 0:
+            return opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
+
+        elif oprank < 0 or input_rank <= oprank:  # apply to operand directly
+            if opfunc.rankout >= 0:
+                return opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
+            # else: return None
 
         elif input_rank > oprank:  # implicit loop over rows in outer table
             newrows = []
@@ -151,6 +156,9 @@ class AIPLInterpreter(Database):
                     if self.single_step:
                         raise
 
+            if opfunc.rankout < 0:
+                return None
+
             if not newrows:
                 raise Exception(f'no rows left ({nerrors} errors)')
 
@@ -168,23 +176,20 @@ class AIPLInterpreter(Database):
 def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
     def _decorator(f):
         @wraps(f)
-        def _wrapped(aipl, t:Table|LazyRow, *args, **kwargs):
+        def _wrapped(aipl, *args, **kwargs):
+            orig_operands = args[:arity]
+            args = args[arity:]
             if rankin == 0:  # t is LazyRow but op takes scalar
-                r = f(aipl, t.value, *args, **kwargs)
-            elif rankin == 0.5:  # op takes LazyRow
-                r = f(aipl, t, *args, **kwargs)
+                operands = [t.value for t in orig_operands]
+                r = f(aipl, *operands, *args, **kwargs)
+            elif rankin == 0.5:  # op takes LazyRow itself
+                r = f(aipl, *orig_operands, *args, **kwargs)
             elif rankin == 1:  # t is Table|LazyRow but op takes simple vector
-                if isinstance(t, LazyRow):
-                    vals = t.value.values
-                else:
-                    vals = t.values
-                r = f(aipl, vals, *args, **kwargs)
+                operands = [t.value.values if isinstance(t, LazyRow) else t.values for t in orig_operands]
+                r = f(aipl, *operands, *args, **kwargs)
             else:  # op takes Table
-                if isinstance(t, LazyRow):
-                    tbl = t.value
-                else:
-                    tbl = t
-                r = f(aipl, tbl, *args, **kwargs)
+                operands = [t.value if isinstance(t, LazyRow) else t for t in orig_operands]
+                r = f(aipl, *operands, *args, **kwargs)
 
             if rankout == 0:
                 return r
@@ -192,14 +197,14 @@ def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
                 return r
             elif rankout == 1:
                 k = aipl.unique_key
-                return Table({'__parent':t, k:x} for x in r)
+                return Table({'__parent':orig_operands[0], k:x} for x in r)
             elif rankout == 1.5:
                 if isinstance(r, Table):
                     return r
                 k = aipl.unique_key
-                return Table({'__parent':t, **x} for x in r)
+                return Table({'__parent':orig_operands[0], **x} for x in r)
             elif rankout < 0:
-                return t
+                return None
 
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout
@@ -208,6 +213,9 @@ def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
         return _wrapped
     return _decorator
 
+@defop('debug', -1, -1, arity=0)
+def op_debug(aipl, *args):
+    aipl.single_step = lambda *args, **kwargs: breakpoint()
 
 @defop('json', 0.5, 0, 1)
 def op_json(aipl, d:LazyRow):

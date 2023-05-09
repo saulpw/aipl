@@ -35,9 +35,9 @@ def op_llm(aipl, v:str, **kwargs) -> str:
     return resp['choices'][0]['message']['content']
 
 
-@defop('llm-embedding', 0, 0, 1)
+@defop('llm-embedding', 0, 0.5, 1)
 @expensive
-def op_llm_embedding(aipl, v:str, **kwargs) -> List[float]:
+def op_llm_embedding(aipl, v:str, **kwargs) -> dict:
     import openai
 
     if not v:
@@ -48,7 +48,9 @@ def op_llm_embedding(aipl, v:str, **kwargs) -> List[float]:
     used = resp['usage']['total_tokens']
     stderr(f'Used {used} tokens')
 
-    return resp['data'][0]['embedding']
+    return dict(model=kwargs.get('model'),
+                used_tokens=used,
+                embedding=resp['data'][0]['embedding'])
 
 
 @defop('cluster', 1, 1, 1)
