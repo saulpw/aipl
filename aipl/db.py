@@ -50,7 +50,7 @@ class Database:
 
     def get_table_info(self, tblname:str):
         if tblname not in self.tables:
-            tinfo = self.query(f'PRAGMA table_info({tblname})')
+            tinfo = self.query(f'PRAGMA table_info("{tblname}")')
             if not tinfo:
                 return {}
 
@@ -60,26 +60,26 @@ class Database:
 
     def insert(self, tblname, **kwargs):
         if tblname not in self.tables:
-            fieldstr = ', '.join(f'{k} {sqlite_type(v)}' for k,v in kwargs.items())
-            self.con.execute(f'CREATE TABLE IF NOT EXISTS {tblname} ({fieldstr})')
+            fieldstr = ', '.join(f'"{k}" {sqlite_type(v)}' for k,v in kwargs.items())
+            self.con.execute(f'CREATE TABLE IF NOT EXISTS "{tblname}" ({fieldstr})')
 
-        fieldnames = ','.join(kwargs.keys())
+        fieldnames = ','.join(f'"{x}"' for x in kwargs.keys())
         valholders = ','.join(['?']*len(kwargs))
-        self.con.execute(f'INSERT INTO {tblname} ({fieldnames}) VALUES ({valholders})', tuple(pyobj_to_sqlite(v) for v in kwargs.values()))
+        self.con.execute(f'INSERT INTO "{tblname}" ({fieldnames}) VALUES ({valholders})', tuple(pyobj_to_sqlite(v) for v in kwargs.values()))
         self.con.commit()
         return kwargs
 
     def table(self, tblname):
-        return self.query(f'SELECT * FROM {tblname}')
+        return self.query(f'SELECT * FROM "{tblname}"')
 
     def select(self, tblname, **kwargs):
         tinfo = self.get_table_info(tblname)
         if not tinfo:
             return []
 
-        wheres = [f'{k}=?' for k in kwargs.keys()]
+        wheres = [f'"{k}"=?' for k in kwargs.keys()]
         wherestr = ' AND '.join(wheres)
-        results = self.query(f'SELECT * FROM {tblname} WHERE {wherestr}',
+        results = self.query(f'SELECT * FROM "{tblname}" WHERE {wherestr}',
                               *tuple(kwargs.values()))
 
         return [AttrDict((k, sqlite_to_pyobj(v, tinfo[k]['type']))
