@@ -183,7 +183,7 @@ These are replaced after parameter parsing, and thus can include whitespace.
 - `!filter`: filter rows by bool, keeping TrueS
 - `!llm-embedding`: text or prompt -> embedding
 - `!cluster n=10`: cluster rows by embedding into n clusters; add label column
-- `!select colname1 colname2`: new table with only these columns
+- `!columns colname1 colname2`: new table with only these columns
 
 
 ## operator implementation

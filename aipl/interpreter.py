@@ -241,14 +241,14 @@ def op_ref(aipl, t:Table, name):
     t.add_column(col)
     return t
 
-@defop('select', 1.5, 1.5)
-def op_select(aipl, t:Table, *colnames):
+@defop('columns', 1.5, 1.5)
+def op_columns(aipl, t:Table, *colnames):
     'Set table columns to only those named as args.'
     newcols = []
     for name in colnames:
         c = t.get_column(name)
         if not c:
-            colnamestr = ','.join(self.colnames)
+            colnamestr = ','.join(t.colnames)
             raise Exception(f'no column "{name}" in {colnamestr}')
 
         newcols.append(c)
