@@ -42,15 +42,15 @@ class LazyRow(Mapping):
         self._row = row
         self._table = table
 
+    def __copy__(self):
+        return LazyRow(self._table, self._row)
+
     def __len__(self):
         return len(self._table.columns)
 
     def __iter__(self):
         assert isinstance(self.value, Table), type(self.value)
         return iter(self.value)
-
-    def __getattr__(self, k):
-        return self.__getitem__(k)
 
     def __getitem__(self, k):
         obj = self

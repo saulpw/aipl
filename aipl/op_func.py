@@ -2,7 +2,6 @@ from copy import copy
 from typing import List, Dict
 from collections import defaultdict
 
-from .utils import stderr
 from .interpreter import defop
 from .table import Table, LazyRow
 
@@ -29,7 +28,7 @@ def op_take(aipl, t:Table, n=1):
 def _unravel(v):
     if isinstance(v, Table):
         for row in v:
-            yield from _unravel(v)
+            yield from _unravel(row)
     else:
         yield v
 

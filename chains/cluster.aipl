@@ -34,8 +34,8 @@
 
 !cluster n=10
 !name label
-!select url text label
 
+!columns url text label
 !dbdrop categorized
 !dbinsert categorized
 

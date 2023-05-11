@@ -167,7 +167,10 @@ class AIPLInterpreter(Database):
 
             if keys_served:
                 for k, col in keys_served.items():
-                    ret.add_column(col)
+                    if isinstance(ret, LazyRow):
+                        ret._table.add_column(col)
+                    else:
+                        ret.add_column(col)
             else:
                 ret.add_column(Column(newkey))
             return ret
