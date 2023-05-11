@@ -39,7 +39,7 @@
 !dbdrop categorized
 !dbinsert categorized
 
-# make a 2-column table with first being the 
+# make a 2-column table (first being the category label, second being the list of rows)
 !group
 
 # find topic and subreddit

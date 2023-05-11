@@ -161,30 +161,45 @@ These are replaced after parameter parsing, and thus can include whitespace.
 
 ## currently available operators
 
-- `!fetch-url`: url -> html
-- `!split-url`: url -> dict(scheme, netloc, path, params, query, fragment)
-- `!fetch-file`: path -> text
-- `!extract-text`: html -> text
-- `!extract-links`: html -> dict(linktext, title, href)[]
-- `!split sep=\n maxsize=0`: text -> text[], staying under maxsize if possible
-- `!join sep=,`: text[] -> text
+### The Big Guns
+
 - `!llm`: text -> text
-- `!unravel`: collapse into 1D array of scalar strings
-- `!sample n=3`: choose sample of n random elements
-- `!json`: convert row to json
-- `!format`: format prompt as Python string template and set as input
-- `!print`: print to stdout
-- `!save filename.txt`: write to file
-- `!name foo`: set name of current column
-- `!dbinsert <tablename> extrakey=value`: insert each row into database
-- `!dbdrop <tablename>`: drop database
-- `!take n=1`: take first n rows
-- `!match <regex>`: text -> bool
-- `!filter`: filter rows by bool, keeping TrueS
 - `!llm-embedding`: text or prompt -> embedding
+
+### 
 - `!cluster n=10`: cluster rows by embedding into n clusters; add label column
+
+### General Array
+
+- `!take n=1`: take first n rows
+- `!sample n=3`: choose sample of n random rows
+- `!filter`: keep only rows whose value is True-like
+- `!unravel`: collapse into 1D array of scalar strings
+- `!name foo`: set name of current column
 - `!columns colname1 colname2`: new table with only these columns
 
+### Strings/Text
+
+- `!split sep=\n maxsize=0`: text -> text[], staying under maxsize if possible
+- `!split-url`: url -> dict(scheme, netloc, path, params, query, fragment)
+- `!join sep=,`: text[] -> text
+- `!match <regex>`: text -> bool
+- `!format`: format prompt as Python string template and set as input
+- `!extract-text`: html -> text
+- `!extract-links`: html -> dict(linktext, title, href)[]
+
+### How to get data in and out
+
+- `!fetch-url`: url -> html
+- `!fetch-file`: path -> text
+- `!print`: print to stdout
+- `!json`: convert row to json
+- `!save filename.txt`: write to file
+
+#### Database
+
+- `!dbinsert <tablename> extrakey=value`: insert each row into database table
+- `!dbdrop <tablename>`: drop database table
 
 ## operator implementation
 
@@ -194,6 +209,7 @@ For instance, here's how the `!join` operator might be defined:
 ```
 @defop('join', rankin=1, rankout=0, arity=1)
 def op_join(aipl:AIPLInterpreter, v:List[str], sep=' ') -> str:
+    'Concatenate text values with *sep* into a single string.'
     return sep.join(v)
 ```
 
