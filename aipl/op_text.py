@@ -1,6 +1,6 @@
 from typing import List, Dict, Mapping
 from .interpreter import defop
-from .table import LazyRow
+from .table import LazyRow, Table, Column
 
 @defop('format', 0.5, 0)
 def op_format(aipl, row:LazyRow, prompt:str=''):
@@ -9,7 +9,7 @@ def op_format(aipl, row:LazyRow, prompt:str=''):
 
 
 @defop('split', 0, 1)
-def op_split(aipl, v:str, maxsize:int=0, sep:str=' ') -> List[str]:
+def op_split(aipl, v: str, maxsize:int=0, sep:str=' ') -> List[str]:
     'Split text into chunks based on sep, keeping each chunk below maxsize'
     win = []
     tot = 0
@@ -40,6 +40,13 @@ def op_print(aipl, v:str):
     print(v)
     return v
 
+@defop('lowercase', 0, 0)
+def op_lowercase(aipl, v:str) -> str:
+    return v.lower()
+
+@defop('uppercase', 0, 0)
+def op_uppercase(aipl, v:str) -> str:
+    return v.upper()
 
 @defop('match', 0, 0, 1)
 def op_match(aipl, v:str, regex:str) -> bool:

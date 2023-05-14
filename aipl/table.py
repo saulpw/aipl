@@ -1,4 +1,5 @@
 from typing import Mapping, List
+from copy import copy
 
 from .utils import fmtargs, fmtkwargs, stderr, strify
 
@@ -76,9 +77,6 @@ class LazyRow(Mapping):
     def _asdict(self):
         d = {}
         for c in self._table.columns:
-            if c.name.startswith('_') and c is not self._table.columns[-1]:
-                # skip anonymous columns except the last
-                continue
 
             v = c.get_value(self._row)
             if isinstance(v, Table):
@@ -103,13 +101,11 @@ class Table:
         ret = Table()
 
         for c in self.columns:
-            if c.name.startswith('_') and c is not self.columns[-1]:
-                continue
-
-            ret.add_column(c)
+            ret.add_column(copy(c))
 
         ret.rows = self.rows
         return ret
+
 
     @property
     def values(self):
@@ -132,6 +128,10 @@ class Table:
     @property
     def colnames(self):
         return [c.name for c in self.columns]
+
+    @property
+    def colkeys(self):
+        return [c.key for c in self.columns]
 
     @property
     def deepcolnames(self) -> str:
@@ -177,6 +177,8 @@ class Table:
                 self.add_column(Column(k, k))
 
     def add_column(self, col:Column):
+        if col.key in self.colkeys:
+            return
         col.table = self
         if self.columns and not self.columns[-1].name:
             self.columns.pop()

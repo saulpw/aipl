@@ -19,10 +19,9 @@ def op_group(aipl, t:Table):
 
 @defop('take', 1.5, 1.5)
 def op_take(aipl, t:Table, n=1):
-#    ret = copy(t)
-#    ret.rows = t.rows[:n]
-#    return ret
-    return Table(t.rows[:n])
+    ret = copy(t)
+    ret.rows = t.rows[:n]
+    return ret
 
 
 def _unravel(v):

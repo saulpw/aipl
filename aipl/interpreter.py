@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import wraps
 import json
 
-from .table import Table, LazyRow, Column
+from .table import Table, LazyRow, Column, Row
 from .db import Database
 from .utils import stderr, trynum, fmtargs, fmtkwargs
 
@@ -106,7 +106,7 @@ class AIPLInterpreter(Database):
                 if isinstance(result, Table):
                     inputs = result
                 elif op.rankout >= 0:  # otherwise keep former inputs
-                    inputs = Table([dict(output=result)])
+                    inputs = Table([result])
 
             except Exception as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
@@ -117,97 +117,99 @@ class AIPLInterpreter(Database):
     def get_op(self, opname:str):
         return self.operators.get(opname, None)
 
-    def eval_op(self, opfunc, t:Table|LazyRow|Scalar, args, kwargs, contexts=[]):
-        newkey = self.unique_key
+    def eval_op(self, opfunc, t:Table, args, kwargs, contexts=[], newkey='foo') -> Table:
+        # if row.value is a Table, recurse down
+        # each row might be different
+        if rank(t) > opfunc.rankin:
+            if isinstance(t, Table):
+                ret = copy(t)
 
-        input_rank = rank(t)
-        oprank = opfunc.rankin
-
-        if oprank < 0:
-            return opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
-
-        elif oprank < 0 or input_rank <= oprank:  # apply to operand directly
-            if opfunc.rankout >= 0:
-                return opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
-            # else: return None
-
-        elif input_rank > oprank:  # implicit loop over rows in outer table
-            newrows = []
-            keys_served = {}
-
-            nerrors = 0
-            if isinstance(t, LazyRow):
-                t = t.value
+            else:
+                ret = Table()
+            x = dict()
+            ret.rows = []
+            newkey = self.unique_key
             for row in t:
-                try:
-                    r = self.eval_op(opfunc, row, args, kwargs, contexts+[row])
-                    if r is not None:
-                        row._row[newkey] = r
-                        newrows.append(row._row)
-
-                        if opfunc.rankout == 0.5 and input_rank <= oprank+1:
-                            for k in r:
-                                if k not in keys_served:
-                                    keys_served[k] = Column((newkey, k), name=k)
-
-                except Exception as e:
-                    stderr(e) # and skip output row
-                    nerrors += 1
-                    if self.single_step:
-                        raise
-
-            if opfunc.rankout < 0:
-                return None
-
-            if not newrows:
-                raise Exception(f'no rows left ({nerrors} errors)')
-
-            ret = copy(t)
-            ret.rows = newrows
-
-            if keys_served:
-                for k, col in keys_served.items():
-                    if isinstance(ret, LazyRow):
-                        ret._table.add_column(col)
-                    else:
-                        ret.add_column(col)
+                x = self.eval_op(opfunc, row, args, kwargs, newkey=newkey)
+                newrow = copy(row._row)
+                if not isinstance(x, dict):
+                    newrow[newkey] = x
+                else:
+                    newrow.update(x)
+                ret.rows.append(newrow)
+            if isinstance(x, dict):
+                for k in x.keys(): # assumes the last x has the same keys as all rows
+                    ret.add_column(Column(k))
             else:
                 ret.add_column(Column(newkey))
             return ret
+        else:
+            r = opfunc(self, t, *args, **kwargs)
+            if isinstance(t, LazyRow):
+                newrow = copy(t._row)
+            else:
+                newrow = dict()
+            if not isinstance(r, dict):
+                newrow[newkey] = r
+            else:
+                newrow.update(r)
+            return newrow
 
 
-def defop(opname:str, rankin:int=0, rankout:int=0, arity=1):
+        return ret
+
+
+def prep_input(operand:LazyRow, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+    if rankin == 0:
+        assert isinstance(operand, LazyRow)
+        return operand.value
+    elif rankin == 0.5:
+        assert isinstance(operand, LazyRow)
+        return operand
+    elif rankin == 1:
+        if isinstance(operand, LazyRow):
+            assert operand.value.rank == 1
+            return operand.value.values
+        elif isinstance(operand, Table):
+            assert operand.rank == 1
+            return operand.values
+    elif rankin == 1.5:
+        assert isinstance(operand, LazyRow)
+        assert operand.value.rank == 1
+        return operand.value
+    else:
+        raise Exception("Unexpected rankin")
+
+def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, rankout:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+    if rankout == 0:
+        assert isinstance(out, (int, float, str))
+        return out
+    elif rankout == 0.5:
+       return out
+    elif rankout == 1:
+        ret = Table()
+        newkey = aipl.unique_key
+        ret.rows = [
+                {newkey:v}
+                    for v in out]
+        ret.add_column(Column(newkey))
+        return ret
+    elif rankout >= 1.5:
+        assert isinstance(out, Table)
+        return out
+    else:
+        raise Exception("Unexpected rankout")
+
+
+
+
+def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
     def _decorator(f):
         @wraps(f)
-        def _wrapped(aipl, *args, **kwargs):
-            orig_operands = args[:arity]
-            args = args[arity:]
-            if rankin == 0:  # t is LazyRow but op takes scalar
-                operands = [t.value for t in orig_operands]
-                r = f(aipl, *operands, *args, **kwargs)
-            elif rankin == 0.5:  # op takes LazyRow itself
-                r = f(aipl, *orig_operands, *args, **kwargs)
-            elif rankin == 1:  # t is Table|LazyRow but op takes simple vector
-                operands = [t.value.values if isinstance(t, LazyRow) else t.values for t in orig_operands]
-                r = f(aipl, *operands, *args, **kwargs)
-            else:  # op takes Table
-                operands = [t.value if isinstance(t, LazyRow) else t for t in orig_operands]
-                r = f(aipl, *operands, *args, **kwargs)
-
-            if rankout == 0:
-                return r
-            elif rankout == 0.5:
-                return r
-            elif rankout == 1:
-                k = aipl.unique_key
-                return Table({'__parent':orig_operands[0], k:x} for x in r)
-            elif rankout == 1.5:
-                if isinstance(r, Table):
-                    return r
-                k = aipl.unique_key
-                return Table({'__parent':orig_operands[0], **x} for x in r)
-            elif rankout < 0:
-                return None
+        def _wrapped(aipl, operand:LazyRow|Table, *args, **kwargs) -> LazyRow|Table:
+            inp = prep_input(operand, rankin)
+            r = f(aipl, inp, *args, **kwargs)
+            return prep_output(aipl, inp, r, rankout)
 
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout
@@ -227,9 +229,10 @@ def op_json(aipl, d:LazyRow):
 
 @defop('name', 1.5, 1.5)
 def op_name(aipl, t:Table, name):
-    c = t.columns[-1]
+    ret = copy(t)
+    c = ret.columns[-1]
     c.name = name
-    return t
+    return ret
 
 @defop('ref', 1.5, 1.5)
 def op_ref(aipl, t:Table, name):
