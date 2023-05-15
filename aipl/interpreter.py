@@ -130,7 +130,11 @@ class AIPLInterpreter(Database):
             ret.rows = []
             newkey = self.unique_key
             for row in t:
-                x = self.eval_op(opfunc, row, args, kwargs, newkey=newkey)
+                try:
+                    x = self.eval_op(opfunc, row, args, kwargs, newkey=newkey)
+                except Exception as e:
+                    stderr(e)
+                    continue
                 newrow = copy(row._row)
                 if not isinstance(x, dict):
                     newrow[newkey] = x
