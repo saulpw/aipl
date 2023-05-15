@@ -30,7 +30,11 @@ def op_extract_text(aipl, html:str, **kwargs) -> str:
     parms.update(kwargs)
 
     import trafilatura
-    return trafilatura.extract(html, **parms)
+    content = trafilatura.extract(html, **parms)
+    if content is None:
+        return ''
+    else:
+        return content
 
 
 @defop('extract-links', 0, 1.5)

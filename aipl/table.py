@@ -180,8 +180,6 @@ class Table:
         if col.key in self.colkeys:
             return
         col.table = self
-        if self.columns and not self.columns[-1].name:
-            self.columns.pop()
         self.columns.append(col)
 
     def get_column(self, name:str) -> Column:

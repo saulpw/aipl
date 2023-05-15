@@ -10,8 +10,8 @@
 
 # get only urls below the given url and remove the #fragment
 !name url
-!match ^{sourceurl}
-!filter
+#!match ^{sourceurl}
+#!filter
 !ref url
 !defrag
 

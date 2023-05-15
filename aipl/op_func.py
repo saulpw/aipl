@@ -3,7 +3,7 @@ from typing import List, Dict
 from collections import defaultdict
 
 from .interpreter import defop
-from .table import Table, LazyRow
+from .table import Table, LazyRow, Column
 
 @defop('group', 1.5, 1.5)
 def op_group(aipl, t:Table):
@@ -17,6 +17,11 @@ def op_group(aipl, t:Table):
         yield dict(key=k, items=ret)
 
 
+@defop('python',-1,-1,0)
+def op_python(aipl, prompt=''):
+    exec(prompt)
+
+
 @defop('take', 1.5, 1.5)
 def op_take(aipl, t:Table, n=1):
     ret = copy(t)
@@ -24,17 +29,17 @@ def op_take(aipl, t:Table, n=1):
     return ret
 
 
-def _unravel(v):
-    if isinstance(v, Table):
-        for row in v:
-            yield from _unravel(row)
-    else:
-        yield v
+@defop('unravel', 2, 1.5)
+def op_unravel(aipl, v:Table, sep=' ') -> Table:
+    ret = Table()
+    ret.rows = []
+    newkey = aipl.unique_key
+    for row in v: # row:LazyRow
+        for row_two in row.value:
+            ret.rows.append({'__parent':row_two, newkey:row_two.value})
 
-
-@defop('unravel', 2, 1)
-def op_unravel(aipl, v:Table, sep=' '):
-    return list(_unravel(v))
+    ret.add_column(Column(newkey))
+    return ret
 
 
 @defop('filter', 1.5, 1.5)

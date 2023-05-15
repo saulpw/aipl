@@ -3,3 +3,4 @@ scikit-learn
 numpy
 discord
 trafilatura
+beautifulsoup4

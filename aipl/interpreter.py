@@ -120,7 +120,7 @@ class AIPLInterpreter(Database):
     def eval_op(self, opfunc, t:Table, args, kwargs, contexts=[], newkey='foo') -> Table:
         # if row.value is a Table, recurse down
         # each row might be different
-        if rank(t) > opfunc.rankin:
+        if (rank(t) > opfunc.rankin) and (opfunc.arity != 0):
             if isinstance(t, Table):
                 ret = copy(t)
 
@@ -137,12 +137,15 @@ class AIPLInterpreter(Database):
                 else:
                     newrow.update(x)
                 ret.rows.append(newrow)
-            if isinstance(x, dict):
-                for k in x.keys(): # assumes the last x has the same keys as all rows
-                    ret.add_column(Column(k))
-            else:
-                ret.add_column(Column(newkey))
+                if isinstance(x, dict):
+                    for k in x.keys(): # assumes the last x has the same keys as all rows
+                        ret.add_column(Column(k))
+                else:
+                    ret.add_column(Column(newkey))
             return ret
+        elif (opfunc.arity == 0) and (opfunc.rankout == -1):
+            r = opfunc(self, *args, **kwargs)
+            return t
         else:
             r = opfunc(self, t, *args, **kwargs)
             if isinstance(t, LazyRow):
@@ -160,6 +163,8 @@ class AIPLInterpreter(Database):
 
 
 def prep_input(operand:LazyRow, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+    if rankin == -1:
+        return None
     if rankin == 0:
         assert isinstance(operand, LazyRow)
         return operand.value
@@ -173,30 +178,41 @@ def prep_input(operand:LazyRow, rankin:int|float) -> Scalar|List[Scalar]|Table|L
         elif isinstance(operand, Table):
             assert operand.rank == 1
             return operand.values
-    elif rankin == 1.5:
-        assert isinstance(operand, LazyRow)
-        assert operand.value.rank == 1
-        return operand.value
+    elif rankin >= 1.5:
+        if isinstance(operand, LazyRow):
+            #assert operand.value.rank == 1
+            return operand.value
+        elif isinstance(operand, Table):
+            return operand
     else:
         raise Exception("Unexpected rankin")
 
 def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, rankout:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+    if rankout == -1:
+        return None
     if rankout == 0:
         assert isinstance(out, (int, float, str))
         return out
     elif rankout == 0.5:
-       return out
+        return out
     elif rankout == 1:
         ret = Table()
         newkey = aipl.unique_key
         ret.rows = [
-                {newkey:v}
+                {'__parent': in_row, newkey:v}
                     for v in out]
         ret.add_column(Column(newkey))
         return ret
     elif rankout >= 1.5:
-        assert isinstance(out, Table)
-        return out
+        if isinstance(out, Table):
+            return out
+        else:
+            ret = Table()
+            ret.rows = list(out)
+            for k in ret.rows[0].keys(): # assumes first row has same keys as every other row
+                ret.add_column(Column(k))
+            return ret
+
     else:
         raise Exception("Unexpected rankout")
 
@@ -205,11 +221,19 @@ def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, ran
 
 def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
     def _decorator(f):
-        @wraps(f)
-        def _wrapped(aipl, operand:LazyRow|Table, *args, **kwargs) -> LazyRow|Table:
-            inp = prep_input(operand, rankin)
-            r = f(aipl, inp, *args, **kwargs)
-            return prep_output(aipl, inp, r, rankout)
+
+        if arity == 1:
+            @wraps(f)
+            def _wrapped(aipl, operand:LazyRow|Table, *args, **kwargs) -> LazyRow|Table:
+                inp = prep_input(operand, rankin)
+                r = f(aipl, inp, *args, **kwargs)
+                return prep_output(aipl, inp, r, rankout)
+        elif arity == 0:
+            @wraps(f)
+            def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
+                r = f(aipl, *args, **kwargs)
+                return prep_output(aipl, None, r, rankout)
+
 
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout
