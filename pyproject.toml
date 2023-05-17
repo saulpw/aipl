@@ -20,4 +20,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-aipl = "aipl.__main__:main"
+aipl = "aipl.main:main"
