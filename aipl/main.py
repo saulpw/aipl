@@ -25,8 +25,9 @@ def vd_singlestep(inputs:List[LazyRow], cmd):
 
 def main():
     parser = argparse.ArgumentParser(description='AIPL interpreter')
-    parser.add_argument('--debug', '-d', action='store_true', help='debug mode with visidata')
-    parser.add_argument('--breakpoint', '-x', action='store_true', help='debug mode with breakpoint()')
+    parser.add_argument('--visidata', '--vd', action='store_true', help='open VisiData with input before each step')
+    parser.add_argument('--debug', '-d', action='store_true', help='abort on exception')
+    parser.add_argument('--single-step', '-x', action='store_true', help='breakpoint() before each step')
     parser.add_argument('script_or_global', nargs='+', help='scripts to run, or k=v global parameters')
     args = parser.parse_args()
 
@@ -67,13 +68,14 @@ def main():
         aipl.stdout = sys.stdout
 
     # parse a few options
-    if args.debug:
-        aipl.debug = True
+    if args.visidata:
         aipl.single_step = vd_singlestep
 
-    if args.breakpoint:
-        aipl.debug = True
+    if args.single_step:
         aipl.single_step = lambda *args, **kwargs: breakpoint()
+
+    if args.debug:
+        aipl.debug = True
 
     aipl.globals = global_parameters
 
