@@ -30,7 +30,7 @@ def op_take(aipl, t:Table, n=1):
 
 
 @defop('unravel', 2, 1.5)
-def op_unravel(aipl, v:Table, sep=' ') -> Table:
+def op_unravel(aipl, v:Table) -> Table:
     ret = Table()
     ret.rows = []
     newkey = aipl.unique_key

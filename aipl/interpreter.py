@@ -117,7 +117,7 @@ class AIPLInterpreter(Database):
                 elif op.rankout >= 0:  # otherwise keep former inputs
                     inputs = Table([result])
                 if cmd.varname:
-                    inputs.axis(op.rankout+1).columns[-1].name = cmd.varname
+                    inputs.axis(1).columns[-1].name = cmd.varname
 
             except Exception as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
