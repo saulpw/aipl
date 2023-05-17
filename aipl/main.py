@@ -67,11 +67,11 @@ def main():
         aipl.stdout = sys.stdout
 
     # parse a few options
-    if args.d:
+    if args.debug:
         aipl.debug = True
         aipl.single_step = vd_singlestep
 
-    if args.x:
+    if args.breakpoint:
         aipl.debug = True
         aipl.single_step = lambda *args, **kwargs: breakpoint()
 
