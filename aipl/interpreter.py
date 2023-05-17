@@ -142,7 +142,7 @@ class AIPLInterpreter(Database):
             newkey = self.unique_key
             for row in t:
                 try:
-                    x = self.eval_op(opfunc, row, args, kwargs, newkey=newkey)
+                    x = self.eval_op(opfunc, row, args, kwargs, contexts=contexts+[row], newkey=newkey)
                 except Exception as e:
                     stderr(e)
                     continue
@@ -159,12 +159,16 @@ class AIPLInterpreter(Database):
                     ret.add_column(Column(newkey))
             return ret
         elif (opfunc.arity == 0) and (opfunc.rankout == -1):
-            r = opfunc(self, *args, **kwargs)
+            r = opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
             return t
+        elif (opfunc.arity == 0) and (opfunc.rankout != -1):
+            return opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
         else:
-            r = opfunc(self, t, *args, **kwargs)
-            if isinstance(t, LazyRow):
+            r = opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
+            if isinstance(r, LazyRow):
                 newrow = copy(t._row)
+            elif isinstance(r, Table):
+                return r
             else:
                 newrow = dict()
             if not isinstance(r, dict):
@@ -177,7 +181,7 @@ class AIPLInterpreter(Database):
         return ret
 
 
-def prep_input(operand:LazyRow, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
     if rankin == -1:
         return None
     if rankin == 0:
@@ -212,6 +216,7 @@ def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, ran
         return out
     elif rankout == 1:
         ret = Table()
+        assert isinstance(in_row, LazyRow)
         newkey = aipl.unique_key
         ret.rows = [
                 {'__parent': in_row, newkey:v}
