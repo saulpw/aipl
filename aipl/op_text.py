@@ -3,13 +3,13 @@ from .interpreter import defop
 from .table import LazyRow, Table, Column
 
 @defop('format', 0.5, 0)
-def op_format(aipl, row:LazyRow, prompt:str=''):
+def op_format(aipl, row:LazyRow, prompt:str='') -> str:
     'Format prompt text as template, substituting values from row'
     return prompt.format_map(row)
 
 
 @defop('split', 0, 1)
-def op_split(aipl, v: str, maxsize:int=0, sep:str=' ') -> List[str]:
+def op_split(aipl, v: str, maxsize:int=0, sep=None) -> List[str]:
     'Split text into chunks based on sep, keeping each chunk below maxsize'
     win = []
     tot = 0
@@ -17,7 +17,7 @@ def op_split(aipl, v: str, maxsize:int=0, sep:str=' ') -> List[str]:
         n = len(unit)
         if tot+n > maxsize:
             if win:
-                yield sep.join(win)
+                yield (sep or ' ').join(win)
                 win = []
                 tot = 0
 
@@ -25,7 +25,7 @@ def op_split(aipl, v: str, maxsize:int=0, sep:str=' ') -> List[str]:
         tot += n
 
     if win:
-        yield sep.join(win)
+        yield (sep or ' ').join(win)
 
 
 @defop('join', 1, 0, 1)
