@@ -21,6 +21,12 @@ def op_fetch_url(aipl, url:str) -> dict:
     return dict(url=url, contents=trafilatura.fetch_url(url))
 
 
+@defop('extract-text-all', 0, 0, 1)
+def op_extract_text_all(aipl, html:str, **kwargs) -> str:
+    import trafilatura
+    return trafilatura.html2txt(html, **kwargs)
+
+
 @defop('extract-text', 0, 0, 1)
 def op_extract_text(aipl, html:str, **kwargs) -> str:
     'Extract text from HTML'

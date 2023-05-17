@@ -283,8 +283,14 @@ def op_json(aipl, d:LazyRow):
     import json
     return json.dumps(d._asdict())
 
+@defop('parse-json', 0, 0.5, 1)
+def op_parse_json(aipl, v:str):
+    import json
+    return json.loads(v)
+
+
 @defop('name', 1.5, 1.5)
-def op_name(aipl, t:Table, name):
+def op_name(aipl, t:Table, name) -> Table:
     ret = copy(t)
     c = ret.columns[-1]
     c.name = name

@@ -61,3 +61,8 @@ def op_save(aipl, v:str, filename=''):
     assert '{' not in filename, filename
     with open(filename, 'w') as fp:
         fp.write(v)
+
+
+@defop('literal', -1, 0, 0)
+def op_literal(aipl, prompt=''):
+    return prompt
