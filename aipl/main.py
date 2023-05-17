@@ -61,7 +61,7 @@ def main():
 
     if not sys.stdout.isatty():
         fout = open('/dev/tty', mode='w')
-        aipl.stdout = open(os.dup(1))  # for dumping to stdout from interface
+        aipl.stdout = open(os.dup(1), 'w')  # for dumping to stdout from interface
         os.dup2(fout.fileno(), 1)
         fout.close() # close file descriptors for original stdin/stdout
     else:
