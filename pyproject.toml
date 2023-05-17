@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "aipl"
+version = "0.1.0"
+description = "Array-Inspired Pipeline Language"
+authors = ["Saul Pwanson <code@saul.pw>"]
+license = "Proprietary"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+openai = "^0.27.6"
+scikit-learn = "^1.2.2"
+numpy = "^1.24.3"
+discord = "^2.2.3"
+trafilatura = "^1.6.0"
+beautifulsoup4 = "^4.12.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+aipl = "aipl.__main__:main"
