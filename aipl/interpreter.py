@@ -144,6 +144,9 @@ class AIPLInterpreter(Database):
                 try:
                     x = self.eval_op(opfunc, row, args, kwargs, contexts=contexts+[row], newkey=newkey)
                 except Exception as e:
+                    if self.debug:
+                        breakpoint()
+                        raise
                     stderr(e)
                     continue
                 newrow = copy(row._row)
@@ -262,8 +265,17 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
         return _wrapped
     return _decorator
 
+class Abort(BaseException):
+    pass
+
+@defop('abort', -1, -1, arity=0)
+def op_abort(aipl):
+    raise Abort(f'deliberately aborted')
+
+
 @defop('debug', -1, -1, arity=0)
 def op_debug(aipl, *args):
+    aipl.debug = True
     aipl.single_step = lambda *args, **kwargs: breakpoint()
 
 @defop('json', 0.5, 0, 1)
