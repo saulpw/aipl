@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-import sys
-
 from aipl import main
 
-main(*sys.argv[1:])
+main()

@@ -2,6 +2,7 @@ from typing import List
 
 import os
 import sys
+import argparse
 
 from .interpreter import AIPLInterpreter
 from .table import LazyRow
@@ -22,18 +23,20 @@ def vd_singlestep(inputs:List[LazyRow], cmd):
     sheet.addCommand('Q', 'quit-really', 'uberquit()')
     visidata.vd.run(sheet)
 
+def main():
+    parser = argparse.ArgumentParser(description='AIPL interpreter')
+    parser.add_argument('--debug', '-d', action='store_true', help='debug mode with visidata')
+    parser.add_argument('--breakpoint', '-x', action='store_true', help='debug mode with breakpoint()')
+    parser.add_argument('script_or_global', nargs='+', help='scripts to run, or k=v global parameters')
+    args = parser.parse_args()
 
-def main(*args):
-    opts = []  # -x options
-    scripts = []  # .aipl scripts to run
-    kwargs = {}  # key=value parameters 
+    global_parameters = {}
+    scripts = []
 
-    for arg in args:
-        if arg.startswith('-'):
-            opts.append(arg)
-        elif '=' in arg:
-            k, v = arg.split('=', maxsplit=1)
-            kwargs[k] = v
+    for arg in args.script_or_global:
+        if '=' in arg:
+            key, value = arg.split('=', maxsplit=1)
+            global_parameters[key] = value
         else:
             scripts.append(arg)
 
@@ -64,15 +67,15 @@ def main(*args):
         aipl.stdout = sys.stdout
 
     # parse a few options
-    if '-d' in opts:
+    if args.debug:
         aipl.debug = True
         aipl.single_step = vd_singlestep
 
-    if '-x' in opts:
+    if args.breakpoint:
         aipl.debug = True
         aipl.single_step = lambda *args, **kwargs: breakpoint()
 
-    aipl.globals = kwargs
+    aipl.globals = global_parameters
 
     for fn in scripts:
         aipl.run(open(fn).read(), stdin_contents)
