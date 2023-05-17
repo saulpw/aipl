@@ -37,7 +37,7 @@ def op_join(aipl, v:List[str], sep=' ') -> str:
 @defop('print', 0, 0, 1)
 def op_print(aipl, v:str):
     'Print to stdout'
-    print(v)
+    print(v, file=aipl.stdout)
     return v
 
 @defop('lowercase', 0, 0)

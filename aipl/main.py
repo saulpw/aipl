@@ -7,26 +7,6 @@ from .interpreter import AIPLInterpreter
 from .table import LazyRow
 
 
-def duptty():
-    'Duplicate stdin/stdout for input/output and reopen tty as stdin/stdout.  Return (stdin, stdout).'
-    try:
-        fin = open('/dev/tty')
-        fout = open('/dev/tty', mode='w')
-        stdin = open(os.dup(0))
-        stdout = open(os.dup(1))  # for dumping to stdout from interface
-        os.dup2(fin.fileno(), 0)
-        os.dup2(fout.fileno(), 1)
-
-        # close file descriptors for original stdin/stdout
-        fin.close()
-        fout.close()
-    except Exception as e:
-        stdin = sys.stdin
-        stdout = sys.stdout
-
-    return stdin, stdout
-
-
 def vd_singlestep(inputs:List[LazyRow], cmd):
     import visidata
     @visidata.VisiData.api
@@ -44,11 +24,6 @@ def vd_singlestep(inputs:List[LazyRow], cmd):
 
 
 def main(*args):
-    if not sys.stdin.isatty():
-        stdin, stdout = duptty()
-    else:
-        stdin, stdout = sys.stdin, sys.stdout
-
     opts = []  # -x options
     scripts = []  # .aipl scripts to run
     kwargs = {}  # key=value parameters 
@@ -68,13 +43,36 @@ def main(*args):
 
     aipl = AIPLInterpreter('aipl-cache.sqlite')
 
+    # dup stdin/stdout if necessary
+
+    if not sys.stdin.isatty():
+        fin = open('/dev/tty')
+        aipl.stdin = open(os.dup(0))
+        os.dup2(fin.fileno(), 0)
+        stdin_contents = aipl.stdin.read()
+        fin.close()
+    else:
+        aipl.stdin = sys.stdin
+        stdin_contents = ''
+
+    if not sys.stdout.isatty():
+        fout = open('/dev/tty', mode='w')
+        aipl.stdout = open(os.dup(1))  # for dumping to stdout from interface
+        os.dup2(fout.fileno(), 1)
+        fout.close() # close file descriptors for original stdin/stdout
+    else:
+        aipl.stdout = sys.stdout
+
+    # parse a few options
     if '-d' in opts:
+        aipl.debug = True
         aipl.single_step = vd_singlestep
 
     if '-x' in opts:
+        aipl.debug = True
         aipl.single_step = lambda *args, **kwargs: breakpoint()
 
     aipl.globals = kwargs
 
     for fn in scripts:
-        aipl.run(open(fn).read(), *stdin.read().splitlines())
+        aipl.run(open(fn).read(), stdin_contents)
