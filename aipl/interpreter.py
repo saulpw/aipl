@@ -242,7 +242,7 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
             def _wrapped(aipl, operand:LazyRow|Table, *args, **kwargs) -> LazyRow|Table:
                 inp = prep_input(operand, rankin)
                 r = f(aipl, inp, *args, **kwargs)
-                return prep_output(aipl, inp, r, rankout)
+                return prep_output(aipl, operand, r, rankout)
         elif arity == 0:
             @wraps(f)
             def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:

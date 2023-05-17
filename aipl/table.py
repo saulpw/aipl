@@ -60,7 +60,7 @@ class LazyRow(Mapping):
             if c:
                 return c.get_value(self._row)
 
-            if '__parent__' not in obj._row:
+            if '__parent' not in obj._row:
                 break
 
             obj = obj._row['__parent']
