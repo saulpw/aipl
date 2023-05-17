@@ -213,7 +213,7 @@ def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, ran
     if rankout == -1:
         return None
     if rankout == 0:
-        assert isinstance(out, (int, float, str))
+        assert not isinstance(out, (Table, LazyRow, dict))
         return out
     elif rankout == 0.5:
         return out
@@ -281,7 +281,15 @@ def op_debug(aipl, *args):
 @defop('json', 0.5, 0, 1)
 def op_json(aipl, d:LazyRow):
     import json
-    return json.dumps(d._asdict())
+    class _vjsonEncoder(json.JSONEncoder):
+        def default(self, obj):
+            try:
+                return obj.text
+            except Exception:
+                return str(obj)
+
+    jsonenc = _vjsonEncoder()
+    return jsonenc.encode(d._asdict())
 
 @defop('parse-json', 0, 0.5, 1)
 def op_parse_json(aipl, v:str):

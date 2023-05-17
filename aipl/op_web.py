@@ -20,6 +20,17 @@ def op_fetch_url(aipl, url:str) -> dict:
     import trafilatura
     return dict(url=url, contents=trafilatura.fetch_url(url))
 
+@defop('fetch-url-bytes', 0, 0.5, 1)
+@expensive
+def op_fetch_url_bytes(aipl, url:str) -> dict:
+    url = urlunparse(urlparse(url)._replace(fragment=''))
+
+    stderr(f'fetching {url}...')
+
+    import urllib.request
+    with urllib.request.urlopen(url) as resp:
+        return dict(url=url, contents=resp.read())
+
 
 @defop('extract-text-all', 0, 0, 1)
 def op_extract_text_all(aipl, html:str, **kwargs) -> str:

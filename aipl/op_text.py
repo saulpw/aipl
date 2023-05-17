@@ -40,19 +40,15 @@ def op_print(aipl, v:str):
     print(v, file=aipl.stdout)
     return v
 
-@defop('lowercase', 0, 0)
-def op_lowercase(aipl, v:str) -> str:
-    return v.lower()
-
-@defop('uppercase', 0, 0)
-def op_uppercase(aipl, v:str) -> str:
-    return v.upper()
-
 @defop('match', 0, 0, 1)
 def op_match(aipl, v:str, regex:str) -> bool:
     import re
     m = re.search(regex, v)
     return m is not None
+
+@defop('replace', 0, 0)
+def op_replace(aipl, s:str, find:str, repl:str) -> str:
+    return s.replace(find, repl)
 
 
 @defop('save', 0, -1, 1)

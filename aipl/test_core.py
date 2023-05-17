@@ -28,6 +28,15 @@ def op_combine_dict(aipl, t:Table) -> dict:
 def op_cases(aipl, v:str) -> dict:
     return dict(upper=v.upper(), lower=v.lower())
 
+@defop('lowercase', 0, 0)
+def op_lowercase(aipl, v:str) -> str:
+    return v.lower()
+
+@defop('uppercase', 0, 0)
+def op_uppercase(aipl, v:str) -> str:
+    return v.upper()
+
+
 @pytest.fixture()
 def aipl():
     r = AIPLInterpreter()

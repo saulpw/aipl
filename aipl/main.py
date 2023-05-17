@@ -78,4 +78,4 @@ def main():
     aipl.globals = global_parameters
 
     for fn in scripts:
-        aipl.run(open(fn).read(), stdin_contents)
+        aipl.run(open(fn).read(), stdin_contents.strip())
