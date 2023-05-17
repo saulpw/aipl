@@ -106,6 +106,12 @@ class Table:
         ret.rows = self.rows
         return ret
 
+    def axis(self, rank:int=0):
+        if self.rank > rank:
+            firstrowval = self.columns[-1].get_value(self.rows[0])
+            return firstrowval.axis(rank)
+
+        return self
 
     @property
     def values(self):

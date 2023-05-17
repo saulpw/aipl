@@ -14,6 +14,7 @@ Scalar = int|float|str
 @dataclass
 class Command:
     opname:str
+    varname:str
     args:list
     kwargs:dict
     line:str
@@ -36,16 +37,24 @@ class AIPLInterpreter(Database):
 
     def __init__(self, dbfn='aipl-output.sqlite', single_step=None):
         super().__init__(dbfn)
+        self.debug = False
         self.single_step = single_step  # func(Table, Command) to call between steps
         self.globals = {}  # base context
 
     def parse_cmdline(self, line:str, linenum:int=0) -> List[Command]:
         'Parse single command line into one or more Commands.'
         for cmdstr in line[1:].split(' !'):
-            opname, *rest = cmdstr.split(' ')
-            cmd = Command(linenum=linenum,
+            opvar, *rest = cmdstr.split(' ')
+            if '>' in opvar:
+                opname, varname = opvar.split('>')
+            else:
+                opname = opvar
+                varname = None
+
+            cmd = Command(linenum=linenum+1,
                           line=cmdstr,
                           opname=clean_to_id(opname),
+                          varname=varname,
                           args=[],
                           kwargs={})
 
@@ -107,6 +116,8 @@ class AIPLInterpreter(Database):
                     inputs = result
                 elif op.rankout >= 0:  # otherwise keep former inputs
                     inputs = Table([result])
+                if cmd.varname:
+                    inputs.axis(op.rankout+1).columns[-1].name = cmd.varname
 
             except Exception as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
