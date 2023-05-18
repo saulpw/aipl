@@ -1,0 +1,39 @@
+# testing xml operators
+
+!format
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <link href="http://arxiv.org/api/query?search_query%3Dcat%3Acs.AI%26id_list%3D%26start%3D1000%26max_results%3D10" rel="self" type="application/atom+xml"/>
+      <title type="html">ArXiv Query: search_query=cat:cs.AI&amp;id_list=&amp;start=1000&amp;max_results=10</title>
+      <id>http://arxiv.org/api/DT5MV1FVXpfuZZ1aLNCXrU8CaYU</id>
+      <updated>2023-05-17T00:00:00-04:00</updated>
+      <entry>
+        <id>http://arxiv.org/abs/1109.2347v1</id>
+        <updated>2011-09-11T20:09:48Z</updated>
+        <published>2011-09-11T20:09:48Z</published>
+        <title>Breaking Instance-Independent Symmetries In Exact Graph Coloring</title>
+        <summary>Code optimization and high level synthesis can be posed as constraint satisfaction and optimization problems, such as graph coloring used in register allocation.</summary>
+        <author>
+          <name>I. L. Markov</name>
+        </author>
+        <arxiv:doi xmlns:arxiv="http://arxiv.org/schemas/atom">10.1613/jair.1637</arxiv:doi>
+        <link title="doi" href="http://dx.doi.org/10.1613/jair.1637" rel="related"/>
+        <arxiv:journal_ref xmlns:arxiv="http://arxiv.org/schemas/atom">Journal Of Artificial Intelligence Research, Volume 26, pages 289-322, 2006</arxiv:journal_ref>
+        <link href="http://arxiv.org/abs/1109.2347v1" rel="alternate" type="text/html"/>
+        <link title="pdf" href="http://arxiv.org/pdf/1109.2347v1" rel="related" type="application/pdf"/>
+        <arxiv:primary_category xmlns:arxiv="http://arxiv.org/schemas/atom" term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+        <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+      </entry>
+    </feed>
+
+!xml-xpath //entry/link[@type="application/pdf"]
+!xml-xpaths published=../published updated=../updated title=../title href=@href
+
+!json
+
+!print
+
+!assert-equals
+
+{"published": "2011-09-11T20:09:48Z", "updated": "2011-09-11T20:09:48Z", "title": "Breaking Instance-Independent Symmetries In Exact Graph Coloring", "href": "http://arxiv.org/pdf/1109.2347v1"}

@@ -3,6 +3,7 @@ from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 import json
+import re
 
 from .table import Table, LazyRow, Column, Row
 from .db import Database
@@ -59,8 +60,9 @@ class AIPLInterpreter(Database):
                           kwargs={})
 
             for arg in rest:
-                if '=' in arg:
-                    k, v = arg.split('=', maxsplit=1)
+                m = re.match(r'(\w+)=(.*)', arg)
+                if m:
+                    k, v = m.groups()  # arg.split('=', maxsplit=1)
                     cmd.kwargs[clean_to_id(k)] = trynum(v)
                 else:
                     cmd.args.append(trynum(arg))

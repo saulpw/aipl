@@ -11,3 +11,4 @@ from .op_text import *
 from .op_web import *
 from .op_xml import *
 from .op_pdf import *
+from .op_test import *
