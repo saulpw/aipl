@@ -18,7 +18,7 @@ setup(
     description="A tiny DSL to make it easier to explore and experiment with AI pipelines.",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     py_modules=["aipl"],
     scripts=['bin/aipl'],
     install_requires=requirements(),
