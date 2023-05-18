@@ -1,5 +1,8 @@
 # AIPL (Array-Inspired Pipeline Language)
 
+[![Tests](https://github.com/saulpw/aipl/workflows/aipl-testing/badge.svg)](https://github.com/saulpw/aipl/actions/workflows/main.yml)
+![discord](https://img.shields.io/discord/880915750007750737?label=discord)](https://visidata.org/chat)
+
 A tiny DSL to make it easier to explore and experiment with AI pipelines.
 
 ## Features
