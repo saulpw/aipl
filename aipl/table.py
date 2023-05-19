@@ -90,9 +90,10 @@ class LazyRow(Mapping):
 
 
 class Table:
-    def __init__(self, rows:List[Mapping|LazyRow]=[]):
+    def __init__(self, rows:List[Mapping|LazyRow]=[], parent:'Table'=None):
         self.rows = []  # list of Row
         self.columns = []  # list of Column
+        self.parent = parent
 
         for row in rows:
             self.add_row(row)
@@ -195,6 +196,9 @@ class Table:
         for c in self.columns:
             if c.name == name:
                 return c
+
+        if self.parent:
+            return self.parent.get_column(name)
 
     def apply(self, aipl, opfunc, args, kwargs, contexts=[]):
         newkey = aipl.unique_key

@@ -117,7 +117,8 @@ class AIPLInterpreter(Database):
                 if isinstance(result, Table):
                     inputs = result
                 elif op.rankout >= 0:  # otherwise keep former inputs
-                    inputs = Table([result])
+                    inputs = Table([result], parent=inputs)
+
                 if cmd.varname:
                     inputs.axis(1).columns[-1].name = cmd.varname
 
@@ -136,9 +137,9 @@ class AIPLInterpreter(Database):
         if (rank(t) > opfunc.rankin) and (opfunc.arity != 0):
             if isinstance(t, Table):
                 ret = copy(t)
-
             else:
-                ret = Table()
+                ret = Table(parent=t._table)
+
             x = dict()
             ret.rows = []
             newkey = self.unique_key
@@ -221,8 +222,8 @@ def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, ran
     elif rankout == 0.5:
         return out
     elif rankout == 1:
-        ret = Table()
         assert isinstance(in_row, LazyRow)
+        ret = Table(parent=in_row._table)
         newkey = aipl.unique_key
         ret.rows = [
                 {'__parent': in_row, newkey:v}
@@ -233,7 +234,7 @@ def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, ran
         if isinstance(out, Table):
             return out
         else:
-            ret = Table()
+            ret = Table(parent=in_row._table)
             ret.rows = list(out)
             for k in ret.rows[0].keys():  # assumes first row has same keys as every other row
                 ret.add_column(Column(k))
