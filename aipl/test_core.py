@@ -6,6 +6,10 @@ from .interpreter import AIPLInterpreter, defop
 from .table import Table, LazyRow
 
 
+@defop('assert-equals', 0, -1)
+def op_assert_equals(aipl, v:str, prompt=''):
+    assert v == prompt, v
+
 @defop('parse-keyval', 0, 0.5)
 def op_parse_keyval(aipl, s:str) -> dict:
     k, v = s.split('=', maxsplit=1)

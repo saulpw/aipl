@@ -2,8 +2,8 @@ from copy import copy
 from typing import List, Dict
 from collections import defaultdict
 
-from .interpreter import defop
-from .table import Table, LazyRow, Column
+from aipl import defop
+from aipl.table import Table, LazyRow, Column
 
 @defop('group', 1.5, 1.5)
 def op_group(aipl, t:Table):

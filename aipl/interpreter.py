@@ -259,54 +259,6 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
     return _decorator
 
 
-class Abort(BaseException):
-    pass
-
-@defop('abort', -1, -1, arity=0)
-def op_abort(aipl):
-    raise Abort(f'deliberately aborted')
-
-
-@defop('debug', -1, -1, arity=0)
-def op_debug(aipl, *args):
-    aipl.debug = True
-    aipl.single_step = lambda *args, **kwargs: breakpoint()
-
-@defop('json', 0.5, 0, 1)
-def op_json(aipl, d:LazyRow):
-    import json
-    class _vjsonEncoder(json.JSONEncoder):
-        def default(self, obj):
-            try:
-                return obj.text
-            except Exception:
-                return str(obj)
-
-    jsonenc = _vjsonEncoder()
-    return jsonenc.encode(d._asdict())
-
-@defop('parse-json', 0, 0.5, 1)
-def op_parse_json(aipl, v:str):
-    import json
-    return json.loads(v)
-
-
-@defop('name', 1.5, 1.5)
-def op_name(aipl, t:Table, name) -> Table:
-    ret = copy(t)
-    c = ret.columns[-1]
-    c.name = name
-    return ret
-
-@defop('ref', 1.5, 1.5)
-def op_ref(aipl, t:Table, name):
-    'Move column on table to end of columns list (becoming the new .value)'
-    col = t.get_column(name)
-    if col not in t.columns:
-        stderr(f'no such column {name}')
-    t.columns.remove(col)
-    t.add_column(col)
-    return t
 
 @defop('columns', 1.5, 1.5)
 def op_columns(aipl, t:Table, *colnames):

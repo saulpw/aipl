@@ -1,7 +1,6 @@
 from typing import List, Dict
 
-from .utils import stderr
-from . import defop, expensive
+from aipl import defop, expensive, stderr
 
 
 def _parse_msg(s:str):

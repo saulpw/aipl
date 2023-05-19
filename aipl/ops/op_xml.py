@@ -1,5 +1,5 @@
 from typing import List
-from . import defop
+from aipl import defop
 
 def _xml(s):
     if not isinstance(s, str):

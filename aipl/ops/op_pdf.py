@@ -1,4 +1,4 @@
-from . import defop
+from aipl import defop
 
 
 @defop('pdf-extract', 0, 0)

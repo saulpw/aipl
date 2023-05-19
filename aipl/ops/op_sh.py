@@ -1,4 +1,4 @@
-from . import defop
+from aipl import defop
 
 
 @defop('sh', 0, 0.5)

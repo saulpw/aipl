@@ -1,7 +1,4 @@
-from typing import List, Dict
-
-from .utils import stderr
-from .interpreter import defop
+from aipl import defop
 
 
 @defop('dbinsert', 0.5, -1, 1)

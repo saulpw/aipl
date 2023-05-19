@@ -1,6 +1,7 @@
 from typing import List, Dict, Mapping
-from .interpreter import defop
-from .table import LazyRow, Table, Column
+from aipl import defop
+from aipl.table import LazyRow, Table, Column
+
 
 @defop('format', 0.5, 0)
 def op_format(aipl, row:LazyRow, prompt:str='') -> str:

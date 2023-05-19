@@ -1,14 +1,18 @@
+from .utils import stderr
 from .interpreter import AIPLInterpreter, defop
 from .db import Database, expensive
+from .table import Table, LazyRow
 from .main import main
-from .op_abort import *
-from .op_llm import *
-from .op_misc import *
-from .op_db import *
-from .op_sh import *
-from .op_func import *
-from .op_text import *
-from .op_web import *
-from .op_xml import *
-from .op_pdf import *
-from .op_test import *
+
+
+def import_submodules(pkgname):
+    'Import all files below the given *pkgname*'
+    import pkgutil
+    import importlib
+
+    m = importlib.import_module(pkgname)
+    for module in pkgutil.walk_packages(m.__path__):
+        importlib.import_module(pkgname + '.' + module.name)
+
+
+import_submodules('aipl.ops')

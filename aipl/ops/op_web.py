@@ -1,8 +1,7 @@
 from typing import List, Dict
 from urllib.parse import urljoin, urlparse, urlunparse
 
-from . import defop, expensive
-from .utils import stderr
+from aipl import defop, expensive, stderr
 
 
 @defop('fetch-file', 0, 0, 1)
