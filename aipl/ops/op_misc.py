@@ -23,6 +23,11 @@ def op_debug(aipl, *args):
     aipl.single_step = lambda *args, **kwargs: breakpoint()
 
 
+@defop('assert-equal', 0, None)
+def op_assert_equal(aipl, v:str, prompt=''):
+    assert v == prompt, v
+
+
 @defop('name', 1.5, 1.5)
 def op_name(aipl, t:Table, name) -> Table:
     ret = copy(t)

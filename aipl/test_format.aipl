@@ -1,0 +1,19 @@
+# test: prompt is dedented
+
+!format>golden
+ 1
+ 2
+ # literal line that starts with '#'
+ 3
+
+!format
+
+   1
+# comments are not part of the prompt and can be interspersed
+   2
+   # literal line that starts with '#'
+   3
+
+# leading and trailing newlines are also stripped
+
+!assert-equal {golden}

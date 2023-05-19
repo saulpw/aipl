@@ -22,6 +22,10 @@ class Command:
     linenum:int
 
 
+class AIPLException(Exception):
+    pass
+
+
 def clean_to_id(s:str) -> str:
     return s.replace('-', '_')
 
@@ -78,32 +82,34 @@ class AIPLInterpreter(Database):
 
             yield cmd
 
+
     def parse(self, source:str) -> List[Command]:
         'Generate list of Commands from source text'
 
         prompt = ''
         ret = []
 
+        def set_last_prompt(ret, prompt):
+            import textwrap
+            if ret:
+                prompt = prompt.strip('\n')
+                if prompt:
+                    ret[-1].kwargs['prompt'] = textwrap.dedent(prompt)
+
         for linenum, line in enumerate(source.splitlines()):
             if line.startswith('#'):  # comment
                 continue
 
             if line.startswith('!'):  # command
-                if ret:
-                    prompt = prompt.strip()
-                    if prompt:
-                        ret[-1].kwargs['prompt'] = prompt
-                        prompt = ''
+                set_last_prompt(ret, prompt)
+                prompt = ''
 
                 ret.extend(self.parse_cmdline(line, linenum))
 
             else:
                 prompt += line + '\n'
 
-        if ret:
-            prompt = prompt.strip()
-            if prompt:
-                ret[-1].kwargs['prompt'] = prompt
+        set_last_prompt(ret, prompt)
 
         return ret
 
@@ -114,7 +120,7 @@ class AIPLInterpreter(Database):
         for cmd in self.parse(script):
             op = self.get_op(cmd.opname)
             if not op:
-                raise Exception(f'no such operator "!{cmd.opname}"')
+                raise AIPLException(f'no such operator "!{cmd.opname}"', cmd)
 
             stderr(inputs, f'-> {cmd.opname} (line {cmd.linenum})')
 
