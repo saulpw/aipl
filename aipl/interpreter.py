@@ -210,6 +210,7 @@ def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|T
     else:
         raise Exception("Unexpected rankin")
 
+
 def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, rankout:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
     if rankout == -1:
         return None
@@ -241,23 +242,13 @@ def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, ran
         raise Exception("Unexpected rankout")
 
 
-
-
 def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
     def _decorator(f):
-
-        if arity == 1:
-            @wraps(f)
-            def _wrapped(aipl, operand:LazyRow|Table, *args, **kwargs) -> LazyRow|Table:
-                inp = prep_input(operand, rankin)
-                r = f(aipl, inp, *args, **kwargs)
-                return prep_output(aipl, operand, r, rankout)
-        elif arity == 0:
-            @wraps(f)
-            def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
-                r = f(aipl, *args, **kwargs)
-                return prep_output(aipl, None, r, rankout)
-
+        @wraps(f)
+        def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
+            operands = [prep_input(operand, rankin) for operand in args[:arity]]
+            r = f(aipl, *operands, *args[arity:], **kwargs)
+            return prep_output(aipl, args[0] if operands else None, r, rankout)
 
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout
@@ -265,6 +256,7 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
         AIPLInterpreter.operators[clean_to_id(opname)] = _wrapped
         return _wrapped
     return _decorator
+
 
 class Abort(BaseException):
     pass
