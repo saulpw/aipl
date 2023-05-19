@@ -58,20 +58,27 @@ def main():
     # dup stdin/stdout if necessary
 
     if not sys.stdin.isatty():
-        fin = open('/dev/tty')
-        aipl.stdin = open(os.dup(0))
-        os.dup2(fin.fileno(), 0)
-        stdin_contents = aipl.stdin.read()
-        fin.close()
+        try:
+            fin = open('/dev/tty')
+            aipl.stdin = open(os.dup(0))
+            os.dup2(fin.fileno(), 0)
+            stdin_contents = aipl.stdin.read()
+            fin.close()
+        except OSError as e:
+            aipl.stdin = sys.stdin
+            stdin_contents = ''
     else:
         aipl.stdin = sys.stdin
         stdin_contents = ''
 
     if not sys.stdout.isatty():
-        fout = open('/dev/tty', mode='w')
-        aipl.stdout = open(os.dup(1), 'w')  # for dumping to stdout from interface
-        os.dup2(fout.fileno(), 1)
-        fout.close() # close file descriptors for original stdin/stdout
+        try:
+            fout = open('/dev/tty', mode='w')
+            aipl.stdout = open(os.dup(1), 'w')  # for dumping to stdout from interface
+            os.dup2(fout.fileno(), 1)
+            fout.close() # close file descriptors for original stdin/stdout
+        except OSError as e:
+            aipl.stdout = sys.stdout
     else:
         aipl.stdout = sys.stdout
 
