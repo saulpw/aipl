@@ -9,10 +9,13 @@ from .table import LazyRow
 
 
 def vd_singlestep(inputs:List[LazyRow], cmd):
+    class UserAbort(BaseException):
+        pass
+
     import visidata
     @visidata.VisiData.api
     def uberquit(vd):
-        raise BaseException('user abort')
+        raise UserAbort('user abort')
 
     inputs = list(r._asdict() for r in inputs)
     sheet = visidata.PyobjSheet('current_input', source=inputs)
@@ -21,7 +24,12 @@ def vd_singlestep(inputs:List[LazyRow], cmd):
     kwargstr = ' '.join(f'{k}={v}' for k, v in cmd.kwargs.items())
     sheet.recentcmd = f'[line {cmd.linenum}] !' + ' '.join([cmd.opname, argstr, kwargstr])
     sheet.addCommand('Q', 'quit-really', 'uberquit()')
-    visidata.vd.run(sheet)
+    try:
+        visidata.vd.run(sheet)
+    except UserAbort:
+        print('aborted by user', file=sys.stderr)
+        sys.exit(1)
+
 
 def main():
     parser = argparse.ArgumentParser(description='AIPL interpreter')
