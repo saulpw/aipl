@@ -169,7 +169,7 @@ class AIPLInterpreter(Database):
             return opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
         else:
             r = opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
-            if isinstance(r, LazyRow):
+            if isinstance(t, LazyRow):
                 newrow = copy(t._row)
             elif isinstance(r, Table):
                 return r
