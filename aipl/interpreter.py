@@ -151,13 +151,9 @@ class AIPLInterpreter(Database):
                     stderr(e)
                     continue
                 newrow = copy(row._row)
-                if not isinstance(x, dict):
-                    newrow[newkey] = x
-                else:
-                    newrow.update(x)
-                ret.rows.append(newrow)
+                ret.rows.append(update_dict(newrow, x, newkey))
                 if isinstance(x, dict):
-                    for k in x.keys(): # assumes the last x has the same keys as all rows
+                    for k in x.keys():  # assumes the last x has the same keys as all rows
                         ret.add_column(Column(k))
                 else:
                     ret.add_column(Column(newkey))
@@ -169,20 +165,25 @@ class AIPLInterpreter(Database):
             return opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
         else:
             r = opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
+            if isinstance(r, Table):
+                return r
+
             if isinstance(t, LazyRow):
                 newrow = copy(t._row)
-            elif isinstance(r, Table):
-                return r
             else:
                 newrow = dict()
-            if not isinstance(r, dict):
-                newrow[newkey] = r
-            else:
-                newrow.update(r)
-            return newrow
 
+            return update_dict(newrow, r, key=newkey)
 
         return ret
+
+def update_dict(d:dict, elem, key:str=''):
+    'update a dict based on whether input is a dict or a scalar'
+    if isinstance(elem, dict):
+        d.update(elem)
+    else:
+        d[key] = elem
+    return d
 
 
 def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
@@ -234,7 +235,7 @@ def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, ran
         else:
             ret = Table()
             ret.rows = list(out)
-            for k in ret.rows[0].keys(): # assumes first row has same keys as every other row
+            for k in ret.rows[0].keys():  # assumes first row has same keys as every other row
                 ret.add_column(Column(k))
             return ret
 
