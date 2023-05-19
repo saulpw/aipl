@@ -31,5 +31,11 @@ jobs:
     - name: Ensure it starts up
       run: aipl -h
 
-    - name: Run tests
+    - name: Run pytests
       run: pytest .
+
+    - name: Run aipl tests
+      run: |
+        for i in $(find tests/ -name "*.aipl" -print); do
+          aipl $i
+        done
