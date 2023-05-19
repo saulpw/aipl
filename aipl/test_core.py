@@ -6,7 +6,7 @@ from .interpreter import AIPLInterpreter, defop
 from .table import Table, LazyRow
 
 
-@defop('assert-equals', 0, -1)
+@defop('assert-equals', 0, None)
 def op_assert_equals(aipl, v:str, prompt=''):
     assert v == prompt, v
 

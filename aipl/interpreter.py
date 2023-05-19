@@ -26,6 +26,15 @@ def clean_to_id(s:str) -> str:
     return s.replace('-', '_')
 
 
+def rank(v):
+    if isinstance(v, LazyRow):
+        return rank(v.value)
+    if isinstance(v, Table):
+        return v.rank
+    else:
+        return 0
+
+
 class AIPLInterpreter(Database):
     operators = {}  # opname:str -> func(aipl, ..., *args, *kwargs)
     next_unique_key = 0
@@ -159,10 +168,10 @@ class AIPLInterpreter(Database):
                 else:
                     ret.add_column(Column(newkey))
             return ret
-        elif (opfunc.arity == 0) and (opfunc.rankout == -1):
+        elif (opfunc.arity == 0) and (opfunc.rankout is None):
             r = opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
             return t
-        elif (opfunc.arity == 0) and (opfunc.rankout != -1):
+        elif (opfunc.arity == 0) and (opfunc.rankout is not None):
             return opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
         else:
             r = opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
@@ -188,7 +197,7 @@ def update_dict(d:dict, elem, key:str=''):
 
 
 def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
-    if rankin == -1:
+    if rankin is None:
         return None
     if rankin == 0:
         assert isinstance(operand, LazyRow)
@@ -214,7 +223,7 @@ def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|T
 
 
 def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, rankout:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
-    if rankout == -1:
+    if rankout is None:
         return None
     if rankout == 0:
         assert not isinstance(out, (Table, LazyRow, dict))
@@ -258,13 +267,3 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
         AIPLInterpreter.operators[clean_to_id(opname)] = _wrapped
         return _wrapped
     return _decorator
-
-
-
-def rank(v):
-    if isinstance(v, LazyRow):
-        return rank(v.value)
-    if isinstance(v, Table):
-        return v.rank
-    else:
-        return 0

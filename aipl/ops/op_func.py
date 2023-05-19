@@ -17,7 +17,7 @@ def op_group(aipl, t:Table):
         yield dict(key=k, items=ret)
 
 
-@defop('python',-1,-1,0)
+@defop('python',None,None,0)
 def op_python(aipl, prompt=''):
     exec(prompt)
 

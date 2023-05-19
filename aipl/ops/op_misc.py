@@ -12,12 +12,12 @@ def op_sample(aipl, t:Table, n:int=1):
 class Abort(BaseException):
     pass
 
-@defop('abort', -1, -1, arity=0)
+@defop('abort', None, None, arity=0)
 def op_abort(aipl):
     raise Abort(f'deliberately aborted')
 
 
-@defop('debug', -1, -1, arity=0)
+@defop('debug', None, None, arity=0)
 def op_debug(aipl, *args):
     aipl.debug = True
     aipl.single_step = lambda *args, **kwargs: breakpoint()
@@ -29,6 +29,7 @@ def op_name(aipl, t:Table, name) -> Table:
     c = ret.columns[-1]
     c.name = name
     return ret
+
 
 @defop('ref', 1.5, 1.5)
 def op_ref(aipl, t:Table, name):

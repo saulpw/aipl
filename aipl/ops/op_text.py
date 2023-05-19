@@ -52,7 +52,7 @@ def op_replace(aipl, s:str, find:str, repl:str) -> str:
     return s.replace(find, repl)
 
 
-@defop('save', 0, -1, 1)
+@defop('save', 0, None, 1)
 def op_save(aipl, v:str, filename=''):
     'Save to given filename.'
     assert '{' not in filename, filename
@@ -60,6 +60,6 @@ def op_save(aipl, v:str, filename=''):
         fp.write(v)
 
 
-@defop('literal', -1, 0, 0)
+@defop('literal', None, 0, 0)
 def op_literal(aipl, prompt=''):
     return prompt
