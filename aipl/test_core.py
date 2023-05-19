@@ -39,7 +39,7 @@ def op_uppercase(aipl, v:str) -> str:
 
 @pytest.fixture()
 def aipl():
-    r = AIPLInterpreter()
+    r = AIPLInterpreter(debug=True)
 #    r.single_step = lambda *args, **kwargs: breakpoint()
     return r
 

@@ -36,9 +36,9 @@ class AIPLInterpreter(Database):
         self.next_unique_key += 1
         return f'_{r}'
 
-    def __init__(self, dbfn='aipl-output.sqlite', single_step=None):
+    def __init__(self, dbfn='aipl-output.sqlite', single_step=None, debug=True):
         super().__init__(dbfn)
-        self.debug = False
+        self.debug = debug
         self.single_step = single_step  # func(Table, Command) to call between steps
         self.globals = {}  # base context
 
@@ -147,7 +147,6 @@ class AIPLInterpreter(Database):
                     x = self.eval_op(opfunc, row, args, kwargs, contexts=contexts+[row], newkey=newkey)
                 except Exception as e:
                     if self.debug:
-                        breakpoint()
                         raise
                     stderr(e)
                     continue
