@@ -1,11 +1,12 @@
-from typing import List, Dict
+from typing import List, Dict, Mapping, Callable
 from copy import copy
 from dataclasses import dataclass
 from functools import wraps
+import math
 import json
 import re
 
-from .table import Table, LazyRow, Column, Row
+from .table import Table, LazyRow, Column, Row, ParentColumn
 from .db import Database
 from .utils import stderr, trynum, fmtargs, fmtkwargs
 
@@ -15,7 +16,8 @@ Scalar = int|float|str
 @dataclass
 class Command:
     opname:str
-    varname:str
+    op:Callable
+    varnames:List[str]
     args:list
     kwargs:dict
     line:str
@@ -60,17 +62,22 @@ class AIPLInterpreter(Database):
         for cmdstr in line[1:].split(' !'):
             opvar, *rest = cmdstr.split(' ')
             if '>' in opvar:
-                opname, varname = opvar.split('>')
+                opname, *varnames = opvar.split('>')
             else:
                 opname = opvar
-                varname = None
+                varnames = []
 
+            opname = clean_to_id(opname)
             cmd = Command(linenum=linenum+1,
                           line=cmdstr,
-                          opname=clean_to_id(opname),
-                          varname=varname,
+                          opname=opname,
+                          op=self.get_op(opname),
+                          varnames=varnames,
                           args=[],
                           kwargs={})
+
+            if not cmd.op:
+                raise AIPLException(f'no such operator "!{cmd.opname}"', cmd)
 
             for arg in rest:
                 m = re.match(r'(\w+)=(.*)', arg)
@@ -82,6 +89,8 @@ class AIPLInterpreter(Database):
 
             yield cmd
 
+    def get_op(self, opname:str):
+        return self.operators.get(opname, None)
 
     def parse(self, source:str) -> List[Command]:
         'Generate list of Commands from source text'
@@ -118,24 +127,17 @@ class AIPLInterpreter(Database):
         inputs = Table([{argkey:arg} for arg in args])
 
         for cmd in self.parse(script):
-            op = self.get_op(cmd.opname)
-            if not op:
-                raise AIPLException(f'no such operator "!{cmd.opname}"', cmd)
-
             stderr(inputs, f'-> {cmd.opname} (line {cmd.linenum})')
 
             if self.single_step:
                 self.single_step(inputs, cmd)
 
             try:
-                result = self.eval_op(op, inputs, cmd.args, cmd.kwargs, contexts=[self.globals])
+                result = self.eval_op(cmd, inputs, contexts=[self.globals])
                 if isinstance(result, Table):
                     inputs = result
-                elif op.rankout >= 0:  # otherwise keep former inputs
+                elif cmd.op.rankout is not None:  # otherwise keep former inputs
                     inputs = Table([result], parent=inputs)
-
-                if cmd.varname:
-                    inputs.axis(1).columns[-1].name = cmd.varname
 
             except Exception as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
@@ -143,58 +145,78 @@ class AIPLInterpreter(Database):
 
         return inputs
 
-    def get_op(self, opname:str):
-        return self.operators.get(opname, None)
+    def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs):
+        try:
+            ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+        except Exception as e:
+            if self.debug:
+                raise
+            stderr(e)
+            return None
 
-    def eval_op(self, opfunc, t:Table, args, kwargs, contexts=[], newkey='foo') -> Table:
-        # if row.value is a Table, recurse down
-        # each row might be different
-        if (rank(t) > opfunc.rankin) and (opfunc.arity != 0):
-            if isinstance(t, Table):
-                ret = copy(t)
-            else:
-                ret = Table(parent=t._table)
-
-            x = dict()
-            ret.rows = []
-            newkey = self.unique_key
-            for row in t:
-                try:
-                    x = self.eval_op(opfunc, row, args, kwargs, contexts=contexts+[row], newkey=newkey)
-                except Exception as e:
-                    if self.debug:
-                        raise
-                    stderr(e)
-                    continue
-                newrow = copy(row._row)
-                ret.rows.append(update_dict(newrow, x, newkey))
-                if isinstance(x, dict):
-                    for k in x.keys():  # assumes the last x has the same keys as all rows
-                        ret.add_column(Column(k))
-                else:
-                    ret.add_column(Column(newkey))
-            return ret
-        elif (opfunc.arity == 0) and (opfunc.rankout is None):
-            r = opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
-            return t
-        elif (opfunc.arity == 0) and (opfunc.rankout is not None):
-            return opfunc(self, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
+        if cmd.op.rankout is not None and len(cmd.varnames) > cmd.op.rankout:
+            varname = cmd.varnames[int(cmd.op.rankout)]
         else:
-            r = opfunc(self, t, *fmtargs(args, contexts), **fmtkwargs(kwargs, contexts))
-            if isinstance(r, Table):
-                return r
+            varname = self.unique_key
 
-            if isinstance(t, LazyRow):
-                newrow = copy(t._row)
+        return prep_output(self, inputs[0] if inputs else None, ret, cmd.op.rankout, varname)
+
+    def eval_op(self, cmd:Command, t:Table, contexts=[], newkey='') -> Table:
+        'Recursively evaluate cmd.op(t) with cmd args formatted with contexts'
+
+        if cmd.op.arity == 0:
+            ret = self.call_cmd(cmd, contexts)
+            if cmd.op.rankout is None:
+                assert not ret  # ignore return value (no rankout)
+                return t
+
+        elif rank(t) <= cmd.op.rankin:
+            ret = self.call_cmd(cmd, contexts, t)
+
+        else:
+            if isinstance(t, Table):
+                ret = Table(parent=t)
             else:
-                newrow = dict()
+                ret = Table(parent=t.value)
 
-            return update_dict(newrow, r, key=newkey)
+            # rank(t) > 0
+            # varnames, rank(t), outrank
+            #   0, *, * -> no
+            #   1, 1, 1 -> use it as outer newkey?
+            #   1, 1, 0 -> use it as inner newkey
+            #   1, 2, 0 -> not yet
+            #   1, 2, 1 -> use it as outer newkey
+            #   2, 1, 0 -> use [0] as outer newkey, [1] as inner newkey
+            #   2, 1, 1 -> use [0] as outer newkey, [1] as inner newkey
+            #   2, 2, 0 -> use [0] as inner newkey, [1] not yet
+            #   2, 2, 1 -> use [0] as outer newkey, [1] as inner newkey
+            if cmd.varnames and rank(t) == int(cmd.op.rankin+1):
+                newkey = cmd.varnames[0]
+            else:
+                newkey = newkey or self.unique_key
+
+            for row in t:
+                x = self.eval_op(cmd, row, contexts=contexts+[row], newkey=newkey)
+
+                if x is None:
+                    continue
+
+                newrow = {}
+                newrow['__parent'] = row
+                ret.rows.append(update_dict(newrow, x, newkey))
+
+            if isinstance(x, dict):
+                for k in x.keys():  # assumes the last x has the same keys as all rows
+                    vname = (newkey+'_'+k) if len(x) > 1 else newkey
+                    ret.add_column(Column(k, vname))
+            else:
+                ret.add_column(Column(newkey))
 
         return ret
 
-def update_dict(d:dict, elem, key:str=''):
-    'update a dict based on whether input is a dict or a scalar'
+
+def update_dict(d:dict, elem, key:str='') -> dict:
+    'Update d with elem if elem is dict, otherwise add d[key]=elem.  Return d.'
     if isinstance(elem, dict):
         d.update(elem)
     else:
@@ -228,29 +250,35 @@ def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|T
         raise Exception("Unexpected rankin")
 
 
-def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, rankout:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+def prep_output(aipl,
+                in_row:LazyRow,
+                out:Scalar|List[Scalar]|LazyRow|Table,
+                rankout:int|float,
+                varname:str) -> Scalar|List[Scalar]|Table|LazyRow:
+
     if rankout is None:
         return None
+
     if rankout == 0:
         assert not isinstance(out, (Table, LazyRow, dict))
         return out
+
     elif rankout == 0.5:
         return out
+
     elif rankout == 1:
         assert isinstance(in_row, LazyRow)
-        ret = Table(parent=in_row._table)
-        newkey = aipl.unique_key
-        ret.rows = [
-                {'__parent': in_row, newkey:v}
-                    for v in out]
-        ret.add_column(Column(newkey))
+        ret = Table()
+        ret.rows = [{'__parent': in_row, varname:v} for v in out]
+        ret.add_column(Column(varname))
         return ret
+
     elif rankout >= 1.5:
         if isinstance(out, Table):
             return out
         else:
             ret = Table(parent=in_row._table)
-            ret.rows = list(out)
+            ret.rows = [{'__parent': in_row, varname:v} for v in out]
             for k in ret.rows[0].keys():  # assumes first row has same keys as every other row
                 ret.add_column(Column(k))
             return ret
@@ -259,13 +287,13 @@ def prep_output(aipl, in_row:LazyRow, out:Scalar|List[Scalar]|LazyRow|Table, ran
         raise Exception("Unexpected rankout")
 
 
+
 def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
     def _decorator(f):
         @wraps(f)
         def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
             operands = [prep_input(operand, rankin) for operand in args[:arity]]
-            r = f(aipl, *operands, *args[arity:], **kwargs)
-            return prep_output(aipl, args[0] if operands else None, r, rankout)
+            return f(aipl, *operands, *args[arity:], **kwargs)
 
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout

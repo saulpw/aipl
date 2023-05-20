@@ -3,7 +3,7 @@ from typing import List, Dict
 from collections import defaultdict
 
 from aipl import defop
-from aipl.table import Table, LazyRow, Column
+from aipl.table import Table, LazyRow, Column, ParentColumn
 
 @defop('group', 1.5, 1.5)
 def op_group(aipl, t:Table):
@@ -28,7 +28,6 @@ def op_take(aipl, t:Table, n=1):
     ret.rows = t.rows[:n]
     return ret
 
-
 @defop('unravel', 2, 1.5)
 def op_unravel(aipl, v:Table) -> Table:
     ret = Table()
@@ -38,6 +37,8 @@ def op_unravel(aipl, v:Table) -> Table:
         for row_two in row.value:
             ret.rows.append({'__parent':row_two, newkey:row_two.value})
 
+    for c in v.columns:
+        ret.add_column(ParentColumn(c.name, c))
     ret.add_column(Column(newkey))
     return ret
 

@@ -12,7 +12,16 @@ class Column:
     def __init__(self, key, name=''):
         self.name = name or key
         self.key = key
-        self.table = None
+        self.table = None  # set later by Table.add_column()
+
+    @property
+    def hidden(self) -> bool:
+        return self.name.startswith('_')
+
+    @property
+    def last(self) -> bool:
+        'is this the last column in the table?'
+        return self is self.table.columns[-1]
 
     def get_value(self, row:Row):
         if isinstance(self.key, (list, tuple)):
@@ -36,6 +45,15 @@ class Column:
                 return f'{self.name}:{r.deepcolnames}'
 
         return self.name or self.key
+
+
+class ParentColumn(Column):
+    def __init__(self, name, origcol):
+        super().__init__(name)
+        self.origcol = origcol
+
+    def get_value(self, row):
+        return self.origcol.get_value(row['__parent']._row)
 
 
 class LazyRow(Mapping):
@@ -77,12 +95,24 @@ class LazyRow(Mapping):
     def _asdict(self):
         d = {}
         for c in self._table.columns:
-
             v = c.get_value(self._row)
+
+            if c.hidden:
+                if not c.last:
+                    continue
+
+#                if not d:
+#                    return v  # simple scalar if no other named cols in the row
+
+                k = 'input'
+            else:
+                k = c.name
+
             if isinstance(v, Table):
                 v = [r._asdict() for r in v]
+
             if v is not None:
-                d[c.name] = v
+                d[k] = v
         return d
 
     def __repr__(self):
@@ -97,6 +127,11 @@ class Table:
 
         for row in rows:
             self.add_row(row)
+
+        if parent:
+            for col in parent.columns:
+                if not col.hidden:
+                    self.add_column(ParentColumn(col.name, col))
 
     def __copy__(self):
         ret = Table()
@@ -121,11 +156,12 @@ class Table:
     @property
     def shape(self):
         if not self.rows:
-            return []
+            return [0]
         dims = [len(self.rows)]
-        firstrowval = self.columns[-1].get_value(self.rows[0])
-        if isinstance(firstrowval, Table):
-            dims += firstrowval.shape
+        if self.columns:
+            firstrowval = self.columns[-1].get_value(self.rows[0])
+            if isinstance(firstrowval, Table):
+                dims += firstrowval.shape
         return dims
 
     @property
@@ -142,7 +178,7 @@ class Table:
 
     @property
     def deepcolnames(self) -> str:
-        return ','.join(f'{c.deepname}' for c in self.columns)
+        return ','.join(f'{c.deepname}' for c in self.columns) or "no cols"
 
     def __getitem__(self, k:int):
         #return LazyRow(self, self.rows[k])
@@ -159,9 +195,7 @@ class Table:
     def __repr__(self):
         shapestr = 'x'.join(map(str, self.shape))
         contentstr = ''
-        if not self.rows:
-            contentstr += '(nothing)'
-        else:
+        if self.rows:
             contentstr += strify(self[0], maxlen=20)
         if len(self.rows) > 1:
             contentstr += ' ...'

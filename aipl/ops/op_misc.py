@@ -1,6 +1,7 @@
 from copy import copy
 
 from aipl import defop, Table
+from aipl.utils import stderr
 
 
 @defop('sample', 1.5, 1.5)
@@ -27,6 +28,10 @@ def op_debug(aipl, *args):
 def op_assert_equal(aipl, v:str, prompt=''):
     assert v == prompt, v
 
+@defop('assert-eq-json', 100, None)
+def op_assert_equal_json(aipl, t:Table, prompt=''):
+    import json
+    assert t._asdict() == json.loads(prompt), json.dumps(t._asdict())
 
 @defop('name', 1.5, 1.5)
 def op_name(aipl, t:Table, name) -> Table:
