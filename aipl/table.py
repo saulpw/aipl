@@ -125,12 +125,18 @@ class LazyRow(Mapping):
 
 class Table:
     def __init__(self, rows:List[Mapping|LazyRow]=[], parent:'Table'=None):
-        self.rows = []  # list of Row
+        self.rows = []  # list of dict
         self.columns = []  # list of Column
         self.parent = parent
 
         for row in rows:
-            self.add_row(row)
+            if isinstance(row, LazyRow):
+                self.rows.append(row._row)
+            elif isinstance(row, Mapping):
+                self.rows.append(row)
+                self.add_new_columns(row)
+            else:
+                raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")
 
         if parent:
             for col in parent.columns:
@@ -187,9 +193,9 @@ class Table:
     def __getitem__(self, k:int):
         #return LazyRow(self, self.rows[k])
         if not self.columns:
-            raise Exception('no columns!')
+            raise IndexError('table has no columns')
         if k >= len(self.rows):
-            raise Exception('not enough rows!')
+            raise IndexError('table index out of range')
 
         return self.columns[-1].get_value(self.rows[k])
 
@@ -203,26 +209,19 @@ class Table:
             contentstr += strify(self[0], maxlen=20)
         if len(self.rows) > 1:
             contentstr += ' ...'
-        return f'[{shapestr} {self.deepcolnames}] {contentstr}'
+        return f'<Table [{shapestr} {self.deepcolnames}] {contentstr}>'
 
     def __iter__(self):
         for r in self.rows:
             yield LazyRow(self, r)
 
-    def add_row(self, row:Row|LazyRow):
-        if isinstance(row, LazyRow):
-            self.rows.append(row._row)
-        else:
-            self.rows.append(row)
-            self.add_new_columns(row)
-
-    def add_new_columns(self, d:dict):
-        for k in d:
-            if not str(k).startswith('__') and k not in self.colnames:
+    def add_new_columns(self, row:Row):
+        for k in row.keys():
+            if not k.startswith('__'):
                 self.add_column(Column(k, k))
 
     def add_column(self, col:Column):
-        if col.key in self.colkeys:
+        if col.key in self.colkeys or col.name in self.colnames:
             return
         col.table = self
         self.columns.append(col)
@@ -237,3 +236,4 @@ class Table:
 
         if self.parent:
             return self.parent.get_column(name)
+        return None
