@@ -1,0 +1,13 @@
+
+!!def first-3-words
+ !split
+ !take 3
+ !join
+
+!format
+now is the time for all good men
+
+!first-3-words
+
+!assert-equal
+now is the
