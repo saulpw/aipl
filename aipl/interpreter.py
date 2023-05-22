@@ -139,7 +139,7 @@ class AIPLInterpreter(Database):
                 if isinstance(result, Table):
                     inputs = result
                 elif cmd.op.rankout is not None:  # otherwise keep former inputs
-                    inputs = Table([result], parent=inputs)
+                    inputs = Table([{self.unique_key: result}], parent=inputs)
 
             except Exception as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
