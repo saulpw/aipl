@@ -9,7 +9,6 @@ import re
 from .table import Table, LazyRow, Column, Row, ParentColumn
 from .db import Database
 from .utils import stderr, trynum, fmtargs, fmtkwargs
-from .utils import stderr, trynum, fmtargs, fmtkwargs
 
 
 Scalar = int|float|str
@@ -19,6 +18,7 @@ class Command:
     opname:str
     op:Callable
     varnames:List[str]
+    immediate:bool
     args:list
     kwargs:dict
     line:str
@@ -30,7 +30,7 @@ class AIPLException(Exception):
 
 
 def clean_to_id(s:str) -> str:
-    return s.replace('-', '_')
+    return s.replace('-', '_').strip('!')
 
 
 def rank(v):
@@ -68,18 +68,19 @@ class AIPLInterpreter(Database):
                 opname = opvar
                 varnames = []
 
+            immediate=opname.startswith('!')
             opname = clean_to_id(opname)
             cmd = Command(linenum=linenum+1,
                           line=cmdstr,
                           opname=opname,
+                          immediate=immediate,
                           op=self.get_op(opname),
                           varnames=varnames,
                           args=[],
                           kwargs={})
 
             if not cmd.op:
-                stderr(f'[line {cmd.linenum}] no such operator "!{cmd.opname}"')
-                self.operators['abort'](self)
+                raise AIPLException(f'[line {cmd.linenum}] no such operator "!{cmd.opname}"', cmd)
 
             for arg in rest:
                 m = re.match(r'(\w+)=(.*)', arg)
@@ -114,8 +115,12 @@ class AIPLInterpreter(Database):
             if line.startswith('!'):  # command
                 set_last_prompt(ret, prompt)
                 prompt = ''
+                if ret and ret[-1].immediate:  # !!op means do the command immediately
+                    result = self.eval_op(ret[-1], Table(), contexts=[self.globals])
+                    stderr('compile time:', result)
 
-                ret.extend(self.parse_cmdline(line, linenum))
+                for cmd in self.parse_cmdline(line, linenum):
+                    ret.append(cmd)
 
             else:
                 prompt += line + '\n'
@@ -125,10 +130,15 @@ class AIPLInterpreter(Database):
         return ret
 
     def run(self, script:str, *args):
+        cmds = self.parse(script)
+
         argkey = self.unique_key
         inputs = Table([{argkey:arg} for arg in args])
+        return self.run_cmdlist(cmds, inputs)
 
-        for cmd in self.parse(script):
+    def run_cmdlist(self, cmds:List[Command], inputs):
+
+        for cmd in cmds:
             stderr(inputs, f'-> {cmd.opname} (line {cmd.linenum})')
 
             if self.single_step:
@@ -163,7 +173,7 @@ class AIPLInterpreter(Database):
 
         return prep_output(self, inputs[0] if inputs else None, ret, cmd.op.rankout, varname)
 
-    def eval_op(self, cmd:Command, t:Table, contexts=[], newkey='') -> Table:
+    def eval_op(self, cmd:Command, t:Table|LazyRow, contexts=[], newkey='') -> Table:
         'Recursively evaluate cmd.op(t) with cmd args formatted with contexts'
 
         if cmd.op.arity == 0:
@@ -186,6 +196,7 @@ class AIPLInterpreter(Database):
             else:
                 newkey = newkey or self.unique_key
 
+            x = dict()
             for row in t:
                 x = self.eval_op(cmd, row, contexts=contexts+[row], newkey=newkey)
 
@@ -219,7 +230,7 @@ def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|T
     if rankin is None:
         return None
     if rankin == 0:
-        assert isinstance(operand, LazyRow)
+        assert isinstance(operand, LazyRow), type(operand)
         return operand.value
     elif rankin == 0.5:
         assert isinstance(operand, LazyRow)

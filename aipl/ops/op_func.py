@@ -49,3 +49,17 @@ def op_filter(aipl, t:Table):
     ret.rows = [r._row for r in t if r.value]
     ret.columns = ret.columns[:-1]  # discard bool column
     return ret
+
+
+@defop('def', None, None, arity=0)  # immediate
+def op_def(aipl, opname, prompt=''):
+    cmds = aipl.parse(prompt)
+
+    @defop(opname,
+           rankin=cmds[0].op.rankin,
+           rankout=cmds[-1].op.rankout,
+           arity=cmds[0].op.arity)
+    def new_operator(aipl, input, *args, **kwargs):
+        argkey = aipl.unique_key
+        ret = aipl.run_cmdlist(cmds, Table([{argkey:input}]), *args)
+        return ret[0]
