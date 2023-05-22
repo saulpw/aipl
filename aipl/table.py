@@ -76,7 +76,7 @@ class LazyRow(Mapping):
         while True:
             c = obj._table.get_column(k)
             if c:
-                return c.get_value(self._row)
+                return c.get_value(obj._row)
 
             if '__parent' not in obj._row:
                 break
