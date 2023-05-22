@@ -72,3 +72,8 @@ def op_ref(aipl, t:Table, name):
     t.columns.remove(col)
     t.add_column(col)
     return t
+
+
+@defop('comment', None, None, arity=0)
+def op_comment(aipl, *args, **kwargs):
+    pass

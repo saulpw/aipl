@@ -152,7 +152,6 @@ class AIPLInterpreter(Database):
             ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
         except Exception as e:
             if self.debug:
-                breakpoint()
                 raise
             stderr(e)
             return None
@@ -182,17 +181,6 @@ class AIPLInterpreter(Database):
             else:
                 ret = Table(parent=t.value)
 
-            # rank(t) > 0
-            # varnames, rank(t), outrank
-            #   0, *, * -> no
-            #   1, 1, 1 -> use it as outer newkey?
-            #   1, 1, 0 -> use it as inner newkey
-            #   1, 2, 0 -> not yet
-            #   1, 2, 1 -> use it as outer newkey
-            #   2, 1, 0 -> use [0] as outer newkey, [1] as inner newkey
-            #   2, 1, 1 -> use [0] as outer newkey, [1] as inner newkey
-            #   2, 2, 0 -> use [0] as inner newkey, [1] not yet
-            #   2, 2, 1 -> use [0] as outer newkey, [1] as inner newkey
             if cmd.varnames and rank(t) == int(cmd.op.rankin+1):
                 newkey = cmd.varnames[0]
             else:

@@ -115,8 +115,12 @@ class LazyRow(Mapping):
                 d[k] = v
         return d
 
+    @property
+    def parent(self):
+        return self._row.get('__parent', None)
+
     def __repr__(self):
-        return strify(self._asdict())
+        return f"<LazyRow row={self._asdict()} parent={self.parent!r}>"
 
 
 class Table:
