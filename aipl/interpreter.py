@@ -157,7 +157,7 @@ class AIPLInterpreter(Database):
             return None
 
         if cmd.op.rankout is not None and len(cmd.varnames) > cmd.op.rankout:
-            varname = cmd.varnames[int(cmd.op.rankout)]
+            varname = cmd.varnames[int(cmd.op.rankout)] or self.unique_key
         else:
             varname = self.unique_key
 
@@ -182,7 +182,7 @@ class AIPLInterpreter(Database):
                 ret = Table(parent=t.value)
 
             if cmd.varnames and rank(t) == int(cmd.op.rankin+1):
-                newkey = cmd.varnames[0]
+                newkey = cmd.varnames[0] or self.unique_key
             else:
                 newkey = newkey or self.unique_key
 
