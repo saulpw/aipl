@@ -1,34 +1,10 @@
-from typing import List
-
 import os
 import sys
 import argparse
 
 from .interpreter import AIPLInterpreter
 from .table import LazyRow
-
-
-def vd_singlestep(inputs:List[LazyRow], cmd):
-    class UserAbort(BaseException):
-        pass
-
-    import visidata
-    @visidata.VisiData.api
-    def uberquit(vd):
-        raise UserAbort('user abort')
-
-    inputs = list(r._asdict() for r in inputs)
-    sheet = visidata.PyobjSheet('current_input', source=inputs)
-    sheet.help = '{sheet.recentcmd}'
-    argstr = ' '.join(str(x) for x in cmd.args)
-    kwargstr = ' '.join(f'{k}={v}' for k, v in cmd.kwargs.items())
-    sheet.recentcmd = f'[line {cmd.linenum}] !' + ' '.join([cmd.opname, argstr, kwargstr])
-    sheet.addCommand('Q', 'quit-really', 'uberquit()')
-    try:
-        visidata.vd.run(sheet)
-    except UserAbort:
-        print('aborted by user', file=sys.stderr)
-        sys.exit(1)
+from aipl.ops.op_misc import UserAbort
 
 
 def main():
@@ -77,7 +53,7 @@ def main():
 
     # parse a few options
     if args.visidata:
-        aipl.single_step = vd_singlestep
+        aipl.run('!debug-vd')
 
     if args.single_step:
         aipl.single_step = lambda *args, **kwargs: breakpoint()
@@ -88,4 +64,8 @@ def main():
     aipl.globals = global_parameters
 
     for fn in scripts:
-        aipl.run(open(fn).read(), stdin_contents.strip())
+        try:
+            aipl.run(open(fn).read(), stdin_contents.strip())
+        except UserAbort as e:
+            print(f'aborted', e, file=sys.stderr)
+

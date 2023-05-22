@@ -2,6 +2,9 @@
 
 # fetch url, split webpage into chunks, summarize each chunk, then summarize the summaries.
 
+# one input -> multiple urls
+!split sep=\n
+
 # the inputs are urls
 !fetch-url
 

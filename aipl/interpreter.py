@@ -9,6 +9,7 @@ import re
 from .table import Table, LazyRow, Column, Row, ParentColumn
 from .db import Database
 from .utils import stderr, trynum, fmtargs, fmtkwargs
+from .utils import stderr, trynum, fmtargs, fmtkwargs
 
 
 Scalar = int|float|str
@@ -77,7 +78,8 @@ class AIPLInterpreter(Database):
                           kwargs={})
 
             if not cmd.op:
-                raise AIPLException(f'no such operator "!{cmd.opname}"', cmd)
+                stderr(f'[line {cmd.linenum}] no such operator "!{cmd.opname}"')
+                self.operators['abort'](self)
 
             for arg in rest:
                 m = re.match(r'(\w+)=(.*)', arg)
@@ -150,6 +152,7 @@ class AIPLInterpreter(Database):
             ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
         except Exception as e:
             if self.debug:
+                breakpoint()
                 raise
             stderr(e)
             return None
