@@ -302,9 +302,11 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
             operands = [prep_input(operand, rankin) for operand in args[:arity]]
             return f(aipl, *operands, *args[arity:], **kwargs)
 
+        name = clean_to_id(opname)
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout
         _wrapped.arity = arity
-        AIPLInterpreter.operators[clean_to_id(opname)] = _wrapped
+        _wrapped.__name__ = name
+        AIPLInterpreter.operators[name] = _wrapped
         return _wrapped
     return _decorator
