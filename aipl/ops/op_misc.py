@@ -48,13 +48,9 @@ def op_debug_vd(aipl):
 
 @defop('assert-equal', 0, None)
 def op_assert_equal(aipl, v:str, prompt=''):
-    assert v == prompt, v
+    if v != prompt:
+        raise AIPLException(f'assert failed! value not equal\n  ' + v)
 
-@defop('assert-json', 100, None)
-def op_assert_json(aipl, t:Table, prompt=''):
-    import json
-    if t._asdict() != json.loads(prompt):
-        raise AIPLException(f'assert failed! value not equal\n  ' + json.dumps(t._asdict()))
 
 @defop('name', 1.5, 1.5)
 def op_name(aipl, t:Table, name) -> Table:

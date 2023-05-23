@@ -17,11 +17,6 @@ def op_group(aipl, t:Table):
         yield dict(key=k, items=ret)
 
 
-@defop('python',None,None,0)
-def op_python(aipl, prompt=''):
-    exec(prompt)
-
-
 @defop('take', 1.5, 1.5)
 def op_take(aipl, t:Table, n=1):
     ret = copy(t)
