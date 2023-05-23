@@ -148,9 +148,14 @@ class AIPLInterpreter(Database):
                 result = self.eval_op(cmd, inputs, contexts=[self.globals])
                 if isinstance(result, Table):
                     inputs = result
-                elif cmd.op.rankout is not None:  # otherwise keep former inputs
-                    inputs = Table([{self.unique_key: result}], parent=inputs)
+                elif cmd.op.rankout is not None:
+                    k = cmd.varnames[-1] if cmd.varnames else self.unique_key
+                    inputs = Table([{k:result}], parent=inputs)
+                # else if rankout is None, just keep former inputs
 
+            except AIPLException as e:
+                stderr(f'\nError (line {cmd.linenum} !{cmd.opname}):\n{e}')
+                return
             except Exception as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
                 raise
