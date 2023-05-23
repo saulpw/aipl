@@ -12,16 +12,10 @@ class Column:
     def __init__(self, key, name=''):
         self.name = name or key
         self.key = key
-        self.table = None  # set later by Table.add_column()
 
     @property
     def hidden(self) -> bool:
         return self.name.startswith('_')
-
-    @property
-    def last(self) -> bool:
-        'is this the last column in the table?'
-        return self is self.table.columns[-1]
 
     def get_value(self, row:Row):
         if isinstance(self.key, (list, tuple)):
@@ -97,10 +91,7 @@ class LazyRow(Mapping):
         for c in self._table.columns:
             v = c.get_value(self._row)
 
-            if c.hidden:
-                if not c.last:
-                    continue
-
+            if c.hidden and c is self._table[-1]:
 #                if not d:
 #                    return v  # simple scalar if no other named cols in the row
 
