@@ -117,7 +117,7 @@ class LazyRow(Mapping):
 
 
 class Table:
-    def __init__(self, rows:List[Mapping|LazyRow]=[], parent:'Table'=None):
+    def __init__(self, rows:List[Mapping|LazyRow]=[], parent:'Table|None'=None):
         self.rows = []  # list of dict
         self.columns = []  # list of Column
         self.parent = parent
