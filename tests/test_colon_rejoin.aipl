@@ -1,0 +1,8 @@
+!format
+a
+b
+c
+!split
+!join sep=:
+!assert_equal
+a:b:c
