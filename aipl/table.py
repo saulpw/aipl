@@ -31,10 +31,12 @@ class Column:
     def __str__(self):
         return f'[Column {self.name}]'
 
-    @property
-    def deepname(self):
-        if self.table.rows:
-            r = self.get_value(self.table.rows[0])
+    def __repr__(self):
+        return f"<Column {self.name} {self.key}>"
+
+    def deepname(self, table):
+        if table.rows:
+            r = self.get_value(table.rows[0])
             if isinstance(r, Table):
                 return f'{self.name}:{r.deepcolnames}'
 
@@ -179,7 +181,7 @@ class Table:
 
     @property
     def deepcolnames(self) -> str:
-        return ','.join(f'{c.deepname}' for c in self.columns) or "no cols"
+        return ','.join(f'{c.deepname(self)}' for c in self.columns) or "no cols"
 
     def __getitem__(self, k:int):
         #return LazyRow(self, self.rows[k])
@@ -209,12 +211,11 @@ class Table:
     def add_new_columns(self, row:Row):
         for k in row.keys():
             if not k.startswith('__'):
-                self.add_column(Column(k, k))
+                self.add_column(Column(k))
 
     def add_column(self, col:Column):
         if col.key in self.colkeys or col.name in self.colnames:
             return
-        col.table = self
         self.columns.append(col)
 
     def get_column(self, name:str) -> Column:
