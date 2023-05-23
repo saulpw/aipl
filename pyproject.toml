@@ -14,6 +14,10 @@ numpy = "^1.24.3"
 discord = "^2.2.3"
 trafilatura = "^1.6.0"
 beautifulsoup4 = "^4.12.2"
+lxml = "^4.9.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
 
 [build-system]
 requires = ["poetry-core"]

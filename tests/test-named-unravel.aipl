@@ -14,7 +14,7 @@ d e f g
 !assert-eq-json
 [{"arg": "a b c\nd e f g", "lines": [{"line": "a b c"}, {"line": "d e f g"}]}]
 
-!debug
+# !debug
 !split>chars>char
 
 !assert-eq-json
