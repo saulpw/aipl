@@ -165,6 +165,8 @@ class AIPLInterpreter(Database):
     def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs):
         try:
             ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+        except AssertionError:
+            raise
         except Exception as e:
             if self.debug:
                 raise

@@ -28,14 +28,8 @@ jobs:
         pip3 install .
         pip3 install pytest
 
-    - name: Ensure it starts up
+    - name: Ensure it exe starts up
       run: aipl -h
 
     - name: Run pytests
-      run: pytest aipl/ops/*.py
-
-    - name: Run aipl tests
-      run: |
-        for i in $(find tests/ -name "*.aipl" -print); do
-          aipl $i
-        done
+      run: pytest .
