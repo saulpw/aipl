@@ -158,7 +158,15 @@ class AIPLInterpreter(Database):
         return inputs
 
     def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs):
-        ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+        try:
+            ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+        except AssertionError:
+            raise
+        except Exception as e:
+            if self.debug:
+                raise
+            stderr(e)
+            return None
 
         if cmd.op.rankout is not None and len(cmd.varnames) > cmd.op.rankout:
             varname = cmd.varnames[int(cmd.op.rankout)] or self.unique_key
