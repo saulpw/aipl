@@ -3,7 +3,7 @@ import sys
 import argparse
 
 from .interpreter import AIPLInterpreter
-from .table import LazyRow
+from .table import Table
 from aipl.ops.op_misc import UserAbort
 
 

@@ -143,6 +143,9 @@ class Table:
                 if not col.hidden:
                     self.add_column(ParentColumn(col.name, col))
 
+    def __bool__(self):
+        return len(self.rows) > 0
+
     def __copy__(self):
         ret = Table()
 

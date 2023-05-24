@@ -1,7 +1,7 @@
 from copy import copy
 from typing import List
 
-from aipl import defop, Table, LazyRow
+from aipl import defop, Table, LazyRow, AIPLException
 from aipl.utils import stderr
 
 
@@ -48,12 +48,9 @@ def op_debug_vd(aipl):
 
 @defop('assert-equal', 0, None)
 def op_assert_equal(aipl, v:str, prompt=''):
-    assert v == prompt, v
+    if v != prompt:
+        raise AIPLException(f'assert failed! value not equal\n  ' + v)
 
-@defop('assert-eq-json', 100, None)
-def op_assert_equal_json(aipl, t:Table, prompt=''):
-    import json
-    assert t._asdict() == json.loads(prompt), json.dumps(t._asdict())
 
 @defop('name', 1.5, 1.5)
 def op_name(aipl, t:Table, name) -> Table:
@@ -68,7 +65,8 @@ def op_ref(aipl, t:Table, name):
     'Move column on table to end of columns list (becoming the new .value)'
     col = t.get_column(name)
     if col not in t.columns:
-        stderr(f'no such column {name}')
+        raise AIPLException(f'no such column {name}')
+
     t.columns.remove(col)
     t.add_column(col)
     return t

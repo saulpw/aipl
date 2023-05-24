@@ -148,9 +148,14 @@ class AIPLInterpreter(Database):
                 result = self.eval_op(cmd, inputs, contexts=[self.globals])
                 if isinstance(result, Table):
                     inputs = result
-                elif cmd.op.rankout is not None:  # otherwise keep former inputs
-                    inputs = Table([{self.unique_key: result}], parent=inputs)
+                elif cmd.op.rankout is not None:
+                    k = cmd.varnames[-1] if cmd.varnames else self.unique_key
+                    inputs = Table([{k:result}], parent=inputs)
+                # else if rankout is None, just keep former inputs
 
+            except AIPLException as e:
+                stderr(f'\nError (line {cmd.linenum} !{cmd.opname}):\n{e}')
+                return
             except Exception as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
                 raise
@@ -211,7 +216,7 @@ class AIPLInterpreter(Database):
 
             if isinstance(x, dict):
                 for k in x.keys():  # assumes the last x has the same keys as all rows
-                    vname = (newkey+'_'+k) if len(x) > 1 else newkey
+                    vname = k  # (newkey+'_'+k) if len(x) > 1 else newkey
                     ret.add_column(Column(k, vname))
             else:
                 ret.add_column(Column(newkey))
@@ -299,9 +304,11 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
             operands = [prep_input(operand, rankin) for operand in args[:arity]]
             return f(aipl, *operands, *args[arity:], **kwargs)
 
+        name = clean_to_id(opname)
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout
         _wrapped.arity = arity
-        AIPLInterpreter.operators[clean_to_id(opname)] = _wrapped
+        _wrapped.__name__ = name
+        AIPLInterpreter.operators[name] = _wrapped
         return _wrapped
     return _decorator

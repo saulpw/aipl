@@ -1,24 +1,22 @@
-
-!format>arg
+!literal>arg
 
 a b c
 d e f g
 
 # for an op with rankout=1, !op>var1>var2 will name the deepest (scalar) 'inner column' var2, and the outer column that contains the vector var1.
 
-!split>lines>line sep=\n
+# empty varname (from >>) means keep it anonymous/hidden
+!split>>line sep=\n
 
 # make sure columns are named correctly
 # and that named columns remain visible to a top-level json
 
-!assert-eq-json
-[{"arg": "a b c\nd e f g", "lines": [{"line": "a b c"}, {"line": "d e f g"}]}]
+!assert-json
+[{"arg": "a b c\nd e f g", "input": [{"line": "a b c"}, {"line": "d e f g"}]}]
 
-# !debug
 !split>chars>char
 
-!assert-eq-json
-
+!assert-json
 
 [{
     "arg": "a b c\nd e f g",
@@ -28,7 +26,14 @@ d e f g
      ]
 }]
 
-!format
-"{line} {char}"
+!unravel>letter
+
+!join>out sep=.
+!columns out
+
+!assert-json
+[{
+    "out": "a.b.c.d.e.f.g"
+}]
 
 !print
