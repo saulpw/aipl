@@ -214,7 +214,7 @@ class AIPLInterpreter(Database):
 
             if isinstance(x, dict):
                 for k in x.keys():  # assumes the last x has the same keys as all rows
-                    vname = (newkey+'_'+k) if len(x) > 1 else newkey
+                    vname = k  # (newkey+'_'+k) if len(x) > 1 else newkey
                     ret.add_column(Column(k, vname))
             else:
                 ret.add_column(Column(newkey))
