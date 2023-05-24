@@ -17,12 +17,6 @@ def op_group(aipl, t:Table):
         yield dict(key=k, items=ret)
 
 
-@defop('take', 1.5, 1.5)
-def op_take(aipl, t:Table, n=1):
-    ret = copy(t)
-    ret.rows = t.rows[:n]
-    return ret
-
 @defop('unravel', 2, 1.5)
 def op_unravel(aipl, v:Table) -> Table:
     ret = Table()

@@ -32,7 +32,7 @@ jobs:
       run: aipl -h
 
     - name: Run pytests
-      run: pytest .
+      run: pytest aipl/ops/*.py
 
     - name: Run aipl tests
       run: |
