@@ -37,12 +37,6 @@ def op_uppercase(aipl, v:str) -> str:
     return v.upper()
 
 
-@pytest.fixture()
-def aipl():
-    r = AIPLInterpreter(debug=True)
-#    r.single_step = lambda *args, **kwargs: breakpoint()
-    return r
-
 def test_lowercase(aipl):
     # scalar to scalar
     # 2 rows; single column
