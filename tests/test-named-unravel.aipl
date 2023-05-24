@@ -5,6 +5,7 @@ d e f g
 
 # for an op with rankout=1, !op>var1>var2 will name the deepest (scalar) 'inner column' var2, and the outer column that contains the vector var1.
 
+# empty varname (from >>) means keep it anonymous/hidden
 !split>>line sep=\n
 
 # make sure columns are named correctly
@@ -13,7 +14,6 @@ d e f g
 !assert-json
 [{"arg": "a b c\nd e f g", "input": [{"line": "a b c"}, {"line": "d e f g"}]}]
 
-# empty varname (from >>) means keep it anonymous/hidden
 !split>chars>char
 
 !assert-json
