@@ -32,14 +32,6 @@ def op_unravel(aipl, v:Table) -> Table:
     return ret
 
 
-@defop('filter', 1.5, 1.5)
-def op_filter(aipl, t:Table):
-    ret = copy(t)
-    ret.rows = [r._row for r in t if r.value]
-    ret.columns = ret.columns[:-1]  # discard bool column
-    return ret
-
-
 @defop('def', None, None, arity=0)  # immediate
 def op_def(aipl, opname, prompt=''):
     cmds = aipl.parse(prompt)
