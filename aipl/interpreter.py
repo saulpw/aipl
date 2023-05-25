@@ -194,9 +194,13 @@ class AIPLInterpreter(Database):
 
         else:
             if isinstance(t, Table):
-                ret = Table(parent=t)
+                ret = Table()
+                for c in t.columns:
+                    ret.add_column(copy(c))
             else:
-                ret = Table(parent=t.value)
+                ret = Table()
+                for c in t.value.columns:
+                    ret.add_column(copy(c))
 
             if cmd.varnames and rank(t) == int(cmd.op.rankin+1):
                 newkey = cmd.varnames[0] or self.unique_key
@@ -210,14 +214,11 @@ class AIPLInterpreter(Database):
                 if x is None:
                     continue
 
-                newrow = {}
-                newrow['__parent'] = row
-                ret.rows.append(update_dict(newrow, x, newkey))
+                ret.rows.append(update_dict(row._row, x, newkey))
 
-            if isinstance(x, dict):
-                for k in x.keys():  # assumes the last x has the same keys as all rows
-                    vname = k  # (newkey+'_'+k) if len(x) > 1 else newkey
-                    ret.add_column(Column(k, vname))
+            if isinstance(x, Mapping):
+                for k in x.keys():
+                    ret.add_column(Column(k, k))
             else:
                 ret.add_column(Column(newkey))
 
