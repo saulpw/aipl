@@ -84,6 +84,6 @@ def test_match_filter(aipl):
     assert t[0] == 'zh zq z'
 
 
-def test_unravel(aipl):
-    t = aipl.run('!split !take 2 !unravel !join', 'a b c d', 'e f g')
+def test_ravel(aipl):
+    t = aipl.run('!split !take 2 !ravel !join', 'a b c d', 'e f g')
     assert t[0] == 'a b e f'

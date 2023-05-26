@@ -17,17 +17,26 @@ def op_group(aipl, t:Table):
         yield dict(key=k, items=ret)
 
 
-@defop('unravel', 2, 1.5)
-def op_unravel(aipl, v:Table) -> Table:
-    ret = Table()
-    ret.rows = []
-    newkey = aipl.unique_key
-    for row in v: # row:LazyRow
-        for row_two in row.value:
-            ret.rows.append({'__parent':row_two, newkey:row_two.value})
+@defop('take', 1.5, 1.5)
+def op_take(aipl, t:Table, n=1):
+    ret = copy(t)
+    ret.rows = t.rows[:n]
+    return ret
 
-    for c in v.columns:
-        ret.add_column(ParentColumn(c.name, c))
+
+@defop('ravel', 100, 1.5)
+def op_ravel(aipl, v:Table) -> Table:
+    def _ravel(t:Table, newkey:str) -> List['Scalar']:
+        for row in t:
+            if isinstance(row.value, Table):
+                yield from _ravel(row.value, newkey)
+            else:
+                yield {'__parent':row, newkey:row.value}
+
+    newkey = aipl.unique_key
+    ret = Table()
+    for r in _ravel(v, newkey):
+        ret.rows.append(r)
     ret.add_column(Column(newkey))
     return ret
 

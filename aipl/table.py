@@ -93,9 +93,11 @@ class LazyRow(Mapping):
         for c in self._table.columns:
             v = c.get_value(self._row)
 
-            if c.hidden and c is self._table[-1]:
-#                if not d:
-#                    return v  # simple scalar if no other named cols in the row
+            if c.hidden:
+                if c is self._table.current_col:
+                    k = 'input'
+                else:
+                    continue
 
                 k = 'input'
             else:
@@ -181,6 +183,10 @@ class Table:
     @property
     def colkeys(self):
         return [c.key for c in self.columns]
+
+    @property
+    def current_col(self):
+        return self.columns[-1]
 
     @property
     def deepcolnames(self) -> str:
