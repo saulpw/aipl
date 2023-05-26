@@ -29,6 +29,11 @@ def op_split(aipl, v: str, maxsize:int=0, sep=None) -> List[str]:
         yield (sep or ' ').join(win)
 
 
+@defop('split-into', 0, 0.5)
+def op_split_into(aipl, v:str, *args, sep=None) -> dict:
+    return dict(zip(args, v.split(sep)))
+
+
 @defop('join', 1, 0, 1)
 def op_join(aipl, v:List[str], sep=' ') -> str:
     'Join inputs with sep into a single output.'

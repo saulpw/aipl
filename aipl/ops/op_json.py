@@ -11,14 +11,14 @@ class _jsonEncoder(json.JSONEncoder):
             return str(obj)
 
 
-@defop('json', 100, 0, 1)
-def op_json(aipl, d:'LazyRow'):
+@defop('json', 100, 0)
+def op_json(aipl, t:'Table') -> str:
     jsonenc = _jsonEncoder()
-    return jsonenc.encode(d._asdict())
+    return jsonenc.encode(t._asdict())
 
 
 @defop('parse-json', 0, 0.5, 1)
-def op_parse_json(aipl, v:str):
+def op_parse_json(aipl, v:str) -> dict:
     return json.loads(v)
 
 

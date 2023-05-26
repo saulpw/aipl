@@ -6,7 +6,7 @@ import math
 import json
 import re
 
-from .table import Table, LazyRow, Column, Row, ParentColumn
+from .table import Table, LazyRow, Column, Row
 from .db import Database
 from .utils import stderr, trynum, fmtargs, fmtkwargs
 
@@ -150,7 +150,7 @@ class AIPLInterpreter(Database):
                     inputs = result
                 elif cmd.op.rankout is not None:
                     k = cmd.varnames[-1] if cmd.varnames else self.unique_key
-                    inputs = Table([{k:result}], parent=inputs)
+                    inputs = Table([{k:result}])
                 # else if rankout is None, just keep former inputs
 
             except AIPLException as e:

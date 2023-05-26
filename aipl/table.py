@@ -74,12 +74,10 @@ class LazyRow(Mapping):
             if c:
                 return c.get_value(obj._row)
 
-            if '__parent' not in obj._row:
-                break
+            obj = obj.parent
 
-            obj = obj._row['__parent']
-
-        raise KeyError(k)
+            if obj is None:
+                raise KeyError(k)
 
     @property
     def value(self):
@@ -90,13 +88,17 @@ class LazyRow(Mapping):
 
     def _asdict(self):
         d = {}
+
+        parent = self.parent
+        if parent:
+            assert parent._table is not self._table
+            d = parent._asdict()
+
         for c in self._table.columns:
             v = c.get_value(self._row)
 
             if c.hidden:
-                if c is self._table.current_col:
-                    k = 'input'
-                else:
+                if c is not self._table.current_col:
                     continue
 
                 k = 'input'
@@ -107,11 +109,14 @@ class LazyRow(Mapping):
                 v = [r._asdict() for r in v]
 
             if v is not None:
+                if k in d:
+                    del d[k]
                 d[k] = v
+
         return d
 
     @property
-    def parent(self):
+    def parent(self) -> 'LazyRow':
         return self._row.get('__parent', None)
 
     def __repr__(self):
@@ -133,7 +138,7 @@ class Table:
             else:
                 raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")
 
-        if parent:
+        if parent is not None:
             for col in parent.columns:
                 if not col.hidden:
                     self.add_column(ParentColumn(col.name, col))
@@ -167,7 +172,7 @@ class Table:
             return [0]
         dims = [len(self.rows)]
         if self.columns:
-            firstrowval = self.columns[-1].get_value(self.rows[0])
+            firstrowval = self.current_col.get_value(self.rows[0])
             if isinstance(firstrowval, Table):
                 dims += firstrowval.shape
         return dims
@@ -223,6 +228,8 @@ class Table:
                 self.add_column(Column(k))
 
     def add_column(self, col:Column):
+        if self.rows:
+            assert col.get_value(self.rows[0]) is not None
         if col.key in self.colkeys or col.name in self.colnames:
             return
         self.columns.append(col)

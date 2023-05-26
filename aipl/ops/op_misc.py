@@ -49,7 +49,7 @@ def op_debug_vd(aipl):
 @defop('assert-equal', 0, None)
 def op_assert_equal(aipl, v:str, prompt=''):
     if v != prompt:
-        raise AIPLException(f'assert failed! value not equal\n  ' + v)
+        raise AIPLException(f'assert failed! value not equal:\n' + v)
 
 
 @defop('name', 1.5, 1.5)

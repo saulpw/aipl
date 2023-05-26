@@ -1,0 +1,24 @@
+
+
+!literal>arg
+
+pizza toppings:tomato,cheese,onion
+sex:m,f,y,n
+
+!split sep=\n
+!split-into sep=: category members
+!split>>member sep=,
+!ravel
+
+!format
+{category}: {member}
+
+!join sep=\n
+!assert-equal
+pizza toppings: tomato
+pizza toppings: cheese
+pizza toppings: onion
+sex: m
+sex: f
+sex: y
+sex: n
