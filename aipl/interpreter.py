@@ -42,7 +42,7 @@ def rank(v):
         return 0
 
 
-class AIPLInterpreter(Database):
+class AIPL(Database):
     operators = {}  # opname:str -> func(aipl, ..., *args, *kwargs)
     next_unique_key = 0
 
@@ -310,6 +310,6 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
         _wrapped.rankout = rankout
         _wrapped.arity = arity
         _wrapped.__name__ = name
-        AIPLInterpreter.operators[name] = _wrapped
+        AIPL.operators[name] = _wrapped
         return _wrapped
     return _decorator

@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 
-from .interpreter import AIPLInterpreter
+from .interpreter import AIPL
 from .table import Table
 from aipl.ops.op_misc import UserAbort
 
@@ -29,7 +29,7 @@ def main():
         print('no script on stdin: nothing to do', file=sys.stderr)
         return
 
-    aipl = AIPLInterpreter('aipl-cache.sqlite')
+    aipl = AIPL('aipl-cache.sqlite')
 
     # dup stdin/stdout if necessary
 

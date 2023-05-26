@@ -1,8 +1,8 @@
 import pytest
 
-from aipl import AIPLInterpreter
+from aipl import AIPL
 
 @pytest.fixture()
 def aipl():
-    r = AIPLInterpreter(debug=True)
+    r = AIPL(debug=True)
     return r

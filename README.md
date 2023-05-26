@@ -211,7 +211,7 @@ For instance, here's how the `!join` operator might be defined:
 
 ```
 @defop('join', rankin=1, rankout=0, arity=1)
-def op_join(aipl:AIPLInterpreter, v:List[str], sep=' ') -> str:
+def op_join(aipl:AIPL, v:List[str], sep=' ') -> str:
     'Concatenate text values with *sep* into a single string.'
     return sep.join(v)
 ```

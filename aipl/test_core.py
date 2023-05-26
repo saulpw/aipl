@@ -2,7 +2,7 @@ from typing import List
 
 import pytest
 
-from .interpreter import AIPLInterpreter, defop
+from .interpreter import defop
 from .table import Table, LazyRow
 
 
