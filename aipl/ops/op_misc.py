@@ -4,13 +4,6 @@ from typing import List
 from aipl import defop, Table, LazyRow, AIPLException
 from aipl.utils import stderr
 
-
-@defop('sample', 1.5, 1.5)
-def op_sample(aipl, t:Table, n:int=1):
-    import random
-    return Table(random.sample(t.rows, n), parent=t)
-
-
 class UserAbort(BaseException):
     pass
 
