@@ -177,8 +177,8 @@ class AIPL(Database):
             stderr(e)
             return None
 
-        if cmd.op.rankout is not None and len(cmd.varnames) > cmd.op.rankout:
-            varname = cmd.varnames[int(cmd.op.rankout)] or self.unique_key
+        if cmd.op.rankout is not None and cmd.varnames:
+            varname = cmd.varnames[-1]
         else:
             varname = self.unique_key
 
@@ -206,7 +206,8 @@ class AIPL(Database):
                 for c in t.value.columns:
                     ret.add_column(copy(c))
 
-            if cmd.varnames and rank(t) == int(cmd.op.rankin+1):
+            # !op>var1>var2 names the deepest column "var2" and the column one-level up (for rankout==1) "var1"
+            if cmd.op.rankout is not None and len(cmd.varnames) > cmd.op.rankout and rank(t) == int(cmd.op.rankin+1):
                 newkey = cmd.varnames[0] or self.unique_key
             else:
                 newkey = newkey or self.unique_key
