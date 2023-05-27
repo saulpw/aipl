@@ -90,11 +90,6 @@ class LazyRow(Mapping):
         'if named_only=False, add current_col as "input" if it is hidden.  otherwise ignore it too'
         d = {}
 
-        parent = self.parent
-        if parent:
-            assert parent._table is not self._table
-            d = parent._asdict(named_only=True)
-
         for c in self._table.columns:
             if c.hidden:
                 if named_only or c is not self._table.current_col:
