@@ -7,7 +7,7 @@ sex:m,f,y,n
 
 !split sep=\n
 !split-into sep=: category members
-!split>>member sep=,
+!split>member sep=,
 !ravel
 
 !format
