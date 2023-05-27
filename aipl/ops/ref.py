@@ -1,8 +1,4 @@
-from copy import copy
-from typing import List
-
-from aipl import defop, Table, LazyRow, AIPLException
-from aipl.utils import stderr
+from aipl import defop, Table, AIPLException
 
 
 @defop('ref', 1.5, 1.5)
