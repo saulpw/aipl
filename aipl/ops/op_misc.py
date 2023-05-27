@@ -4,13 +4,6 @@ from typing import List
 from aipl import defop, Table, LazyRow, AIPLException
 from aipl.utils import stderr
 
-class UserAbort(BaseException):
-    pass
-
-@defop('abort', None, None, arity=0)
-def op_abort(aipl, *args):
-    raise UserAbort(*args)
-
 @defop('assert-equal', 0, None)
 def op_assert_equal(aipl, v:str, prompt=''):
     if v != prompt:

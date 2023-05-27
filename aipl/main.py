@@ -4,7 +4,7 @@ import argparse
 
 from .interpreter import AIPL
 from .table import Table
-from aipl.ops.op_misc import UserAbort
+from aipl.ops.abort import UserAbort
 
 
 def main():
