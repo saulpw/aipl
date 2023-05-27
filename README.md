@@ -55,25 +55,34 @@ At the very least, AIPL should be a useful tool to learn, explore, and prototype
 
 ## Usage
 
-    export OPENAI_API_KEY=<API_KEY>
-    echo '<inputs>' | python3 -m aipl [options] [key=value ...] chains/<script>.aipl
+```
+usage: aipl [-h] [--visidata] [--debug] [--single-step]
+            script_or_global [script_or_global ...]
 
-This will run the particular script over the given newline-separated inputs.
+AIPL interpreter
 
-Options:
+positional arguments:
+  script_or_global   scripts to run, or k=v global parameters
 
-- `-x`: breakpoint (drop into pdb) before each command
-- `-d`: show inputs in visidata before each command
+options:
+  -h, --help         show this help message and exit
+  --visidata, --vd   open VisiData with input before each step
+  --debug, -d        abort on exception
+  --single-step, -x  breakpoint() before each step
+
+```
 
 ### `summarize.aipl`
 
 Here's a prime example, a multi-level summarizer in the "map-reduce" style of langchain:
 
-
 ```
 #!/usr/bin/env bin/aipl
 
 # fetch url, split webpage into chunks, summarize each chunk, then summarize the summaries.
+
+# one input -> multiple urls
+!split sep=\n
 
 # the inputs are urls
 !fetch-url
@@ -103,6 +112,7 @@ is precise and concise, and provide an overview of the entire section:
 !join sep=\n-
 
 # have GPT summarize the combined summaries
+
 !format
 
 Based on the summaries of each section provided, create a one-paragraph summary
@@ -121,7 +131,10 @@ Remove all unnecessary text like "The document" and "the author".
 !llm model=gpt-3.5-turbo
 
 !print
+
 ```
+
+## Command Syntax
 
 This is the basic syntax:
 
@@ -129,9 +142,7 @@ This is the basic syntax:
 - commands start with `!` as the first character of a line.
 - everything else is part of the prompt template for the previous `!` command.
 
-### Command Syntax
-
-Commands can take arguments and/or keyword arguments, separated by whitespace.
+Commands can take positional and/or keyword arguments, separated by whitespace.
 
 - `!cmd arg1 key=value arg2`
 
@@ -139,72 +150,73 @@ Keyword arguments have an `=` between the key and the value, and non-keyword arg
 
 - `!cmd` will call the Python function registered to the `cmd` operator with the arguments given, as an operator on the current value.
 
-- Any text following the command line is dedented (and stripped) and added verbatim as a `prompt=` keyword.
-- Argument values may include Python formatting like `{input}`
-- Prompt values are not automatically formatted. `!format` will format the prompt.
-- !literal will convert its prompt into input without formatting.
+- Any text following the command line is dedented (and stripped) and added verbatim as a `prompt=` keyword argument.
+- Argument values may include Python formatting like `{input}` which will be replaced by values from the current row (falling back to parent rows, and ultimately the provided globals).
+- Prompt values, on the other hand, are not automatically formatted. `!format` go over every leaf row and return the formatted prompt as its output.
+- !literal will set its prompt as the toplevel input, without formatting.
 
-The syntax will continue to evolve and become clearer over time as it's used.
+The AIPL syntax will continue to evolve and be clarified over time as it's used and developed.
 
 Notes:
 
-- an AIPL source file documents an entire pipeline from newline-delimited inputs on stdin (or via `!set-input`) to the end of the pipeline (often `!print`).
-
+- an AIPL source file documents an entire pipeline from newline-delimited inputs on stdin (or via `!literal`) to the end of the pipeline (often `!print`).
 - commands always run consecutively and across all inputs.
+- the initial input is a single string (read from stdin).
 
-- if you pass N urls on the command line, the initial input will be an array of urls, and will process them each in turn.
+## List of operators
 
-# operators
+- abort (in=None out=None): None
+- debug (in=None out=None): None
+- debug_vd (in=None out=None): None
+- assert_equal (in=0 out=None): None
+- name (in=1.5 out=1.5): None
+- ref (in=1.5 out=1.5): Move column on table to end of columns list (becoming the new .value)
+- comment (in=None out=None): None
+- def (in=None out=None): Define composite operator from cmds in prompt (must be indented).
+- groupby (in=1.5 out=1.5): Group rows into tables, by set of columns given as args.
+- columns (in=1.5 out=1.5): Set table columns to only those named as args.
+- dbinsert (in=0.5 out=None): None
+- dbdrop (in=None out=None): None
+- filter (in=1.5 out=1.5): Return copy of table, with rows that had a True value col.
+- require_input (in=100 out=100): Ensure there is any input at all; if not, display the prompt and read input from the user.
+- json (in=100 out=0): None
+- parse_json (in=0 out=0.5): None
+- assert_json (in=100 out=None): None
+- llm (in=0 out=0): None
+- llm_embedding (in=0 out=0.5): None
+- cluster (in=1 out=1): Find n clusters in the input vectors
+- pdf_extract (in=0 out=0): None
+- python (in=None out=None): exec() Python toplevel statements.
+- python_input (in=100 out=1.5): eval() Python expression and use as toplevel input table.
+- sh (in=0 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
+- shtty (in=0.5 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
+- take (in=1.5 out=1.5): Return a table with first n rows of `t`
+- format (in=0.5 out=0): Format prompt text as template, substituting values from row
+- split (in=0 out=1): Split text into chunks based on sep, keeping each chunk below maxsize
+- split_into (in=0 out=0.5): None
+- join (in=1 out=0): Join inputs with sep into a single output.
+- print (in=0 out=0): Print to stdout
+- match (in=0 out=0): None
+- replace (in=0 out=0): None
+- save (in=0 out=None): Save to given filename.
+- literal (in=None out=0): None
+- fetch_url (in=0 out=0.5): None
+- fetch_url_bytes (in=0 out=0.5): None
+- extract_text_all (in=0 out=0): None
+- extract_text (in=0 out=0): Extract text from HTML
+- extract_links (in=0 out=1.5): Extract links (href attribute from <a> tags) from HTML
+- split_url (in=0 out=0.5): None
+- defrag (in=0 out=0): None
+- xml_xpath (in=0 out=1): None
+- xml_xpaths (in=0 out=0.5): None
+- ravel (in=100 out=1.5): None
+- read (in=None out=0): Open, read, and return contents in given local filename.
+- sample (in=1.5 out=1.5): Sample n rows from the input table.
+- aipl_ops (in=100 out=0): None
+- read_summary (in=None out=0): None
 
-Each operator refers to a Python function (hyphens become underscores).
-All parameters are optional named (`keyword=value`) arguments, separated by whitespace.
-Parameter values can include values from the current row, e.g. `{input}`.
-These are replaced after parameter parsing, and thus can include whitespace.
 
-
-## currently available operators
-
-### The Big Guns
-
-- `!llm`: text -> text
-- `!llm-embedding`: text or prompt -> embedding
-
-### 
-- `!cluster n=10`: cluster rows by embedding into n clusters; add label column
-
-### General Array
-
-- `!take n=1`: take first n rows
-- `!sample n=3`: choose sample of n random rows
-- `!filter`: keep only rows whose value is True-like
-- `!unravel`: collapse into 1D array of scalar strings
-- `!name foo`: set name of current column
-- `!columns colname1 colname2`: new table with only these columns
-
-### Strings/Text
-
-- `!split sep=\n maxsize=0`: text -> text[], staying under maxsize if possible
-- `!split-url`: url -> dict(scheme, netloc, path, params, query, fragment)
-- `!join sep=,`: text[] -> text
-- `!match <regex>`: text -> bool
-- `!format`: format prompt as Python string template and set as input
-- `!extract-text`: html -> text
-- `!extract-links`: html -> dict(linktext, title, href)[]
-
-### How to get data in and out
-
-- `!fetch-url`: url -> html
-- `!fetch-file`: path -> text
-- `!print`: print to stdout
-- `!json`: convert row to json
-- `!save filename.txt`: write to file
-
-#### Database
-
-- `!dbinsert <tablename> extrakey=value`: insert each row into database table
-- `!dbdrop <tablename>`: drop database table
-
-## operator implementation
+## Defining a new operator
 
 It's pretty easy to define a new operator that can be used right away.
 For instance, here's how the `!join` operator might be defined:
@@ -216,23 +228,21 @@ def op_join(aipl:AIPL, v:List[str], sep=' ') -> str:
     return sep.join(v)
 ```
 
-- `@defop` registers the decorated function as the named operator.
-   - `rankin` is what the function takes as input:
+- `@defop(...)` registers the decorated function as the named operator.
+   - `rankin`/`rankout` indicate what the function takes as input, and what it returns:
      - `0`: a scalar (number or string)
-     - `0.5`: a whole row (dict)
-     - `1`: a whole column of values
-     - `1.5`: the whole table (array of rows)
-   - `rankout` is what the function returns
-     - `0`: a scalar value
-     - `0.5`: a dict of values
-     - `1`: a whole column of values
-     - `1.5`: the whole table
-   - `arity` for how many operands it takes; only `0` and `1` supported currently
+     - `0.5`: a whole row (a mapping of key/value pairs)
+     - `1`: a vector of scalar values (e.g. `List[str]` as above)
+     - `1.5`: a whole Table (list of the whole table (array of rows)
+     - `None`: nothing (the operator is an input "source" if rankin is None; it is a pass-through if rankout is None)
+   - `arity` is how many operands it takes (only `0` and `1` supported currently)
 
-The join operator is `rankin=1 rankout=0` which means that it takes a list of strings and outputs a single string.  Which it does.
+The join operator is `rankin=1 rankout=0` which means that it takes a list of strings and outputs a single string.
 
-- Add the `@expensive` decorator if it has to actually go to the network or use an LLM; this will persistently cache the results in a sqlite database.
-   - so running the same inputs through a pipeline multiple times won't keep refetching the same data impolitely, and won't run up a large GPT bill during development.
+- Add the `@expensive` decorator to operators that actually go to the network or use an LLM; this will persistently cache the results in a local sqlite database.
+   - running the same inputs through a pipeline multiple times won't keep refetching the same data impolitely, and won't run up a large bill during development.
+
+
 
 # Architecture
 
@@ -298,7 +308,7 @@ With `rankin=2`, and `rankout` of:
 ## arguments and formatting
 
 In addition to operands, operators also take parameters, both positional and named (`args` and `kwargs` in Python).
-These cannot have spaces, but they can have Python format strings like `{value}`.
+These cannot have spaces, but they can have Python format strings like `{input}`.
 
 The identifiers available to Python format strings come from a chain of contexts:
 
@@ -309,10 +319,6 @@ The identifiers available to Python format strings come from a chain of contexts
 # Future
 
 ## new operators
-
-- `!define`: create a subchain of operators
-
-- `!group`
 
 - `!dbtable`: use entire table as input
 - `!dbquery`: sql template -> table
