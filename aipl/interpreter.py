@@ -154,12 +154,13 @@ class AIPL(Database):
 
             try:
                 result = self.eval_op(cmd, inputs, contexts=[self.globals])
-                if isinstance(result, Table):
+                if cmd.op.rankout is None:
+                    continue # just keep former inputs
+                elif isinstance(result, Table):
                     inputs = result
-                elif cmd.op.rankout is not None:
+                else:
                     k = cmd.varnames[-1] if cmd.varnames else self.unique_key
                     inputs = Table([{k:result}])
-                # else if rankout is None, just keep former inputs
 
             except AIPLException as e:
                 stderr(f'\nError (line {cmd.linenum} !{cmd.opname}):\n{e}')
