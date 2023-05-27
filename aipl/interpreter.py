@@ -172,15 +172,7 @@ class AIPL(Database):
         return inputs
 
     def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs):
-        try:
-            ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
-        except AssertionError:
-            raise
-        except Exception as e:
-            if self.debug:
-                raise
-            stderr(e)
-            return None
+        ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
 
         if cmd.op.rankout is not None and cmd.varnames:
             varname = cmd.varnames[-1]
