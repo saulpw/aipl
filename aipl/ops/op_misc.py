@@ -4,11 +4,6 @@ from typing import List
 from aipl import defop, Table, LazyRow, AIPLException
 from aipl.utils import stderr
 
-@defop('assert-equal', 0, None)
-def op_assert_equal(aipl, v:str, prompt=''):
-    if v != prompt:
-        raise AIPLException(f'assert failed! value not equal:\n' + v)
-
 
 @defop('name', 1.5, 1.5)
 def op_name(aipl, t:Table, name) -> Table:
