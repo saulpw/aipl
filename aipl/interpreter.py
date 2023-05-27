@@ -163,11 +163,9 @@ class AIPL(Database):
                     inputs = Table([{k:result}])
 
             except AIPLException as e:
-                stderr(f'\nAIPL Error (line {cmd.linenum} !{cmd.opname}):\n{e}')
-                raise
+                raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
             except Exception as e:
-                stderr(f'\nError (line {cmd.linenum} !{cmd.opname}): {e}')
-                raise
+                raise Exception(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
 
         return inputs
 
