@@ -4,11 +4,6 @@ from urllib.parse import urljoin, urlparse, urlunparse
 from aipl import defop, expensive, stderr
 
 
-@defop('fetch-file', 0, 0, 1)
-def op_fetch_file(aipl, fn:str) -> str:
-    return open(fn).read()
-
-
 @defop('fetch-url', 0, 0.5, 1)
 @expensive
 def op_fetch_url(aipl, url:str) -> dict:

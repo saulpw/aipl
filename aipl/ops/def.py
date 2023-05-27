@@ -18,9 +18,15 @@ def op_def(aipl, opname, prompt=''):
            rankin=cmds[0].op.rankin,
            rankout=cmds[-1].op.rankout,
            arity=cmds[0].op.arity)
-    def new_operator(aipl, input, *args, **kwargs):
-        argkey = aipl.unique_key
-        ret = aipl.run_cmdlist(cmds, Table([{argkey:input}]), *args)
+    def new_operator(aipl, *args, **kwargs):
+        arity = cmds[0].op.arity
+        if arity == 0:
+            t = Table()
+        elif arity == 1:
+            t = args[0]
+            argkey = aipl.unique_key
+            t = Table([{argkey:t}])
+        ret = aipl.run_cmdlist(cmds, t, *args[arity:])
         return ret[0]
 
 

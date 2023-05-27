@@ -1,7 +1,7 @@
 # Rewrite the contents of each given file.
 
 !name filename
-!fetch-file
+!read-file
 !split sep=\n\n maxsize=3000
 !format
 Rewrite this content, keeping the structure the same as a drop-in replacement:

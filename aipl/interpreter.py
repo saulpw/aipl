@@ -116,8 +116,12 @@ class AIPL(Database):
                 set_last_prompt(ret, prompt)
                 prompt = ''
                 if ret and ret[-1].immediate:  # !!op means do the command immediately
-                    result = self.eval_op(ret[-1], Table(), contexts=[self.globals])
-                    stderr('compile time:', result)
+                    cmd = ret[-1]
+                    result = self.eval_op(cmd, Table(), contexts=[self.globals])
+                    if cmd.varnames:
+                        k = cmd.varnames[-1]
+                        self.globals[k] = result
+                        stderr(f'(global) {k} = {cmd.opname}:', result)
 
                 for cmd in self.parse_cmdline(line, linenum):
                     ret.append(cmd)
@@ -287,10 +291,26 @@ def prep_output(aipl,
         if isinstance(out, Table):
             return out
         else:
-            ret = Table(parent=in_row._table)
-            ret.rows = [{'__parent': in_row, varname:v} for v in out]
-            for k in ret.rows[0].keys():  # assumes first row has same keys as every other row
-                ret.add_column(Column(k))
+            if in_row is None:
+                parent_table = None
+                parent_row = None
+            elif isinstance(in_row, Table):
+                parent_table = None
+                parent_row = None
+            elif isinstance(in_row, LazyRow):
+                parent_table = in_row._table
+                parent_row = in_row
+            else:
+                raise Exception(f'unknown type for in_row: {type(in_row)}')
+
+            rows = []
+            for v in out:
+                d = {'__parent': parent_row} if parent_row is not None else {}
+                d[varname] = v
+                rows.append(d)
+            ret = Table(rows, parent=parent_table)
+#            for k in ret.rows[0].keys():  # assumes first row has same keys as every other row
+#                ret.add_column(Column(k))
             return ret
 
     else:

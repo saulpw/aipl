@@ -2,7 +2,7 @@ from aipl import defop
 
 
 @defop('sh', 0, 0.5)
-def op_sh(aipl, stdin:str, *args) -> dict:
+def op_sh(aipl, stdin:str, *args, **kwargs) -> dict:
     'Run the command described by args.  Return (retcode, stderr, stdout) columns.'
     import subprocess
     r = subprocess.run(args, text=True,
