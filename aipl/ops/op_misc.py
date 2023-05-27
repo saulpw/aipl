@@ -5,14 +5,6 @@ from aipl import defop, Table, LazyRow, AIPLException
 from aipl.utils import stderr
 
 
-@defop('name', 1.5, 1.5)
-def op_name(aipl, t:Table, name) -> Table:
-    ret = copy(t)
-    c = ret.columns[-1]
-    c.name = name
-    return ret
-
-
 @defop('ref', 1.5, 1.5)
 def op_ref(aipl, t:Table, name):
     'Move column on table to end of columns list (becoming the new .value)'
