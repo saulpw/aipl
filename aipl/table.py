@@ -86,24 +86,25 @@ class LazyRow(Mapping):
     def items(self):
         return self._asdict().items()
 
-    def _asdict(self):
+    def _asdict(self, named_only=False):
+        'if named_only=False, add current_col as "input" if it is hidden.  otherwise ignore it too'
         d = {}
 
         parent = self.parent
         if parent:
             assert parent._table is not self._table
-            d = parent._asdict()
+            d = parent._asdict(named_only=True)
 
         for c in self._table.columns:
-            v = c.get_value(self._row)
-
             if c.hidden:
-                if c is not self._table.current_col:
+                if named_only or c is not self._table.current_col:
                     continue
 
                 k = 'input'
             else:
                 k = c.name
+
+            v = c.get_value(self._row)
 
             if isinstance(v, Table):
                 v = [r._asdict() for r in v]
