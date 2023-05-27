@@ -1,4 +1,5 @@
 from typing import List
+from copy import copy
 
 
 from aipl import defop
@@ -12,11 +13,14 @@ def op_ravel(aipl, v:Table) -> Table:
             if isinstance(row.value, Table):
                 yield from _ravel(row.value, newkey)
             else:
-                yield {'__parent':row, newkey:row.value}
+                yield row
+
 
     newkey = aipl.unique_key
     ret = Table()
-    for r in _ravel(v, newkey):
-        ret.rows.append(r)
-    ret.add_column(Column(newkey))
+    for row in _ravel(v, newkey):
+        ret.rows.append(row._row)
+
+    for c in row._table.columns:
+        ret.add_column(copy(c))
     return ret
