@@ -106,13 +106,16 @@ class LazyRow(Mapping):
 
             v = c.get_value(self._row)
 
-            if isinstance(v, Table):
+            if v is None:
+                continue
+            elif isinstance(v, Table):
                 v = [r._asdict() for r in v]
+            elif not isinstance(v, (int, float, str)):
+                v = str(v)
 
-            if v is not None:
-                if k in d:
-                    del d[k]
-                d[k] = v
+            if k in d:
+                del d[k]
+            d[k] = v
 
         return d
 

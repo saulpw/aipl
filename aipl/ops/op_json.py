@@ -5,10 +5,7 @@ from aipl import defop, AIPLException
 
 class _jsonEncoder(json.JSONEncoder):
     def default(self, obj):
-        try:
-            return obj.text  # for e.g. xmlElements
-        except Exception:
-            return str(obj)
+        return str(obj)
 
 
 @defop('json', 100, 0)
