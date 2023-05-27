@@ -25,17 +25,34 @@ def _xml(s):
 
     return root
 
+
+class XMLStringableElement:
+    def __init__(self, e):
+        self._element = e
+    def __getattr__(self, k):
+        return getattr(self._element, k)
+    def __str__(self):
+        return getattr(self._element, 'text', '') or ''
+
+def StringifiableObject(s):
+    'create pass-through wrapper to stringify with s.text if available'
+    if not hasattr(s, 'text'):
+        return s
+    return XMLStringableElement(s)
+
+
 @defop('xml-xpath', 0, 1)
 def op_xml_xpath(aipl, v:str, *args) -> List['XmlElement']:
     xml = _xml(v)
     for arg in args:
         for entry in xml.xpath(arg):
-            yield entry
+            yield StringifiableObject(entry)
+
 
 @defop('xml-xpaths', 0, 0.5)
 def op_xml_xpaths(aipl, v:str, **kwargs) -> List['XmlElement']:
     xml = _xml(v)
     ret = {}
     for varname, xpath in kwargs.items():
-        ret[varname] = xml.xpath(xpath)[0]
+        ret[varname] = StringifiableObject(xml.xpath(xpath)[0])
     return ret

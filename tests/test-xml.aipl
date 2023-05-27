@@ -30,10 +30,12 @@
 !xml-xpath //entry/link[@type="application/pdf"]
 !xml-xpaths published=../published updated=../updated title=../title href=@href
 
-!json
+!ravel
+!assert-json
 
-!print
-
-!assert_equal
-
-{"published": "2011-09-11T20:09:48Z", "updated": "2011-09-11T20:09:48Z", "title": "Breaking Instance-Independent Symmetries In Exact Graph Coloring", "href": "http://arxiv.org/pdf/1109.2347v1"}
+[{
+    "published": "2011-09-11T20:09:48Z",
+    "updated": "2011-09-11T20:09:48Z",
+    "title": "Breaking Instance-Independent Symmetries In Exact Graph Coloring",
+    "href": "http://arxiv.org/pdf/1109.2347v1"
+}]
