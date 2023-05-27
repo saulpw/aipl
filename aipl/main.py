@@ -2,8 +2,7 @@ import os
 import sys
 import argparse
 
-from aipl import AIPL, Table
-from aipl.ops.abort import UserAbort
+from aipl import AIPL, Table, UserAbort
 
 
 def main():

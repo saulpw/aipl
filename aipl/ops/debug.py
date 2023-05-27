@@ -1,6 +1,6 @@
 from typing import List
 
-from aipl import defop, LazyRow
+from aipl import defop, LazyRow, UserAbort
 
 
 @defop('debug', None, None, arity=0)

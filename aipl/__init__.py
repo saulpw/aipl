@@ -1,5 +1,5 @@
 from .utils import stderr
-from .interpreter import AIPL, AIPLException, defop
+from .interpreter import AIPL, defop, AIPLException, UserAbort
 from .db import Database, expensive
 from .table import Table, LazyRow
 from .main import main

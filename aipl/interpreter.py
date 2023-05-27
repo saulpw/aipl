@@ -29,6 +29,10 @@ class AIPLException(Exception):
     pass
 
 
+class UserAbort(BaseException):
+    'UserAbort not caught by internal error handling; will always exit.'
+
+
 def clean_to_id(s:str) -> str:
     return s.replace('-', '_').strip('!')
 
