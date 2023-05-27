@@ -42,11 +42,10 @@ def op_join(aipl, v:List[str], sep=' ') -> str:
     return sep.join(v)
 
 
-@defop('print', 0, 0, 1)
+@defop('print', 0, None, 1)
 def op_print(aipl, v:str):
     'Print to stdout'
     print(v, file=aipl.stdout)
-    return v
 
 @defop('match', 0, 0, 1)
 def op_match(aipl, v:str, regex:str) -> bool:
