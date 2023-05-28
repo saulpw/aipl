@@ -15,7 +15,6 @@ def op_ravel(aipl, v:Table) -> Table:
             else:
                 yield row
 
-
     newkey = aipl.unique_key
     ret = Table()
     for row in _ravel(v, newkey):
@@ -24,3 +23,8 @@ def op_ravel(aipl, v:Table) -> Table:
     for c in row._table.columns:
         ret.add_column(copy(c))
     return ret
+
+
+def test_ravel(aipl):
+    t = aipl.run('!split !take 2 !ravel !join', 'a b c d', 'e f g')
+    assert t[0] == 'a b e f'
