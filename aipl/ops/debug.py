@@ -1,6 +1,6 @@
 from typing import List
 
-from aipl import defop, LazyRow, UserAbort
+from aipl import defop, LazyRow, UserAbort, Table
 
 
 @defop('debug', None, None, arity=0)
@@ -28,3 +28,21 @@ def op_debug_vd(aipl):
         sheet.addCommand('Q', 'quit-really', 'uberquit()')
         visidata.vd.run(sheet)
     aipl.single_step = _vd_singlestep
+
+
+@defop('debug-rich', None, None, arity=0)
+def op_debug_rich(aipl):
+    import rich
+    def _rich_table(t:Table, console, console_options):
+        import rich.table
+
+        table = rich.table.Table(show_header=True, header_style="bold magenta")
+        for c in t.columns:
+            table.add_column(c.name)
+        for row in t:
+            table.add_row(*[row[c.name] for c in t.columns])
+        return [table]
+
+    Table.__rich_console__ = _rich_table
+    import sys
+    aipl.single_step = lambda t, cmd: rich.print(t, file=sys.stderr)
