@@ -169,13 +169,13 @@ class AIPL(Database):
 
         return inputs
 
-    def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs):
+    def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs, newkey=''):
         ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
 
         if cmd.op.rankout is not None and cmd.varnames:
             varname = cmd.varnames[-1]
         else:
-            varname = self.unique_key
+            varname = newkey or self.unique_key
 
         return prep_output(self, inputs[0] if inputs else None, ret, cmd.op.rankout, varname)
 
@@ -183,13 +183,13 @@ class AIPL(Database):
         'Recursively evaluate cmd.op(t) with cmd args formatted with contexts'
 
         if cmd.op.arity == 0:
-            ret = self.call_cmd(cmd, contexts)
+            ret = self.call_cmd(cmd, contexts, newkey=newkey)
             if cmd.op.rankout is None:
                 assert not ret  # ignore return value (no rankout)
                 return t
 
         elif rank(t) <= cmd.op.rankin:
-            ret = self.call_cmd(cmd, contexts, t)
+            ret = self.call_cmd(cmd, contexts, t, newkey=newkey)
 
         else:
             if isinstance(t, Table):
