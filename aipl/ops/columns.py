@@ -1,3 +1,10 @@
+'''
+!column takes a space-seperated list of columns
+in the current table, and returns a copy of the table
+with only those columns.
+Akin to SQLite SELECT.
+'''
+
 from aipl import defop
 
 
