@@ -166,25 +166,30 @@ Notes:
 ## List of operators
 
 - abort (in=None out=None): None
-- debug (in=None out=None): None
-- debug_vd (in=None out=None): None
-- assert_equal (in=0 out=None): None
-- name (in=1.5 out=1.5): None
-- ref (in=1.5 out=1.5): Move column on table to end of columns list (becoming the new .value)
-- comment (in=None out=None): None
-- def (in=None out=None): Define composite operator from cmds in prompt (must be indented).
-- groupby (in=1.5 out=1.5): Group rows into tables, by set of columns given as args.
+- assert_equal (in=0 out=None): Error if value is not equal to prompt.
+- cluster (in=1 out=1): Find n clusters in the input vectors.
 - columns (in=1.5 out=1.5): Set table columns to only those named as args.
+- comment (in=None out=None): Do nothing (ignoring args and prompt).
+- debug (in=None out=None): set debug flag and call breakpoint() before each command
+- debug_vd (in=None out=None): launch visidata with current input before each command
+- debug_rich (in=None out=None): Print input table table to stderr (using rich) before each command.
+- def (in=None out=None): Define composite operator from cmds in prompt (must be indented).
+- extract_text_all (in=0 out=0): Extract all text from HTML
+- extract_text (in=0 out=0): Extract meaningful text from HTML
+- extract_links (in=0 out=1.5): Extract (linktext, title, href) from <a> tags in HTML
+- fetch_url (in=0 out=0.5): Fetch URL as text.
+- fetch_url_bytes (in=0 out=0.5): Fetch URL as raw bytes.
+- filter (in=1.5 out=1.5): Return copy of table, with rows that had a True value col.
+- groupby (in=1.5 out=1.5): Group rows into tables, by set of columns given as args.
+- llm (in=0 out=0): Send a chat message to an OpenAI LLM. Supports [all params](https://platform.openai.com/docs/guides/chat/introduction).
+- llm_embedding (in=0 out=0.5): Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.
+- name (in=1.5 out=1.5): rename current input column to given name
 - dbinsert (in=0.5 out=None): None
 - dbdrop (in=None out=None): None
-- filter (in=1.5 out=1.5): Return copy of table, with rows that had a True value col.
 - require_input (in=100 out=100): Ensure there is any input at all; if not, display the prompt and read input from the user.
 - json (in=100 out=0): None
 - parse_json (in=0 out=0.5): None
 - assert_json (in=100 out=None): None
-- llm (in=0 out=0): None
-- llm_embedding (in=0 out=0.5): None
-- cluster (in=1 out=1): Find n clusters in the input vectors
 - pdf_extract (in=0 out=0): None
 - python (in=None out=None): exec() Python toplevel statements.
 - python_input (in=100 out=1.5): eval() Python expression and use as toplevel input table.
@@ -195,22 +200,18 @@ Notes:
 - split (in=0 out=1): Split text into chunks based on sep, keeping each chunk below maxsize
 - split_into (in=0 out=0.5): None
 - join (in=1 out=0): Join inputs with sep into a single output.
-- print (in=0 out=0): Print to stdout
+- print (in=0 out=None): Print to stdout
 - match (in=0 out=0): None
 - replace (in=0 out=0): None
 - save (in=0 out=None): Save to given filename.
 - literal (in=None out=0): None
-- fetch_url (in=0 out=0.5): None
-- fetch_url_bytes (in=0 out=0.5): None
-- extract_text_all (in=0 out=0): None
-- extract_text (in=0 out=0): Extract text from HTML
-- extract_links (in=0 out=1.5): Extract links (href attribute from <a> tags) from HTML
 - split_url (in=0 out=0.5): None
 - defrag (in=0 out=0): None
 - xml_xpath (in=0 out=1): None
 - xml_xpaths (in=0 out=0.5): None
 - ravel (in=100 out=1.5): None
 - read (in=None out=0): Open, read, and return contents in given local filename.
+- ref (in=1.5 out=1.5): Move column on table to end of columns list (becoming the new .value)
 - sample (in=1.5 out=1.5): Sample n rows from the input table.
 - aipl_ops (in=100 out=0): None
 - read_summary (in=None out=0): None
