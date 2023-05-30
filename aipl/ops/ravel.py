@@ -16,7 +16,7 @@ def op_ravel(aipl, v:Table) -> Table:
                 yield row
 
     newkey = aipl.unique_key
-    ret = Table()
+    ret = Table(parent=v)
     for row in _ravel(v, newkey):
         ret.rows.append(row._row)
 

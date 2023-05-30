@@ -246,4 +246,5 @@ class Table:
 
         if self.parent:
             return self.parent.get_column(name)
+
         return None
