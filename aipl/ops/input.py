@@ -1,3 +1,7 @@
+'''
+!require-input prompts the user for input, if none provided in the script.
+'''
+
 import sys
 
 from aipl import defop, Table
