@@ -13,5 +13,5 @@ def op_require_input(aipl, t:'Table', prompt=''):
     if len(t.rows) == 0 or not t[0]:
         print(prompt, file=sys.stderr)
         print('Ctrl+D to end input', file=sys.stderr)
-        return Table([{'input':sys.stdin.read()}])
+        return Table([{'input':sys.stdin.read().strip('\n')}])
     return t
