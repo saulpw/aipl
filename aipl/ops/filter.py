@@ -10,7 +10,7 @@ from aipl.table import Table
 
 @defop('filter', 1.5, 1.5)
 def op_filter(aipl, t:Table) -> Table:
-    'Return copy of table, with rows that had a True value col.'
+    'Return copy of table, keeping only rows whose value is Truthy.'
     ret = copy(t)
     ret.rows = [r._row for r in t if r.value]
     ret.columns = ret.columns[:-1]  # discard bool column

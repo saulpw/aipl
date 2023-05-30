@@ -10,7 +10,7 @@ from aipl import defop
 
 @defop('columns', 1.5, 1.5)
 def op_columns(aipl, t:'Table', *colnames):
-    'Set table columns to only those named as args.'
+    'Create new table containing only these columns.'
     newcols = []
     for name in colnames:
         c = t.get_column(name)

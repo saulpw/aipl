@@ -15,7 +15,7 @@ class _jsonEncoder(json.JSONEncoder):
 
 @defop('json', 100, 0)
 def op_json(aipl, t:Table) -> str:
-    'Convert a Table into a json blob.'
+    'Convert Table into a json blob.'
     jsonenc = _jsonEncoder()
     return jsonenc.encode(t._asdict())
 

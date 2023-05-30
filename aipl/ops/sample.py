@@ -9,7 +9,7 @@ from aipl import defop, Table
 
 @defop('sample', 1.5, 1.5)
 def op_sample(aipl, t:Table, n:int=1) -> Table:
-    'Sample n rows from the input table.'
+    'Sample n random rows from the input table.'
     import random
     return Table(random.sample(t.rows, n), parent=t)
 

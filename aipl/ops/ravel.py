@@ -8,6 +8,7 @@ from aipl.table import Table, Column
 
 @defop('ravel', 100, 1.5)
 def op_ravel(aipl, v:Table) -> Table:
+    'All of the leaf scalars in the value column become a single 1-D array.'
     def _ravel(t:Table, newkey:str) -> List['Scalar']:
         for row in t:
             if isinstance(row.value, Table):

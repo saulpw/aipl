@@ -167,8 +167,9 @@ Notes:
 
 - abort (in=None out=None): None
 - assert_equal (in=0 out=None): Error if value is not equal to prompt.
-- cluster (in=1 out=1): Find n clusters in the input vectors.
-- columns (in=1.5 out=1.5): Set table columns to only those named as args.
+- assert_json (in=100 out=None): Error if value Column is not equal to json blob in prompt.
+- cluster (in=1 out=1): Cluster rows by embedding into n clusters; add label column.
+- columns (in=1.5 out=1.5): Create new table containing only these columns.
 - comment (in=None out=None): Do nothing (ignoring args and prompt).
 - debug (in=None out=None): set debug flag and call breakpoint() before each command
 - debug_vd (in=None out=None): launch visidata with current input before each command
@@ -177,31 +178,30 @@ Notes:
 - extract_text_all (in=0 out=0): Extract all text from HTML
 - extract_text (in=0 out=0): Extract meaningful text from HTML
 - extract_links (in=0 out=1.5): Extract (linktext, title, href) from <a> tags in HTML
-- fetch_url (in=0 out=0.5): Fetch URL as text.
+- fetch_url (in=0 out=0.5): Fetch URL as text HTML.
 - fetch_url_bytes (in=0 out=0.5): Fetch URL as raw bytes.
-- filter (in=1.5 out=1.5): Return copy of table, with rows that had a True value col.
+- filter (in=1.5 out=1.5): Return copy of table, keeping only rows whose value is Truthy.
 - groupby (in=1.5 out=1.5): Group rows into tables, by set of columns given as args.
+- require_input (in=100 out=100): Ensure there is any input at all; if not, display the prompt and read input from the user.
+- json (in=100 out=0): Convert Table into a json blob.
+- json_parse (in=0 out=0.5): Convert a json blob into a LazyRow.
 - llm (in=0 out=0): Send a chat message to an OpenAI LLM. Supports [all params](https://platform.openai.com/docs/guides/chat/introduction).
 - llm_embedding (in=0 out=0.5): Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.
-- name (in=1.5 out=1.5): rename current input column to given name
-- dbinsert (in=0.5 out=None): None
-- dbdrop (in=None out=None): None
-- require_input (in=100 out=100): Ensure there is any input at all; if not, display the prompt and read input from the user.
-- json (in=100 out=0): None
-- parse_json (in=0 out=0.5): None
-- assert_json (in=100 out=None): None
+- name (in=1.5 out=1.5): Rename current input column to given name.
+- dbinsert (in=0.5 out=None): Insert each row into database table.
+- dbdrop (in=None out=None): Drop database table.
 - pdf_extract (in=0 out=0): None
 - python (in=None out=None): exec() Python toplevel statements.
 - python_input (in=100 out=1.5): eval() Python expression and use as toplevel input table.
 - sh (in=0 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
 - shtty (in=0.5 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
 - take (in=1.5 out=1.5): Return a table with first n rows of `t`
-- format (in=0.5 out=0): Format prompt text as template, substituting values from row
-- split (in=0 out=1): Split text into chunks based on sep, keeping each chunk below maxsize
+- format (in=0.5 out=0): Format prompt text as a Python string template, substituting values from row and global context.
+- split (in=0 out=1): Split text into chunks based on sep, keeping each chunk below maxsize.
 - split_into (in=0 out=0.5): None
-- join (in=1 out=0): Join inputs with sep into a single output.
-- print (in=0 out=None): Print to stdout
-- match (in=0 out=0): None
+- join (in=1 out=0): Join inputs with sep into a single output scalar.
+- print (in=0 out=None): Print to stdout.
+- match (in=0 out=0): Return a bool with whether value matched regex. Used with !filter.
 - replace (in=0 out=0): None
 - save (in=0 out=None): Save to given filename.
 - literal (in=None out=0): None
@@ -209,10 +209,10 @@ Notes:
 - defrag (in=0 out=0): None
 - xml_xpath (in=0 out=1): None
 - xml_xpaths (in=0 out=0.5): None
-- ravel (in=100 out=1.5): None
+- ravel (in=100 out=1.5): All of the leaf scalars in the value column become a single 1-D array.
 - read (in=None out=0): Open, read, and return contents in given local filename.
 - ref (in=1.5 out=1.5): Move column on table to end of columns list (becoming the new .value)
-- sample (in=1.5 out=1.5): Sample n rows from the input table.
+- sample (in=1.5 out=1.5): Sample n random rows from the input table.
 - aipl_ops (in=100 out=0): None
 - read_summary (in=None out=0): None
 

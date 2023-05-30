@@ -7,13 +7,13 @@ from aipl.table import LazyRow, Table, Column
 
 @defop('format', 0.5, 0)
 def op_format(aipl, row:LazyRow, prompt:str='') -> str:
-    'Format prompt text as template, substituting values from row'
+    'Format prompt text as a Python string template, substituting values from row and global context.'
     return prompt.format_map(ChainMap(aipl.globals, row))
 
 
 @defop('split', 0, 1)
 def op_split(aipl, v: str, maxsize:int=0, sep=None) -> List[str]:
-    'Split text into chunks based on sep, keeping each chunk below maxsize'
+    'Split text into chunks based on sep, keeping each chunk below maxsize.'
     win = []
     tot = 0
     for i, unit in enumerate(v.split(sep)):
@@ -38,17 +38,18 @@ def op_split_into(aipl, v:str, *args, sep=None) -> dict:
 
 @defop('join', 1, 0, 1)
 def op_join(aipl, v:List[str], sep=' ') -> str:
-    'Join inputs with sep into a single output.'
+    'Join inputs with sep into a single output scalar.'
     return sep.join(v)
 
 
 @defop('print', 0, None, 1)
 def op_print(aipl, v:str):
-    'Print to stdout'
+    'Print to stdout.'
     print(v, file=aipl.stdout)
 
 @defop('match', 0, 0, 1)
 def op_match(aipl, v:str, regex:str) -> bool:
+    'Return a bool with whether value matched regex. Used with !filter.'
     import re
     m = re.search(regex, v)
     return m is not None
