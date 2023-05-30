@@ -5,9 +5,9 @@
 gpt-3.5-turbo
 #gpt-4
 
-!split
+!split>model
 
-!unravel>model
+!ravel
 
 # write commit msg for git diff
 !sh git diff --cached
@@ -30,4 +30,4 @@ Be terse.
 
 !join sep=\n\n
 
-!shtty git commit -m {input} --edit
+!shtty git commit -v -m {input} --edit

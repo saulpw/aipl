@@ -18,7 +18,7 @@ def op_sh(aipl, stdin:str, *args, **kwargs) -> dict:
 def op_shtty(aipl, _:'LazyRow', *args) -> dict:
     'Run the command described by args.  Return (retcode, stderr, stdout) columns.'
     import subprocess
-    r = subprocess.run(args, text=True)
-#                       stderr=subprocess.PIPE)
+    r = subprocess.run(args, text=True,
+                       stderr=subprocess.PIPE)
     return dict(retcode=r.returncode,
                 stderr=r.stderr)
