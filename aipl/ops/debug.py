@@ -32,6 +32,7 @@ def op_debug_vd(aipl):
 
 @defop('debug-rich', None, None, arity=0)
 def op_debug_rich(aipl):
+    'Print input table table to stderr (using rich) before each command.'
     import rich
     def _rich_table(t:Table, console, console_options):
         import rich.table
