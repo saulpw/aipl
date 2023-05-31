@@ -7,7 +7,6 @@ from aipl import AIPL, Table, UserAbort
 
 def main():
     parser = argparse.ArgumentParser(description='AIPL interpreter')
-    parser.add_argument('--visidata', '--vd', action='store_true', help='open VisiData with input before each step')
     parser.add_argument('--debug', '-d', action='store_true', help='abort on exception')
     parser.add_argument('--step', action='store', default='', help='call aipl.step_<func>(cmd, input) before each step')
     parser.add_argument('--step-breakpoint', '-x', action='store_const', dest='step', const='breakpoint', help='breakpoint() before each step')
@@ -31,7 +30,7 @@ def main():
         print('no script on stdin: nothing to do', file=sys.stderr)
         return
 
-    aipl = AIPL('aipl-cache.sqlite')
+    aipl = AIPL('aipl-cache.sqlite', **vars(args))
 
     # dup stdin/stdout if necessary
 
@@ -59,19 +58,6 @@ def main():
             aipl.stdout = sys.stdout
     else:
         aipl.stdout = sys.stdout
-
-    # parse a few options
-    if args.visidata:
-        aipl.run('!debug-vd')
-
-    if args.single_step:
-        aipl.single_step = lambda *args, **kwargs: breakpoint()
-
-    if args.debug:
-        aipl.debug = True
-
-    if args.dry_run:
-        aipl.dry_run = True
 
     aipl.globals = global_parameters
 

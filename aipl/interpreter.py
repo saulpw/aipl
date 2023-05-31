@@ -8,7 +8,7 @@ import re
 
 from .table import Table, LazyRow, Column, Row
 from .db import Database
-from .utils import stderr, trynum, fmtargs, fmtkwargs
+from .utils import stderr, trynum, fmtargs, fmtkwargs, AttrDict
 
 
 Scalar = int|float|str
@@ -56,12 +56,13 @@ class AIPL(Database):
         self.next_unique_key += 1
         return f'_{r}'
 
-    def __init__(self, dbfn='aipl-output.sqlite', single_step=None, debug=True, dry_run=False):
+    def __init__(self, dbfn='aipl-output.sqlite', **kwargs):
         super().__init__(dbfn)
-        self.debug = debug
-        self.single_step = single_step  # func(Table, Command) to call between steps
-        self.dry_run = dry_run
         self.globals = {}  # base context
+        self.options = AttrDict(kwargs)
+
+    def step_breakpoint(self, t:Table, cmd:Command):
+        breakpoint()
 
     def parse_cmdline(self, line:str, linenum:int=0) -> List[Command]:
         'Parse single command line into one or more Commands.'
@@ -150,8 +151,13 @@ class AIPL(Database):
         for cmd in cmds:
             stderr(inputs, f'-> {cmd.opname} (line {cmd.linenum})')
 
-            if self.single_step:
-                self.single_step(inputs, cmd)
+            if self.options.step:
+                for stepfuncname in self.options.step.split(','):
+                    stepfunc = getattr(self, 'step_'+stepfuncname, None)
+                    if stepfunc:
+                        stepfunc(inputs, cmd)
+                    else:
+                        stderr(f'no aipl.step_{stepfuncname}!')
 
             try:
                 result = self.eval_op(cmd, inputs, contexts=[self.globals])
