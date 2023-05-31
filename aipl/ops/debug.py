@@ -1,49 +1,48 @@
 from typing import List
+import sys
 
-from aipl import defop, LazyRow, UserAbort, Table
+from aipl import defop, LazyRow, UserAbort, Table, AIPL
 
 
 @defop('debug', None, None, arity=0)
 def op_debug(aipl, *args):
     'set debug flag and call breakpoint() before each command'
-    aipl.debug = True
-    aipl.single_step = lambda *args, **kwargs: breakpoint()
+    aipl.options.debug = True
+
+def _vd_singlestep(aipl, inputs:List[LazyRow], cmd):
+    import visidata
+    @visidata.VisiData.api
+    def uberquit(vd):
+        raise UserAbort('user abort')
+
+    inputs = list(r._asdict() for r in inputs)
+    sheet = visidata.PyobjSheet('current_input', source=inputs)
+    sheet.help = '{sheet.recentcmd}'
+    argstr = ' '.join(str(x) for x in cmd.args)
+    kwargstr = ' '.join(f'{k}={v}' for k, v in cmd.kwargs.items())
+    sheet.recentcmd = f'[line {cmd.linenum}] !' + ' '.join([cmd.opname, argstr, kwargstr])
+    sheet.addCommand('Q', 'quit-really', 'uberquit()')
+    visidata.vd.run(sheet)
+AIPL.step_vd = _vd_singlestep
 
 
-@defop('debug-vd', None, None, arity=0)
-def op_debug_vd(aipl):
-    'launch visidata with current input before each command'
-    def _vd_singlestep(inputs:List[LazyRow], cmd):
-        import visidata
-        @visidata.VisiData.api
-        def uberquit(vd):
-            raise UserAbort('user abort')
-
-        inputs = list(r._asdict() for r in inputs)
-        sheet = visidata.PyobjSheet('current_input', source=inputs)
-        sheet.help = '{sheet.recentcmd}'
-        argstr = ' '.join(str(x) for x in cmd.args)
-        kwargstr = ' '.join(f'{k}={v}' for k, v in cmd.kwargs.items())
-        sheet.recentcmd = f'[line {cmd.linenum}] !' + ' '.join([cmd.opname, argstr, kwargstr])
-        sheet.addCommand('Q', 'quit-really', 'uberquit()')
-        visidata.vd.run(sheet)
-    aipl.single_step = _vd_singlestep
-
-
-@defop('debug-rich', None, None, arity=0)
-def op_debug_rich(aipl):
-    'Print input table table to stderr (using rich) before each command.'
+def stderr_rich(*args):
     import rich
-    def _rich_table(t:Table, console, console_options):
-        import rich.table
+    rich.print(*args, file=sys.stderr)
 
-        table = rich.table.Table(show_header=True, header_style="bold magenta")
-        for c in t.columns:
-            table.add_column(c.name)
-        for row in t:
-            table.add_row(*[row[c.name] for c in t.columns])
-        return [table]
 
-    Table.__rich_console__ = _rich_table
-    import sys
-    aipl.single_step = lambda t, cmd: rich.print(t, file=sys.stderr)
+def _rich_table(t:Table, console, console_options):
+    import rich
+    import rich.table
+
+    table = rich.table.Table(show_header=True, header_style="bold magenta")
+    colnames = [c.name for c in t.columns if not c.hidden or c is t.current_col]
+    for colname in colnames:
+        table.add_column(colname)
+    for row in t:
+        table.add_row(*[row[colname] for colname in colnames])
+    return [table]
+
+
+Table.__rich_console__ = _rich_table
+AIPL.step_rich = lambda aipl, t, cmd: stderr_rich(t)
