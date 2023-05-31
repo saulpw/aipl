@@ -56,10 +56,11 @@ class AIPL(Database):
         self.next_unique_key += 1
         return f'_{r}'
 
-    def __init__(self, dbfn='aipl-output.sqlite', single_step=None, debug=True):
+    def __init__(self, dbfn='aipl-output.sqlite', single_step=None, debug=True, dry_run=False):
         super().__init__(dbfn)
         self.debug = debug
         self.single_step = single_step  # func(Table, Command) to call between steps
+        self.dry_run = dry_run
         self.globals = {}  # base context
 
     def parse_cmdline(self, line:str, linenum:int=0) -> List[Command]:

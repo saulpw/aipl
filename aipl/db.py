@@ -106,6 +106,9 @@ def expensive(func):
         key = f'{args} {kwargs}'
         tbl = 'cached_'+func.__name__
 
+        if db.options.dry_run:
+            return f'<{func.__name__}({key})>'
+
         ret = db.select(tbl, key=key)
         if ret:
             row = ret[-1]
