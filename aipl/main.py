@@ -9,7 +9,11 @@ def main():
     parser = argparse.ArgumentParser(description='AIPL interpreter')
     parser.add_argument('--visidata', '--vd', action='store_true', help='open VisiData with input before each step')
     parser.add_argument('--debug', '-d', action='store_true', help='abort on exception')
-    parser.add_argument('--single-step', '-x', action='store_true', help='breakpoint() before each step')
+    parser.add_argument('--step', action='store', default='', help='call aipl.step_<func>(cmd, input) before each step')
+    parser.add_argument('--step-breakpoint', '-x', action='store_const', dest='step', const='breakpoint', help='breakpoint() before each step')
+    parser.add_argument('--step-rich', '-v', action='store_const', dest='step', const='rich', help='output rich table before each step')
+    parser.add_argument('--step-vd', '--vd', action='store_const', dest='step', const='vd', help='open VisiData with input before each step')
+    parser.add_argument('--dry-run', '-n', action='store_true', help='do not execute @expensive operations')
     parser.add_argument('script_or_global', nargs='+', help='scripts to run, or k=v global parameters')
     args = parser.parse_args()
 
@@ -65,6 +69,9 @@ def main():
 
     if args.debug:
         aipl.debug = True
+
+    if args.dry_run:
+        aipl.dry_run = True
 
     aipl.globals = global_parameters
 
