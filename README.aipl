@@ -1,15 +1,11 @@
 !!def aipl-ops
- !python-input>>op
+ !python-input>op
     aipl.operators.values()
  !format
-    - {op.__name__} (in={op.rankin} out={op.rankout}): {op.__doc__}
+    - `!{op.__name__}` (in={op.rankin} out={op.rankout}): {op.__doc__}
  !join sep=\n
 
-!!def read-summary
-  !read chains/summarize.aipl
-
-
-!!read-summary>summarize_aipl
+!!read>summarize_aipl chains/summarize.aipl
 !!aipl-ops>opdocs
 
 

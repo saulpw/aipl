@@ -125,7 +125,7 @@ class AIPL(Database):
                     if cmd.varnames:
                         k = cmd.varnames[-1]
                         self.globals[k] = result
-                        stderr(f'(global) {k} = {cmd.opname}:', result)
+                        stderr(f'(global) {k} = result of {cmd.line}')
 
                 for cmd in self.parse_cmdline(line, linenum):
                     ret.append(cmd)
