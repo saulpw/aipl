@@ -4,8 +4,7 @@ import argparse
 
 from aipl import AIPL, Table, UserAbort
 
-
-def main():
+def parse_args(args):
     parser = argparse.ArgumentParser(description='AIPL interpreter')
     parser.add_argument('--debug', '-d', action='store_true', help='abort on exception')
     parser.add_argument('--step', action='store', default='', help='call aipl.step_<func>(cmd, input) before each step')
@@ -14,8 +13,13 @@ def main():
     parser.add_argument('--step-vd', '--vd', action='store_const', dest='step', const='vd', help='open VisiData with input before each step')
     parser.add_argument('--dry-run', '-n', action='store_true', help='do not execute @expensive operations')
     parser.add_argument('script_or_global', nargs='+', help='scripts to run, or k=v global parameters')
-    args = parser.parse_args()
+    return parser.parse_args(args)
 
+
+
+def main():
+
+    args = parse_args(None)
     global_parameters = {}
     scripts = []
 
