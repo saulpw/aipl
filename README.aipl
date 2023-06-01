@@ -176,7 +176,7 @@
 
     - -1: no change (like 'print')
     - 0: scalar operation (like 'translate')
-    - 0.5: scalar to simple row (like 'split-url')
+    - 0.5: scalar to simple row (like 'url-split')
     - 1: scalar to simple vector (like 'split-text')
     - 1.5: scalar to table (like 'extract-links')
 
