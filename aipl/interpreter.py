@@ -48,7 +48,8 @@ def rank(v):
 
 class AIPL(Database):
     operators = {}  # opname:str -> func(aipl, ..., *args, *kwargs)
-    next_unique_key = 0
+    next_unique_key:int = 0
+    cost_usd:float = 0.0
 
     @property
     def unique_key(self) -> str:

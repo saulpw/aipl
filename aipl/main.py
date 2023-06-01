@@ -71,3 +71,5 @@ def main():
         except UserAbort as e:
             print(f'aborted', e, file=sys.stderr)
 
+    if aipl.cost_usd:
+        print(f'total cost: ${aipl.cost_usd:.02f}', file=sys.stderr)

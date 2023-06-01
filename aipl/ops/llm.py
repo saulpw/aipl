@@ -19,11 +19,38 @@ def _parse_msg(s:str):
         return dict(role='user', content=s)
 
 
+# from the horse's mouth, 2023-05-30
+openai_pricing = {
+    "gpt-4-8k": 0.06,
+    "gpt-4-32k": 0.12,
+    "gpt-3.5-turbo": 0.002,
+    "ada": 0.0016,
+    "babbage": 0.0024,
+    "curie": 0.0120,
+    "davinci": 0.1200
+}
+
+
+def count_tokens(s:str, model:str=''):
+    import tiktoken
+    enc = tiktoken.encoding_for_model(model)
+    return len(enc.encode(s))
+
+
+def op_llm_mock(aipl, v:str, **kwargs) -> str:
+    model = kwargs.get('model')
+    used = count_tokens(v, model=model)
+    cost = openai_pricing[model]*used/1000
+    aipl.cost_usd += cost
+    return f'<llm {model} answer>'
+
+
 @defop('llm', 0, 0, 1)
 @expensive
 def op_llm(aipl, v:str, **kwargs) -> str:
     'Send a chat message to an OpenAI LLM. Supports [all params](https://platform.openai.com/docs/guides/chat/introduction).'
     import openai
+    model = kwargs.get('model')
     parms = dict(
         temperature=0,
         top_p=1,
@@ -38,8 +65,12 @@ def op_llm(aipl, v:str, **kwargs) -> str:
         **parms
     )
     used = resp['usage']['total_tokens']
-    stderr(f'Used {used} tokens')
-    return resp['choices'][0]['message']['content']
+    result = resp['choices'][0]['message']['content']
+
+    cost = openai_pricing[model]*used/1000
+    aipl.cost_usd += cost
+    stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.02f}')
+    return result
 
 
 @defop('llm-embedding', 0, 0.5, 1)
