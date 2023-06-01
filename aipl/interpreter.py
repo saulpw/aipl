@@ -24,6 +24,9 @@ class Command:
     line:str
     linenum:int
 
+    def __str__(self):
+        return f'-> {self.opname} (line {self.linenum})'
+
 
 class AIPLException(Exception):
     pass
@@ -147,10 +150,12 @@ class AIPL(Database):
         inputs = Table([{argkey:arg} for arg in args])
         return self.run_cmdlist(cmds, inputs)
 
-    def run_cmdlist(self, cmds:List[Command], inputs):
+    def pre_command(self, t:Table, cmd:Command):
+        stderr(t, cmd)
 
+    def run_cmdlist(self, cmds:List[Command], inputs):
         for cmd in cmds:
-            stderr(inputs, f'-> {cmd.opname} (line {cmd.linenum})')
+            self.pre_command(inputs, cmd)
 
             if self.options.step:
                 for stepfuncname in self.options.step.split(','):

@@ -23,7 +23,6 @@ def _vd_singlestep(aipl, inputs:List[LazyRow], cmd):
     sheet.recentcmd = f'[line {cmd.linenum}] !' + ' '.join([cmd.opname, argstr, kwargstr])
     sheet.addCommand('Q', 'quit-really', 'uberquit()')
     visidata.vd.run(sheet)
-AIPL.step_vd = _vd_singlestep
 
 
 def stderr_rich(*args):
@@ -31,18 +30,30 @@ def stderr_rich(*args):
     rich.print(*args, file=sys.stderr)
 
 
+def install_rich(*args):
+    import rich
+    AIPL.pre_command = lambda aipl, t, cmd: stderr_rich(t, cmd)
+
+
 def _rich_table(t:Table, console, console_options):
     import rich
     import rich.table
 
-    table = rich.table.Table(show_header=True, header_style="bold magenta")
+    table = rich.table.Table(show_header=True, show_lines=True, header_style="bold magenta")
     colnames = [c.name for c in t.columns if not c.hidden or c is t.current_col]
     for colname in colnames:
         table.add_column(colname)
     for row in t:
-        table.add_row(*[row[colname] for colname in colnames])
+        rowdata = []
+        for colnames in colnames:
+            cell = row[colname]
+            if not isinstance(cell, (Table, str, int, float)):
+                cell = str(cell)
+            rowdata.append(cell)
+        table.add_row(*rowdata)
     return [table]
 
 
 Table.__rich_console__ = _rich_table
-AIPL.step_rich = lambda aipl, t, cmd: stderr_rich(t)
+AIPL.step_rich = install_rich
+AIPL.step_vd = _vd_singlestep
