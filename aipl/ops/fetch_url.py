@@ -1,4 +1,5 @@
 from aipl import defop, expensive, stderr
+from urllib.parse import urlparse, urlunparse
 
 
 @defop('fetch-url', 0, 0.5, 1)
