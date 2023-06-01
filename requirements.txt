@@ -1,6 +1,7 @@
 openai
 scikit-learn
 numpy
-trafilatura
-beautifulsoup4
-pdfminer
+trafilatura  # for html extraction
+beautifulsoup4  # for xml/html extraction
+pdfminer  # for pdf extraction
+tiktoken  # for cost-estimation

@@ -32,9 +32,13 @@ openai_pricing = {
 
 
 def count_tokens(s:str, model:str=''):
-    import tiktoken
-    enc = tiktoken.encoding_for_model(model)
-    return len(enc.encode(s))
+    try:
+        import tiktoken
+        enc = tiktoken.encoding_for_model(model)
+        return len(enc.encode(s))
+    except ModuleNotFoundError as e:
+#        stderr(str(e))
+        return len(s)//4
 
 
 def op_llm_mock(aipl, v:str, **kwargs) -> str:
@@ -46,7 +50,7 @@ def op_llm_mock(aipl, v:str, **kwargs) -> str:
 
 
 @defop('llm', 0, 0, 1)
-@expensive
+@expensive(op_llm_mock)
 def op_llm(aipl, v:str, **kwargs) -> str:
     'Send a chat message to an OpenAI LLM. Supports [all params](https://platform.openai.com/docs/guides/chat/introduction).'
     import openai

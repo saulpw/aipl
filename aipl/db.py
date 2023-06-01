@@ -99,16 +99,19 @@ class Database:
         return self.con.execute(qstr)
 
 
-def expensive(func):
-    'Decorator to persistently cache result from func(r, kwargs).'
+def expensive(mockfunc=None):
+  'Decorator to persistently cache result from func(r, kwargs).  Use as @expensive(mock_func) where mock_func has identical signature to func and returns a compatible result for --dry-run.'
+  def _decorator(func):
     @wraps(func)
     def cachingfunc(db:Database, *args, **kwargs):
+        if db.options.dry_run:
+            if mockfunc:
+                return mockfunc(db, *args, **kwargs)
+            else:
+                return f'<{func.__name__}({args} {kwargs})>'
+
         key = f'{args} {kwargs}'
         tbl = 'cached_'+func.__name__
-
-        if db.options.dry_run:
-            return f'<{func.__name__}({key})>'
-
         ret = db.select(tbl, key=key)
         if ret:
             row = ret[-1]
@@ -128,3 +131,4 @@ def expensive(func):
         return result
 
     return cachingfunc
+  return _decorator
