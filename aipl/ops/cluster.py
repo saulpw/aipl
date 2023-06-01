@@ -8,7 +8,7 @@ from typing import List
 
 from aipl import defop
 
-@defop('cluster', 1, 1, 1)
+@defop('cluster', 1, 1)
 def op_cluster(aipl, v:List[List[float]], n=10):
     'Cluster rows by embedding into n clusters; add label column.'
     import numpy as np

@@ -269,7 +269,7 @@ def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|T
 
 
 def prep_output(aipl,
-                in_row:LazyRow,
+                in_row:LazyRow|Table,
                 out:Scalar|List[Scalar]|LazyRow|Table,
                 rankout:int|float,
                 varname:str) -> Scalar|List[Scalar]|Table|LazyRow:
@@ -285,9 +285,13 @@ def prep_output(aipl,
         return out
 
     elif rankout == 1:
-        assert isinstance(in_row, LazyRow)
         ret = Table()
-        ret.rows = [{'__parent': in_row, varname:v} for v in out]
+        if isinstance(in_row, LazyRow):
+            ret.rows = [{'__parent': in_row, varname:v} for v in out]
+        elif isinstance(in_row, Table):
+            ret.rows = [{'__parent': parent_row, varname:v} for parent_row, v in zip(in_row, out)]
+        else:
+            assert False, 'unknown type for in_row'
         ret.add_column(Column(varname))
         return ret
 

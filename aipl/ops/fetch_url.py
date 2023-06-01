@@ -3,7 +3,7 @@ from urllib.parse import urlparse, urlunparse
 
 
 @defop('fetch-url', 0, 0.5, 1)
-#@expensive()
+@expensive()
 def op_fetch_url(aipl, url:str) -> dict:
     'Fetch URL as text HTML.'
     url = urlunparse(urlparse(url)._replace(fragment=''))

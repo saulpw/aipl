@@ -78,7 +78,7 @@ def op_llm(aipl, v:str, **kwargs) -> str:
 
 
 @defop('llm-embedding', 0, 0.5, 1)
-@expensive
+@expensive()
 def op_llm_embedding(aipl, v:str, **kwargs) -> dict:
     'Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.'
     import openai

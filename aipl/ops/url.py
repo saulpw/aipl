@@ -15,7 +15,7 @@ def op_url_split(aipl, url:str) -> dict:
                fragment=r.fragment)
 
 
-@defop('url-defrag', 0, 0, 1)
+@defop('url-defrag', 0, 0)
 def op_url_defrag(aipl, url:str) -> str:
     'Remove fragment from url.'
     return urlunparse(urlparse(url)._replace(fragment=''))
