@@ -44,6 +44,8 @@ def trynum(x:str) -> int|float|str:
 
 class AttrDict(dict):
     def __getattr__(self, k):
+        if k not in self:
+            return None
         return self[k]
 
     def __setattr__(self, k, v):
