@@ -197,7 +197,7 @@ class Table:
 
     @property
     def deepcolnames(self) -> str:
-        return ','.join(f'{c.deepname(self)}' for c in self.columns) or "no cols"
+        return ','.join(f'{c.deepname(self)}' for c in self.columns if not c.hidden or c is self.current_col) or "no cols"
 
     def __getitem__(self, k:int):
         #return LazyRow(self, self.rows[k])
