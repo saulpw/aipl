@@ -1,6 +1,7 @@
 from .utils import stderr
 from .interpreter import AIPL, defop, AIPLException, UserAbort, Command
-from .db import Database, expensive, dbcache
+from .db import Database
+from .caching import expensive, dbcache
 from .table import Table, LazyRow
 from .main import main
 

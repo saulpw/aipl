@@ -49,21 +49,22 @@ def rank(v):
         return 0
 
 
-class AIPL(Database):
+class AIPL:
     operators = {}  # opname:str -> func(aipl, ..., *args, *kwargs)
     next_unique_key:int = 0
     cost_usd:float = 0.0
+
+    def __init__(self, **kwargs):
+        self.globals = {}  # base context
+        self.options = AttrDict(kwargs)
+        self.cache_db = Database('aipl-cache.sqlite')
+        self.output_db = Database(self.options.outdbfn)
 
     @property
     def unique_key(self) -> str:
         r = self.next_unique_key
         self.next_unique_key += 1
         return f'_{r}'
-
-    def __init__(self, dbfn='aipl-output.sqlite', **kwargs):
-        super().__init__(dbfn)
-        self.globals = {}  # base context
-        self.options = AttrDict(kwargs)
 
     def step_breakpoint(self, t:Table, cmd:Command):
         breakpoint()
