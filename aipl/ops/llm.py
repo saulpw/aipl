@@ -52,7 +52,7 @@ def op_llm_mock(aipl, v:str, **kwargs) -> str:
 @defop('llm', 0, 0, 1)
 @expensive(op_llm_mock)
 def op_llm(aipl, v:str, **kwargs) -> str:
-    'Send a chat message to an OpenAI LLM. Supports [all params](https://platform.openai.com/docs/guides/chat/introduction).'
+    'Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.'
     import openai
     model = kwargs.get('model')
     parms = dict(
