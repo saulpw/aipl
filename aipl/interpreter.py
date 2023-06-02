@@ -151,7 +151,7 @@ class AIPL(Database):
         return self.run_cmdlist(cmds, inputs)
 
     def pre_command(self, t:Table, cmd:Command):
-        stderr(t, cmd)
+        stderr(t, str(cmd))
 
     def run_cmdlist(self, cmds:List[Command], inputs):
         for cmd in cmds:
