@@ -126,7 +126,7 @@ class AIPL(Database):
                 set_last_prompt(ret, prompt)
                 prompt = ''
                 if ret and ret[-1].immediate:  # !!op means do the command immediately
-                    cmd = ret[-1]
+                    cmd = ret.pop()
                     result = self.eval_op(cmd, Table(), contexts=[self.globals])
                     if cmd.varnames:
                         k = cmd.varnames[-1]

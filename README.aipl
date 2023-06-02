@@ -13,7 +13,8 @@
 !name aipl_usage
 
 
-!columns opdocs aipl_usage
+!format>opdocs
+{opdocs}
 
 
 !format
