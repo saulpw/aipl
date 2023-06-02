@@ -99,36 +99,45 @@ class Database:
         return self.con.execute(qstr)
 
 
+def dbcache(func):
+    'Decorator to persistently cache result from func(aipl, *args, *kwargs).'
+    @wraps(func)
+    def cachingfunc(db:Database, *args, **kwargs):
+        key = f'{args} {kwargs}'
+        tbl = 'cached_'+func.__name__
+        ret = db.select(tbl, key=key)
+        if ret:
+            row = ret[-1]
+            if 'output' in row:
+                return row['output']
+
+            del row['key']
+            return row
+
+        result = func(db, *args, **kwargs)
+
+        if isinstance(result, dict):
+            db.insert(tbl, key=key, **result)
+        else:
+            db.insert(tbl, key=key, output=result)
+
+        return result
+
+    return cachingfunc
+
+
 def expensive(mockfunc=None):
-    'Decorator to persistently cache result from func(r, kwargs).  Use as @expensive(mock_func) where mock_func has identical signature to func and returns a compatible result for --dry-run.'
+    'Decorator to persistently cache result from func(aipl, *args, **kwargs).  Use as @expensive(mock_func) where mock_func has identical signature to func and returns a compatible result during --dry-run.'
     def _decorator(func):
         @wraps(func)
-        def cachingfunc(db:Database, *args, **kwargs):
+        def _wrapper(db:Database, *args, **kwargs):
             if db.options.dry_run:
                 if mockfunc:
                     return mockfunc(db, *args, **kwargs)
                 else:
                     return f'<{func.__name__}({args} {kwargs})>'
 
-            key = f'{args} {kwargs}'
-            tbl = 'cached_'+func.__name__
-            ret = db.select(tbl, key=key)
-            if ret:
-                row = ret[-1]
-                if 'output' in row:
-                    return row['output']
+            return dbcache(func)(db, *args, **kwargs)
 
-                del row['key']
-                return row
-
-            result = func(db, *args, **kwargs)
-
-            if isinstance(result, dict):
-                db.insert(tbl, key=key, **result)
-            else:
-                db.insert(tbl, key=key, output=result)
-
-            return result
-
-        return cachingfunc
+        return _wrapper
     return _decorator
