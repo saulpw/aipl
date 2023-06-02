@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 
-from aipl import AIPL, Table, UserAbort
+from aipl import AIPL, Table, UserAbort, AIPLException
 
 def parse_args(args):
     parser = argparse.ArgumentParser(description='AIPL interpreter')
@@ -71,6 +71,10 @@ def main():
             aipl.run(open(fn).read(), stdin_contents.strip())
         except UserAbort as e:
             print(f'aborted', e, file=sys.stderr)
+            break
+        except AIPLException as e:
+            print(e, file=sys.stderr)
+            break
 
     if aipl.cost_usd:
         print(f'total cost: ${aipl.cost_usd:.02f}', file=sys.stderr)

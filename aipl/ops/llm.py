@@ -1,13 +1,13 @@
 '''
-!llm and !llm-embedding use the OpenAI API
-to make queries to their llm models.
+!llm and !llm-embedding use the OpenAI API to make queries to GPT.
 
-Require the setting of an OPENAI_API_KEY.
+Requires OPENAI_API_KEY and OPENAI_API_ORG envvars to be set.
 '''
 
 from typing import List, Dict
+import os
 
-from aipl import defop, expensive, stderr
+from aipl import defop, expensive, stderr, AIPLException
 
 
 def _parse_msg(s:str):
@@ -64,6 +64,9 @@ def op_llm(aipl, v:str, **kwargs) -> str:
     parms.update(kwargs)
     msgs = [_parse_msg(m) for m in v.splitlines()]
 
+    if 'OPENAI_API_KEY' not in os.environ or 'OPENAI_API_ORG' not in os.environ:
+        raise AIPLException('''OPENAI_API_KEY and OPENAI_API_ORG envvars must be set for !llm''')
+
     resp = openai.ChatCompletion.create(
         messages=msgs,
         **parms
@@ -85,6 +88,9 @@ def op_llm_embedding(aipl, v:str, **kwargs) -> dict:
 
     if not v:
         raise Exception('no content for embedding')
+
+    if 'OPENAI_API_KEY' not in os.environ or 'OPENAI_API_ORG' not in os.environ:
+        raise AIPLException('''OPENAI_API_KEY and OPENAI_API_ORG envvars must be set for !llm''')
 
     resp = openai.Embedding.create(input=v, **kwargs)
 

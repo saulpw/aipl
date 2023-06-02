@@ -29,7 +29,7 @@ class Command:
 
 
 class AIPLException(Exception):
-    pass
+    'A nice error message to print to stderr and exit without a stacktrace.'
 
 
 class UserAbort(BaseException):
