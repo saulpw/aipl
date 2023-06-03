@@ -164,7 +164,7 @@ class Table:
         return [r.value for r in self]
 
     @property
-    def shape(self):
+    def shape(self) -> List[int]:
         if not self.rows:
             return [0]
         dims = [len(self.rows)]
@@ -175,7 +175,7 @@ class Table:
         return dims
 
     @property
-    def rank(self):
+    def rank(self) -> int:
         return len(self.shape)
 
     @property
@@ -187,14 +187,14 @@ class Table:
         return [c.key for c in self.columns]
 
     @property
-    def current_col(self):
+    def current_col(self) -> Column:
         return self.columns[-1]
 
     @property
     def deepcolnames(self) -> str:
         return ','.join(f'{c.deepname(self)}' for c in self.columns if not c.hidden or c is self.current_col) or "no cols"
 
-    def __getitem__(self, k:int):
+    def __getitem__(self, k:int) -> LazyRow:
         if k >= len(self.rows):
             raise IndexError('table index out of range')
 
