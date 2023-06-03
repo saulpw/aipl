@@ -195,13 +195,10 @@ class Table:
         return ','.join(f'{c.deepname(self)}' for c in self.columns if not c.hidden or c is self.current_col) or "no cols"
 
     def __getitem__(self, k:int):
-        #return LazyRow(self, self.rows[k])
-        if not self.columns:
-            raise IndexError('table has no columns')
         if k >= len(self.rows):
             raise IndexError('table index out of range')
 
-        return self.columns[-1].get_value(self.rows[k])
+        return LazyRow(self, self.rows[k])
 
     def _asdict(self):
         return [r._asdict() for r in self]

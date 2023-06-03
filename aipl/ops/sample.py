@@ -16,8 +16,8 @@ def op_sample(aipl, t:Table, n:int=1) -> Table:
 
 def test_sample(aipl):
     r = aipl.run('!split !sample 2', 'a b c', 'd e f')
-    assert len(r[0]) == 2
-    for row in r[0]:
+    assert len(r[0].value) == 2
+    for row in r[0].value:
         assert row.value in 'abc'
-    for row in r[1]:
+    for row in r[1].value:
         assert row.value in 'def'

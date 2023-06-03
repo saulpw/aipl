@@ -27,7 +27,7 @@ def op_def(aipl, opname, prompt=''):
             argkey = aipl.unique_key
             t = Table([{argkey:t}])
         ret = aipl.run_cmdlist(cmds, t, *args[arity:])
-        return ret[0]
+        return ret[0].value
 
 
 def test_def(aipl):
@@ -38,5 +38,5 @@ def test_def(aipl):
 
 !split-join
 ''', 'a b c', 'd e f')
-    assert r[0] == 'a b c'
-    assert r[1] == 'd e f'
+    assert r[0].value == 'a b c'
+    assert r[1].value == 'd e f'

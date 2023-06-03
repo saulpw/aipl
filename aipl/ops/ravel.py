@@ -28,4 +28,4 @@ def op_ravel(aipl, v:Table) -> Table:
 
 def test_ravel(aipl):
     t = aipl.run('!split !take 2 !ravel !join', 'a b c d', 'e f g')
-    assert t[0] == 'a b e f'
+    assert t[0].value == 'a b e f'

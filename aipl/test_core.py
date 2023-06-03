@@ -42,24 +42,24 @@ def test_lowercase(aipl):
     # 2 rows; single column
     t = aipl.run('!split !lowercase !join', 'A b C', 'DeF')
     assert len(t.rows) == 2
-    assert t[0] == 'a b c'
-    assert t[1] == 'def'
+    assert t[0].value == 'a b c'
+    assert t[1].value == 'def'
 
 def test_cases(aipl):
     t = aipl.run('!split !cases !join', 'A b C', 'DeF')
     assert len(t.rows) == 2
-    assert t[0] == 'a b c'
-    assert t[1] == 'def'
+    assert t[0].value == 'a b c'
+    assert t[1].value == 'def'
 
 def test_toplevel_join(aipl):
     t = aipl.run('!join', 'now', 'is', 'the')
     assert len(t.rows) == 1
-    assert t[0] == 'now is the'
+    assert t[0].value == 'now is the'
 
 def test_split_join(aipl):
     t = aipl.run('!split !take 3 !join', 'now is the time')
     assert len(t.rows) == 1
-    assert t[0] == 'now is the'
+    assert t[0].value == 'now is the'
 
 
 def xtest_op_dicts(aipl):
@@ -76,9 +76,9 @@ def xtest_op_multiple_dicts(aipl):
 
 def xtest_format(aipl):
     t = aipl.run('!split sep=, !parse-keyval !combine-dict !format\n{first} {last}', 'last=smith,first=mike')
-    assert t[0] == 'mike smith'
+    assert t[0].value == 'mike smith'
 
 
 def test_match_filter(aipl):
     t = aipl.run('!split !name keep !match ^z !filter !join', 'ab zh cd zq azzz z')
-    assert t[0] == 'zh zq z'
+    assert t[0].value == 'zh zq z'
