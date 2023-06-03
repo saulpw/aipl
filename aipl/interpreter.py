@@ -94,7 +94,7 @@ class AIPL:
                 raise AIPLException(f'[line {cmd.linenum}] no such operator "!{cmd.opname}"', cmd)
 
             for arg in rest:
-                m = re.match(r'(\w+)=(.*)', arg)
+                m = re.match(r'([\w_-]+)=(.*)', arg)
                 if m:
                     k, v = m.groups()  # arg.split('=', maxsplit=1)
                     cmd.kwargs[clean_to_id(k)] = trynum(v)
