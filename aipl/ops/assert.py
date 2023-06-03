@@ -16,6 +16,11 @@ def op_assert_equal(aipl, v:str, prompt=''):
 @defop('assert-json', 100, None)
 def op_assert_json(aipl, t:Table, prompt:str=''):
     'Error if value Column is not equal to json blob in prompt.'
+
+    class _jsonEncoder(json.JSONEncoder):
+        def default(self, obj):
+            return str(obj)
+
     if t._asdict() != json.loads(prompt):
         jsonenc = _jsonEncoder()
         raise AIPLException(f'assert failed! value not equal\n  ' + jsonenc.encode(t._asdict()))

@@ -320,11 +320,16 @@ def prep_output(aipl,
             rows = []
             for v in out:
                 d = {'__parent': parent_row} if parent_row is not None else {}
-                d[varname] = v
+                if isinstance(v, dict):
+                    d.update(v)
+                else:
+                    d[varname] = v
                 rows.append(d)
             ret = Table(rows, parent=parent_table)
-#            for k in ret.rows[0].keys():  # assumes first row has same keys as every other row
-#                ret.add_column(Column(k))
+            if isinstance(v, dict):
+                for k in v.keys():  # assume last row has same keys as every other row
+                    if k != '__parent':
+                        ret.add_column(Column(k))
             return ret
 
     else:

@@ -143,13 +143,14 @@ class Table:
     def __bool__(self):
         return len(self.rows) > 0
 
-    def __copy__(self):
+    def __copy__(self) -> 'Table':
+        'Returns structural copy of table with all columns and no rows.'
         ret = Table()
 
         for c in self.columns:
             ret.add_column(copy(c))
 
-        ret.rows = self.rows
+        ret.rows = []
         return ret
 
     def axis(self, rank:int=0):
@@ -197,7 +198,6 @@ class Table:
     def __getitem__(self, k:int) -> LazyRow:
         if k >= len(self.rows):
             raise IndexError('table index out of range')
-
         return LazyRow(self, self.rows[k])
 
     def _asdict(self):

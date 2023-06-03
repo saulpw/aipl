@@ -5,20 +5,25 @@ with only those columns.
 Akin to SQLite SELECT.
 '''
 
-from aipl import defop
+from copy import copy
+
+from aipl import defop, Table, Column
 
 
 @defop('columns', 1.5, 1.5)
-def op_columns(aipl, t:'Table', *colnames):
+def op_columns(aipl, t:'Table', *colnames, **renamedcols) -> Table:
     'Create new table containing only these columns.'
+    namings = [(n,n) for n in colnames]  # from_name:to_name
+    namings.extend((v,k) for k,v in renamedcols.items())
     newcols = []
-    for name in colnames:
-        c = t.get_column(name)
-        if not c:
-            colnamestr = ','.join(t.colnames)
-            raise Exception(f'no column "{name}" in {colnamestr}')
+    ret = copy(t)
+    ret.rows = []
+    for row in t:
+        d = {'__parent':row}
+        d.update({to_name:row[from_name] for from_name, to_name in namings})
+        ret.rows.append(d)
 
-        newcols.append(c)
+    for from_name, to_name in namings:
+        ret.add_column(Column(to_name))
 
-    t.columns = newcols
-    return t
+    return ret

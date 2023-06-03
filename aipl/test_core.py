@@ -1,4 +1,6 @@
 from typing import List
+from collections import defaultdict
+import string
 
 import pytest
 
@@ -36,6 +38,17 @@ def op_lowercase(aipl, v:str) -> str:
 def op_uppercase(aipl, v:str) -> str:
     return v.upper()
 
+@defop('lettertypes', 0, 1.5)
+def op_letters(aipl, v:str) -> List[dict]:
+    'Yield dict(letters=, digits=) for each word in input.'
+    for word in v.split():
+        letters = defaultdict(int)
+        for c in word:
+            if c in string.ascii_letters:
+                letters['letters'] += 1
+            elif c in string.digits:
+                letters['digits'] += 1
+        yield letters
 
 def test_lowercase(aipl):
     # scalar to scalar
@@ -82,3 +95,11 @@ def xtest_format(aipl):
 def test_match_filter(aipl):
     t = aipl.run('!split !name keep !match ^z !filter !join', 'ab zh cd zq azzz z')
     assert t[0].value == 'zh zq z'
+
+
+def test_out_table_dict(aipl):
+    'Tests when a rankout of 1.5 is returned a dict.'
+    r = aipl.run('!lettertypes', '1abc cd23 de53')
+    t = r[0].value
+    assert set(t.colnames) == set(['digits', 'letters'])
+    assert t[0]['digits'] == 1 and t[0]['letters'] == 3

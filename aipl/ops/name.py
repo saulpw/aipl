@@ -7,6 +7,7 @@ from aipl import defop, Table
 def op_name(aipl, t:Table, name) -> Table:
     'Rename current input column to given name.'
     ret = copy(t)
-    c = ret.columns[-1]
+    ret.rows = copy(t.rows)
+    c = ret.current_col
     c.name = name
     return ret

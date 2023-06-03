@@ -12,7 +12,7 @@ from aipl.table import Table, Column
 
 
 @defop('groupby', 1.5, 1.5)
-def op_groupby(aipl, t:Table, *args):
+def op_groupby(aipl, t:Table, *args) -> Table:
     'Group rows into tables, by set of columns given as args.'
     groups = defaultdict(list)  # groupkey -> list of rowdict
     for row in t:
