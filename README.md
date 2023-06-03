@@ -56,19 +56,26 @@ At the very least, AIPL should be a useful tool to learn, explore, and prototype
 ## Usage
 
 ```
-usage: aipl [-h] [--visidata] [--debug] [--single-step]
+usage: aipl [-h] [--debug] [--step STEP] [--step-breakpoint] [--step-rich]
+            [--step-vd] [--dry-run] [--output-db OUTDBFN]
             script_or_global [script_or_global ...]
 
 AIPL interpreter
 
 positional arguments:
-  script_or_global   scripts to run, or k=v global parameters
+  script_or_global      scripts to run, or k=v global parameters
 
 options:
-  -h, --help         show this help message and exit
-  --visidata, --vd   open VisiData with input before each step
-  --debug, -d        abort on exception
-  --single-step, -x  breakpoint() before each step
+  -h, --help            show this help message and exit
+  --debug, -d           abort on exception
+  --step STEP           call aipl.step_<func>(cmd, input) before each step
+  --step-breakpoint, -x
+                        breakpoint() before each step
+  --step-rich, -v       output rich table before each step
+  --step-vd, --vd       open VisiData with input before each step
+  --dry-run, -n         do not execute @expensive operations
+  --output-db OUTDBFN, -o OUTDBFN
+                        sqlite database accessible to !db operators
 
 ```
 
@@ -165,56 +172,56 @@ Notes:
 
 ## List of operators
 
-- abort (in=None out=None): None
-- assert_equal (in=0 out=None): Error if value is not equal to prompt.
-- assert_json (in=100 out=None): Error if value Column is not equal to json blob in prompt.
-- cluster (in=1 out=1): Cluster rows by embedding into n clusters; add label column.
-- columns (in=1.5 out=1.5): Create new table containing only these columns.
-- comment (in=None out=None): Do nothing (ignoring args and prompt).
-- debug (in=None out=None): set debug flag and call breakpoint() before each command
-- debug_vd (in=None out=None): launch visidata with current input before each command
-- debug_rich (in=None out=None): Print input table table to stderr (using rich) before each command.
-- def (in=None out=None): Define composite operator from cmds in prompt (must be indented).
-- extract_text_all (in=0 out=0): Extract all text from HTML
-- extract_text (in=0 out=0): Extract meaningful text from HTML
-- extract_links (in=0 out=1.5): Extract (linktext, title, href) from <a> tags in HTML
-- fetch_url (in=0 out=0.5): Fetch URL as text HTML.
-- fetch_url_bytes (in=0 out=0.5): Fetch URL as raw bytes.
-- filter (in=1.5 out=1.5): Return copy of table, keeping only rows whose value is Truthy.
-- groupby (in=1.5 out=1.5): Group rows into tables, by set of columns given as args.
-- require_input (in=100 out=100): Ensure there is any input at all; if not, display the prompt and read input from the user.
-- json (in=100 out=0): Convert Table into a json blob.
-- json_parse (in=0 out=0.5): Convert a json blob into a LazyRow.
-- llm (in=0 out=0): Send a chat message to an OpenAI LLM. Supports [all params](https://platform.openai.com/docs/guides/chat/introduction).
-- llm_embedding (in=0 out=0.5): Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.
-- name (in=1.5 out=1.5): Rename current input column to given name.
-- dbinsert (in=0.5 out=None): Insert each row into database table.
-- dbdrop (in=None out=None): Drop database table.
-- pdf_extract (in=0 out=0): None
-- python (in=None out=None): exec() Python toplevel statements.
-- python_input (in=100 out=1.5): eval() Python expression and use as toplevel input table.
-- sh (in=0 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
-- shtty (in=0.5 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
-- take (in=1.5 out=1.5): Return a table with first n rows of `t`
-- format (in=0.5 out=0): Format prompt text as a Python string template, substituting values from row and global context.
-- split (in=0 out=1): Split text into chunks based on sep, keeping each chunk below maxsize.
-- split_into (in=0 out=0.5): None
-- join (in=1 out=0): Join inputs with sep into a single output scalar.
-- print (in=0 out=None): Print to stdout.
-- match (in=0 out=0): Return a bool with whether value matched regex. Used with !filter.
-- replace (in=0 out=0): None
-- save (in=0 out=None): Save to given filename.
-- literal (in=None out=0): None
-- split_url (in=0 out=0.5): None
-- defrag (in=0 out=0): None
-- xml_xpath (in=0 out=1): None
-- xml_xpaths (in=0 out=0.5): None
-- ravel (in=100 out=1.5): All of the leaf scalars in the value column become a single 1-D array.
-- read (in=None out=0): Open, read, and return contents in given local filename.
-- ref (in=1.5 out=1.5): Move column on table to end of columns list (becoming the new .value)
-- sample (in=1.5 out=1.5): Sample n random rows from the input table.
-- aipl_ops (in=100 out=0): None
-- read_summary (in=None out=0): None
+- `!abort` (in=None out=None): None
+- `!assert_equal` (in=0 out=None): Error if value is not equal to prompt.
+- `!assert_json` (in=100 out=None): Error if value Column is not equal to json blob in prompt.
+- `!cluster` (in=1 out=1): Cluster rows by embedding into n clusters; add label column.
+- `!columns` (in=1.5 out=1.5): Create new table containing only these columns.
+- `!comment` (in=None out=None): Do nothing (ignoring args and prompt).
+- `!dbinsert` (in=0.5 out=None): Insert each row into database table.
+- `!dbdrop` (in=None out=None): Drop database table.
+- `!option` (in=None out=None): None
+- `!debug` (in=None out=None): set debug flag and call breakpoint() before each command
+- `!def` (in=None out=None): Define composite operator from cmds in prompt (must be indented).
+- `!extract_text_all` (in=0 out=0): Extract all text from HTML
+- `!extract_text` (in=0 out=0): Extract meaningful text from HTML
+- `!extract_links` (in=0 out=1.5): Extract (linktext, title, href) from <a> tags in HTML
+- `!fetch_url` (in=0 out=0.5): Fetch URL as text HTML.
+- `!fetch_url_bytes` (in=0 out=0.5): Fetch URL as raw bytes.
+- `!filter` (in=1.5 out=1.5): Return copy of table, keeping only rows whose value is Truthy.
+- `!format` (in=0.5 out=0): Format prompt text as a Python string template, substituting values from row and global context.
+- `!groupby` (in=1.5 out=1.5): Group rows into tables, by set of columns given as args.
+- `!require_input` (in=100 out=100): Ensure there is any input at all; if not, display the prompt and read input from the user.
+- `!join` (in=1 out=0): Join inputs with sep into a single output scalar.
+- `!json` (in=100 out=0): Convert Table into a json blob.
+- `!json_parse` (in=0 out=0.5): Convert a json blob into a LazyRow.
+- `!literal` (in=None out=0): None
+- `!llm` (in=0 out=0): Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.
+- `!llm_embedding` (in=0 out=0.5): Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.
+- `!match` (in=0 out=0): Return a bool with whether value matched regex. Used with !filter.
+- `!name` (in=1.5 out=1.5): Rename current input column to given name.
+- `!pdf_extract` (in=0 out=0): None
+- `!print` (in=0 out=None): Print to stdout.
+- `!python` (in=None out=None): exec() Python toplevel statements.
+- `!python_input` (in=100 out=1.5): eval() Python expression and use as toplevel input table.
+- `!ravel` (in=100 out=1.5): All of the leaf scalars in the value column become a single 1-D array.
+- `!read` (in=None out=0): Open, read, and return contents in given local filename.
+- `!ref` (in=1.5 out=1.5): Move column on table to end of columns list (becoming the new .value)
+- `!replace` (in=0 out=0): None
+- `!sample` (in=1.5 out=1.5): Sample n random rows from the input table.
+- `!save` (in=0 out=None): Save to given filename.
+- `!sh` (in=0 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
+- `!shtty` (in=0.5 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
+- `!sort` (in=1.5 out=1.5): None
+- `!grade_up` (in=1.5 out=1): None
+- `!split` (in=0 out=1): Split text into chunks based on sep, keeping each chunk below maxsize.
+- `!split_into` (in=0 out=0.5): None
+- `!take` (in=1.5 out=1.5): Return a table with first n rows of `t`
+- `!url_split` (in=0 out=0.5): Split url into components (scheme, netloc, path, params, query, fragment).
+- `!url_defrag` (in=0 out=0): Remove fragment from url.
+- `!xml_xpath` (in=0 out=1): None
+- `!xml_xpaths` (in=0 out=0.5): None
+- `!aipl_ops` (in=100 out=0): None
 
 
 ## Defining a new operator
@@ -272,7 +279,7 @@ With `rankin=0` and `rankout` of:
 
 - -1: no change (like 'print')
 - 0: scalar operation (like 'translate')
-- 0.5: scalar to simple row (like 'split-url')
+- 0.5: scalar to simple row (like 'url-split')
 - 1: scalar to simple vector (like 'split-text')
 - 1.5: scalar to table (like 'extract-links')
 

@@ -7,7 +7,7 @@ def op_python(aipl, prompt:str=''):
     exec(prompt)
 
 
-@defop('python-input', 100, 1.5)
+@defop('python-input', 100, 1.5, outcols='pyval')
 def op_python_input(aipl, t:'Table', prompt:str=''):
     'eval() Python expression and use as toplevel input table.'
     aipl.globals.update(dict(aipl=aipl))
