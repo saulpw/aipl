@@ -4,6 +4,12 @@ import sys
 from aipl import defop, LazyRow, UserAbort, Table, AIPL, Command
 
 
+@defop('option', None, None, arity=0)
+def op_option(aipl, **kwargs):
+    for k, v in kwargs.items():
+        aipl.options[k] = v
+
+
 @defop('debug', None, None, arity=0)
 def op_debug(aipl, *args):
     'set debug flag and call breakpoint() before each command'
