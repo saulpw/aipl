@@ -2,7 +2,7 @@ from aipl import defop, dbcache, stderr
 from urllib.parse import urlparse, urlunparse
 
 
-@defop('fetch-url', 0, 0.5, 1)
+@defop('fetch-url', 0, 0.5, 1, outcols='url contents')
 @dbcache
 def op_fetch_url(aipl, url:str) -> dict:
     'Fetch URL as text HTML.'
@@ -14,7 +14,7 @@ def op_fetch_url(aipl, url:str) -> dict:
     return dict(url=url, contents=trafilatura.fetch_url(url))
 
 
-@defop('fetch-url-bytes', 0, 0.5, 1)
+@defop('fetch-url-bytes', 0, 0.5, 1, outcols='url contents')
 @dbcache
 def op_fetch_url_bytes(aipl, url:str) -> dict:
     'Fetch URL as raw bytes.'

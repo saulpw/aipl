@@ -38,7 +38,7 @@ def op_lowercase(aipl, v:str) -> str:
 def op_uppercase(aipl, v:str) -> str:
     return v.upper()
 
-@defop('lettertypes', 0, 1.5)
+@defop('lettertypes', 0, 1.5, outcols='letters digits')
 def op_letters(aipl, v:str) -> List[dict]:
     'Yield dict(letters=, digits=) for each word in input.'
     for word in v.split():

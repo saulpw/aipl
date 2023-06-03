@@ -3,6 +3,7 @@ from copy import copy
 
 from .utils import fmtargs, fmtkwargs, stderr, strify
 
+UNWORKING = object()
 
 class Row(dict):
     pass
@@ -223,7 +224,7 @@ class Table:
 
     def add_column(self, col:Column):
         if self.rows:
-            assert col.get_value(self.rows[0]) is not None
+            assert col.get_value(self.rows[0]) is not UNWORKING
         if col.key in self.colkeys or col.name in self.colnames:
             return
         self.columns.append(col)

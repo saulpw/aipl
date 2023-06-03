@@ -27,7 +27,7 @@ def op_extract_text(aipl, html:str, **kwargs) -> str:
         return content
 
 
-@defop('extract-links', 0, 1.5)
+@defop('extract-links', 0, 1.5, outcols='linktext title href')
 def op_extract_links(aipl, html:str, baseurl='', **kwargs) -> List[dict]:
     'Extract (linktext, title, href) from <a> tags in HTML'
     if not html:

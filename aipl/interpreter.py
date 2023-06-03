@@ -191,7 +191,12 @@ class AIPL:
         else:
             varname = newkey or self.unique_key
 
-        return prep_output(self, inputs[0] if inputs else None, ret, cmd.op.rankout, varname)
+        return prep_output(self,
+                           inputs[0] if inputs else None,
+                           ret,
+                           cmd.op.rankout,
+                           cmd.op.outcols.split(),
+                           varname)
 
     def eval_op(self, cmd:Command, t:Table|LazyRow, contexts=[], newkey='') -> Table:
         'Recursively evaluate cmd.op(t) with cmd args formatted with contexts'
@@ -278,6 +283,7 @@ def prep_output(aipl,
                 in_row:LazyRow|Table,
                 out:Scalar|List[Scalar]|LazyRow|Table,
                 rankout:int|float,
+                outcols:List[str],
                 varname:str) -> Scalar|List[Scalar]|Table|LazyRow:
 
     if rankout is None:
@@ -325,19 +331,19 @@ def prep_output(aipl,
                 else:
                     d[varname] = v
                 rows.append(d)
+
             ret = Table(rows, parent=parent_table)
-            if isinstance(v, dict):
-                for k in v.keys():  # assume last row has same keys as every other row
-                    if k != '__parent':
-                        ret.add_column(Column(k))
+            assert outcols, 'outcols must be given for rankout=1.5'
+            for k in outcols:
+                ret.add_column(Column(k))
+
             return ret
 
     else:
         raise Exception("Unexpected rankout")
 
 
-
-def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
+def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1, outcols:str=''):
     def _decorator(f):
         @wraps(f)
         def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
@@ -348,6 +354,7 @@ def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1):
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout
         _wrapped.arity = arity
+        _wrapped.outcols = outcols
         _wrapped.__name__ = name
         AIPL.operators[name] = _wrapped
         return _wrapped
