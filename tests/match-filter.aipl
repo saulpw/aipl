@@ -1,0 +1,8 @@
+!literal
+ab zh cd zq azzz z
+!split>keep
+!match ^z
+!filter
+!join
+!assert-equal
+zh zq z

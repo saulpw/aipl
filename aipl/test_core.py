@@ -13,12 +13,6 @@ def op_parse_keyval(aipl, s:str) -> dict:
     k, v = s.split('=', maxsplit=1)
     return {k:v}
 
-@defop('parse-keyvals', 0, 1.5)
-def op_parse_keyvals(aipl, s:str) -> List[dict]:
-    for arg in s.split(','):
-        k, v = arg.split('=', maxsplit=1)
-        yield {k:v}
-
 @defop('combine-dict', 1.5, 0.5)
 def op_combine_dict(aipl, t:Table) -> dict:
     ret = {}
@@ -64,37 +58,16 @@ def test_cases(aipl):
     assert t[0].value == 'a b c'
     assert t[1].value == 'def'
 
-def test_toplevel_join(aipl):
-    t = aipl.run('!join', 'now', 'is', 'the')
-    assert len(t.rows) == 1
-    assert t[0].value == 'now is the'
 
-def test_split_join(aipl):
-    t = aipl.run('!split !take 3 !join', 'now is the time')
-    assert len(t.rows) == 1
-    assert t[0].value == 'now is the'
-
-
-def xtest_op_dicts(aipl):
+def test_op_dicts(aipl):
     'test ops of rankin/rankout == 0.5'
     t = aipl.run('!split sep=, !parse-keyval !combine-dict', 'a=1,b=2,c=3')
     assert t._asdict()[0] == dict(a='1', b='2', c='3')
 
 
-def xtest_op_multiple_dicts(aipl):
-    'test ops of rankin/rankout == 0.5'
-    t = aipl.run('!parse-keyvals !combine-dict', 'a=1,b=2,c=3')
-    assert t._asdict()[0] == dict(a='1', b='2', c='3')
-
-
-def xtest_format(aipl):
+def test_col_reference(aipl):
     t = aipl.run('!split sep=, !parse-keyval !combine-dict !format\n{first} {last}', 'last=smith,first=mike')
     assert t[0].value == 'mike smith'
-
-
-def test_match_filter(aipl):
-    t = aipl.run('!split !name keep !match ^z !filter !join', 'ab zh cd zq azzz z')
-    assert t[0].value == 'zh zq z'
 
 
 def test_out_table_dict(aipl):

@@ -235,11 +235,11 @@ class AIPL:
 
                 ret.rows.append(update_dict(row._row, x, newkey))
 
-            if isinstance(x, Mapping):
-                for k in x.keys():
-                    ret.add_column(Column(k, k))
-            else:
-                ret.add_column(Column(newkey))
+                if isinstance(x, Mapping):
+                    for k in x.keys():
+                        ret.add_column(Column(k, k))
+                else:
+                    ret.add_column(Column(newkey))
 
         return ret
 
