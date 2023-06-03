@@ -7,40 +7,34 @@
 !name sourceurl
 !fetch-url
 !extract-links baseurl={sourceurl}
+!name url
 
 # get only urls below the given url and remove the #fragment
-!name url
-#!match ^{sourceurl}
-#!filter
-!ref url
-!defrag
+!match ^{sourceurl}
+!filter
+!url-defrag>mainurl
 
 !fetch-url
-!extract-text
-
-!name text
+!extract-text>text
 
 !split maxsize=4000
 !take 1
-!unravel
+!ravel
 
 # get an embedding for each
 # XXX: how to exclude for URLs we've already done?
 !llm-embedding model=text-embedding-ada-002
-!name embedding
-
-!dbdrop embeddings
-!dbinsert embeddings
 
 !cluster n=10
 !name label
 
-!columns url text label
+!columns url=mainurl text=text label=label
+
 !dbdrop categorized
 !dbinsert categorized
 
 # make a 2-column table (first being the category label, second being the list of rows)
-!group
+!groupby label
 
 # find topic and subreddit
 !sample n=3
@@ -74,4 +68,5 @@ Summaries:
 
 Theme and subreddit:
 
-!llm max-tokens=64
+!llm max-tokens=64 model=gpt-3.5-turbo
+!print
