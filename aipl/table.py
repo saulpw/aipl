@@ -137,11 +137,6 @@ class Table:
             else:
                 raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")
 
-        if parent is not None:
-            for col in parent.columns:
-                if not col.hidden:
-                    self.add_column(ParentColumn(col.name, col))
-
     def __len__(self):
         return len(self.rows)
 
