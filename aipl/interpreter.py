@@ -65,7 +65,7 @@ class AIPL:
     def parse_cmdline(self, line:str, linenum:int=0) -> List[Command]:
         'Parse single command line into one or more Commands.'
         for cmdstr in line[1:].split(' !'):
-            opvar, *rest = cmdstr.split(' ')
+            opvar, *rest = cmdstr.split()
             if '>' in opvar:
                 opname, *varnames = opvar.split('>')
             else:
