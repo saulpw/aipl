@@ -11,7 +11,7 @@ aipl_grammar = Lark(r'''
 start: line*
 
 line: command | "\n"
-command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg* "\n" prompt
+command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg* ["\n" prompt]
 
 COMMAND: "!"
 IMMEDIATE_COMMAND: "!!"
@@ -20,7 +20,7 @@ varnames: ( ">" IDENTIFIER? )*
 
 arg: KEY "=" VALUE | VALUE
 
-VALUE: /\S+/
+VALUE: /[^ \t\n!]\S*/
 KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
@@ -49,11 +49,15 @@ class ToAst(Transformer):
         return tree
 
     def start(self, tree):
-        return [command for command in tree if command]
+        return [command[0] for command in tree if command]
 
     def command(self, tree):
-        print("TREE:", tree)
         command_sign, opname, varnames, *args = tree
+
+        prompt = args.pop()
+        kwargs = {k: v for k, v in args if k is not None}
+        if prompt is not None:
+            kwargs['prompt'] = prompt
 
         return AstCommand(
             opname=tree[1].value,
@@ -62,7 +66,8 @@ class ToAst(Transformer):
             immediate=command_sign.type == 'IMMEDIATE_COMMAND',
             varnames=varnames,
             args=[v for k, v in args if k is None and v is not None],
-            kwargs={k: v for k, v in args if k is not None})
+            kwargs=kwargs,
+        )
 
     def varnames(self, tree):
         return [token.value for token in tree]
@@ -75,9 +80,12 @@ class ToAst(Transformer):
     def prompt(self, lines):
         prompt = textwrap.dedent('\n'.join(token.value for token in lines).strip())
         if not prompt:
-            return (None, None)
-        return ('prompt', prompt)
+            return None
+        return prompt
 
+def parse(program_text):
+    parse_tree = aipl_grammar.parse(program_text)
+    return ToAst().transform(parse_tree)
 
 if __name__ == '__main__':
     for file in sys.argv[1:]:
