@@ -11,12 +11,12 @@ aipl_grammar = Lark(r'''
 start: line*
 
 line: command | "\n"
-command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER redirection arg* "\n" prompt
+command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg* "\n" prompt
 
 COMMAND: "!"
 IMMEDIATE_COMMAND: "!!"
 
-redirection: ( ">" IDENTIFIER? )*
+varnames: ( ">" IDENTIFIER? )*
 
 arg: KEY "=" VALUE | VALUE
 
@@ -64,7 +64,7 @@ class ToAst(Transformer):
             args=[v for k, v in args if k is None and v is not None],
             kwargs={k: v for k, v in args if k is not None})
 
-    def redirection(self, tree):
+    def varnames(self, tree):
         return [token.value for token in tree]
 
     def arg(self, tree):
