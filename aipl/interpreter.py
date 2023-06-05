@@ -108,9 +108,11 @@ class AIPL:
         def set_last_prompt(ret, prompt):
             import textwrap
             if ret:
+                cmd = ret[-1]
                 prompt = prompt.strip('\n')
                 if prompt:
-                    ret[-1].kwargs['prompt'] = textwrap.dedent(prompt)
+                    cmd.kwargs['prompt'] = cmd.op.preprompt(textwrap.dedent(prompt))
+
 
         for linenum, line in enumerate(source.splitlines()):
             if line.startswith('#'):  # comment
@@ -352,6 +354,7 @@ def defop(opname:str, rankin:None|int|float=0, rankout:int|float=0, arity=1, out
         _wrapped.arity = arity
         _wrapped.outcols = outcols
         _wrapped.__name__ = name
+        _wrapped.preprompt = lambda prompt: preprompt(prompt)
         AIPL.operators[name] = _wrapped
         return _wrapped
     return _decorator
