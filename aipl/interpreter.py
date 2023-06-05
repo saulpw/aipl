@@ -336,7 +336,10 @@ def prep_output(aipl,
         raise Exception("Unexpected rankout")
 
 
-def defop(opname:str, rankin:int|float=0, rankout:int|float=0, arity=1, outcols:str=''):
+def defop(opname:str, rankin:None|int|float=0, rankout:int|float=0, arity=1, outcols:str='', preprompt=lambda x: x):
+    if rankin is None:
+        arity = 0  # no explict arity for nonary or unary ops
+
     def _decorator(f):
         @wraps(f)
         def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
