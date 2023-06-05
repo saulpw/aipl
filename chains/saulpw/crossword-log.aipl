@@ -3,7 +3,6 @@
 # Usage:
 #  $0 book="Book Title" attempted_date="2022-2023"
 
-!split sep=\n
 !regex-capture
    (?P<A1_D1>\w+) ?(?P<note>.*)?
 
