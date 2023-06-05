@@ -319,6 +319,7 @@ def prep_output(aipl,
                 raise Exception(f'unknown type for in_row: {type(in_row)}')
 
             rows = []
+            d = {}  # in case there are no rows in out
             for v in out:
                 d = {'__parent': parent_row} if parent_row is not None else {}
                 if isinstance(v, dict):
@@ -328,9 +329,12 @@ def prep_output(aipl,
                 rows.append(d)
 
             ret = Table(rows, parent=parent_table)
-            assert outcols, 'outcols must be given for rankout=1.5'
-            for k in outcols:
-                ret.add_column(Column(k))
+            if outcols:
+                for k in outcols:
+                    ret.add_column(Column(k))
+            elif d:  # we figure it out and it's gay
+                for k in d:
+                    ret.add_column(Column(k))
 
             return ret
 
