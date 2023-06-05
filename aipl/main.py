@@ -12,7 +12,7 @@ def parse_args(args):
     parser.add_argument('--step-rich', '-v', action='store_const', dest='step', const='rich', help='output rich table before each step')
     parser.add_argument('--step-vd', '--vd', action='store_const', dest='step', const='vd', help='open VisiData with input before each step')
     parser.add_argument('--dry-run', '-n', action='store_true', help='do not execute @expensive operations')
-    parser.add_argument('--output-db', '-o', action='store', default='aipl-cache.db', dest='outdbfn', help='sqlite database accessible to !db operators')
+    parser.add_argument('--output-db', '-o', action='store', default='aipl-cache.sqlite', dest='outdbfn', help='sqlite database accessible to !db operators')
     parser.add_argument('script_or_global', nargs='+', help='scripts to run, or k=v global parameters')
     return parser.parse_args(args)
 
