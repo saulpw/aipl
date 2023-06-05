@@ -97,5 +97,3 @@ class Database:
 
     def sql(self, qstr):
         return self.con.execute(qstr)
-
-

@@ -1,8 +1,16 @@
+class AIPLException(Exception):
+    'A nice error message to print to stderr and exit without a stacktrace.'
+
+
+class UserAbort(BaseException):
+    'UserAbort not caught by internal error handling; will always exit.'
+
+
 from .utils import stderr
-from .interpreter import AIPL, defop, AIPLException, UserAbort, Command
 from .db import Database
-from .caching import expensive, dbcache
 from .table import Table, Column, LazyRow
+from .interpreter import AIPL, defop, Command
+from .caching import expensive, dbcache
 from .main import main
 
 

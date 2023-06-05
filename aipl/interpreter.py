@@ -6,6 +6,7 @@ import math
 import json
 import re
 
+from aipl import AIPLException
 from .table import Table, LazyRow, Column, Row
 from .db import Database
 from .utils import stderr, trynum, fmtargs, fmtkwargs, AttrDict
@@ -26,14 +27,6 @@ class Command:
 
     def __str__(self):
         return f'-> {self.opname} (line {self.linenum})'
-
-
-class AIPLException(Exception):
-    'A nice error message to print to stderr and exit without a stacktrace.'
-
-
-class UserAbort(BaseException):
-    'UserAbort not caught by internal error handling; will always exit.'
 
 
 def clean_to_id(s:str) -> str:

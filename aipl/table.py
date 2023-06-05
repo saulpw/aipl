@@ -1,6 +1,7 @@
 from typing import Mapping, List
 from copy import copy
 
+from aipl import AIPLException
 from .utils import fmtargs, fmtkwargs, stderr, strify
 
 UNWORKING = object()
