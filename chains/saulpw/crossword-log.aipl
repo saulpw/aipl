@@ -1,0 +1,41 @@
+#!/usr/bin/env aipl
+
+# Usage:
+#  $0 book="Book Title" attempted_date="2022-2023"
+
+!split sep=\n
+!regex-capture
+   (?P<A1_D1>\w+) ?(?P<note>.*)?
+
+!regex-translate>rating
+# rating:
+# -2: hated
+# -1: didn't like
+#  0: attempted, unfinished
+# +1: completed
+#  2: liked
+  \* 0
+  \+ +2
+  \- -1
+  ^$ +1
+
+!ravel
+
+!!python
+from dateutil.parser import parse
+def date(s):
+    return parse(s)
+
+!!dbopen>gxd gxd.sqlite
+!dbquery gxd puzzles xdid A1_D1={A1_D1}
+
+!python-expr>dotw date('{xdid}'[3:]).strftime('%A')
+
+!format>attempted_date
+{attempted_date}
+!format>book
+{book}
+
+!columns  attempted_date dotw xdid A1_D1 rating book
+!dbdrop attempted_puzzles
+!dbinsert attempted_puzzles
