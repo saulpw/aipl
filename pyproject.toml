@@ -15,6 +15,7 @@ trafilatura = "^1.6.0"
 beautifulsoup4 = "^4.12.2"
 lxml = "^4.9.2"
 lark = "^1.1.5"
+rich = "^13.4.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
