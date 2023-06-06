@@ -1,16 +1,13 @@
-from typing import List, Dict, Mapping, Callable
+from typing import List, Mapping, Callable
 from copy import copy
 from dataclasses import dataclass
 from functools import wraps
-import math
-import json
-import re
 
 from aipl import AIPLException
-from .table import Table, LazyRow, Column, Row
+from .table import Table, LazyRow, Column
 from .db import Database
 from .utils import stderr, fmtargs, fmtkwargs, AttrDict
-from .parser import trynum, clean_to_id
+from .parser import clean_to_id
 from . import parser
 
 
@@ -29,10 +26,6 @@ class Command:
 
     def __str__(self):
         return f'-> {self.opname} (line {self.linenum})'
-
-
-class AIPLException(Exception):
-    'A nice error message to print to stderr and exit without a stacktrace.'
 
 
 class UserAbort(BaseException):
