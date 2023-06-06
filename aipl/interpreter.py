@@ -68,82 +68,41 @@ class AIPL:
     def step_breakpoint(self, t:Table, cmd:Command):
         breakpoint()
 
-    def parse_cmdline(self, line:str, linenum:int=0) -> List[Command]:
-        'Parse single command line into one or more Commands.'
-        for cmdstr in line[1:].split(' !'):
-            opvar, *rest = cmdstr.split()
-            if '>' in opvar:
-                opname, *varnames = opvar.split('>')
-            else:
-                opname = opvar
-                varnames = []
-
-            immediate=opname.startswith('!')
-            opname = clean_to_id(opname)
-            cmd = Command(linenum=linenum+1,
-                          line=cmdstr,
-                          opname=opname,
-                          immediate=immediate,
-                          op=self.get_op(opname),
-                          varnames=varnames,
-                          args=[],
-                          kwargs={})
-
-            if not cmd.op:
-                raise AIPLException(f'[line {cmd.linenum}] no such operator "!{cmd.opname}"', cmd)
-
-            for arg in rest:
-                m = re.match(r'([\w_-]+)=(.*)', arg)
-                if m:
-                    k, v = m.groups()  # arg.split('=', maxsplit=1)
-                    cmd.kwargs[clean_to_id(k)] = trynum(v)
-                else:
-                    cmd.args.append(trynum(arg))
-
-            yield cmd
-
     def get_op(self, opname:str):
         return self.operators.get(opname, None)
 
     def parse(self, source:str) -> List[Command]:
         'Generate list of Commands from source text'
 
-        prompt = ''
-        ret = []
+        ast = parser.parse(source)
 
-        def set_last_prompt(ret, prompt):
-            import textwrap
-            if ret:
-                cmd = ret[-1]
-                prompt = prompt.strip('\n')
-                if prompt:
-                    cmd.kwargs['prompt'] = cmd.op.preprompt(textwrap.dedent(prompt))
+        commands = []
+        for ast_command in ast:
+            command = Command(
+                linenum=ast_command.linenum,
+                line="", # TODO Capture line contents (or not?)
+                opname=ast_command.opname,
+                op=self.get_op(ast_command.opname),
+                immediate=ast_command.immediate,
+                varnames=ast_command.varnames,
+                args=ast_command.args,
+                kwargs=ast_command.kwargs
+            )
 
+            if not command.op:
+                raise AIPLException(
+                    f'[line {command.linenum}] no such operator "!{command.opname}"',
+                    command)
 
-        for linenum, line in enumerate(source.splitlines()):
-            if line.startswith('#'):  # comment
-                continue
-
-            if line.startswith('!'):  # command
-                set_last_prompt(ret, prompt)
-                prompt = ''
-                if ret and ret[-1].immediate:  # !!op means do the command immediately
-                    cmd = ret.pop()
-                    result = self.eval_op(cmd, Table(), contexts=[self.globals])
-                    if cmd.varnames:
-                        k = cmd.varnames[-1]
-                        self.globals[k] = result
-                        stderr(f'(global) {k} = result of {cmd.line}')
-
-                for cmd in self.parse_cmdline(line, linenum):
-                    ret.append(cmd)
-
+            if (command.immediate):
+                result = self.eval_op(command, Table(), contexts=[self.globals])
+                if command.varnames:
+                    last_variable = command.varnames[-1]
+                    self.globals[last_variable] = result
+                    stderr(f'(global) {last_variable} = result of {command.line}')
             else:
-                prompt += line + '\n'
-
-        set_last_prompt(ret, prompt)
-
-        return ret
+                commands.append(command)
+        return commands
 
     def run(self, script:str, *args):
         cmds = self.parse(script)
