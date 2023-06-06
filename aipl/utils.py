@@ -32,16 +32,6 @@ def fmtkwargs(kwargs, contexts:List[Mapping]):
     return {k:(fmtarg(v, d) if k != 'prompt' else v) for k,v in kwargs.items()}
 
 
-def trynum(x:str) -> int|float|str:
-    try:
-        return int(x)
-    except Exception:
-        try:
-            return float(x)
-        except Exception:
-            return x
-
-
 class AttrDict(dict):
     def __getattr__(self, k):
         if k not in self:

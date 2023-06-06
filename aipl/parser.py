@@ -87,6 +87,17 @@ def parse(program_text):
     parse_tree = aipl_grammar.parse(program_text)
     return ToAst().transform(parse_tree)
 
+
+def trynum(x:str) -> int|float|str:
+    try:
+        return int(x)
+    except Exception:
+        try:
+            return float(x)
+        except Exception:
+            return x
+
+
 if __name__ == '__main__':
     for file in sys.argv[1:]:
         print("Parsing: ", file)
