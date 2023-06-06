@@ -12,12 +12,14 @@ ws: [ WS ]
 WS: /[ \t]+/
 
 line: command | "\n"
-command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg* ws ["\n" prompt]
+command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg_list [prompt] ws
 
 COMMAND: "!"
 IMMEDIATE_COMMAND: "!!"
 
 varnames: ( ">" IDENTIFIER )*
+
+arg_list: arg*
 
 arg: ws (KEY "=" VALUE | VALUE)
 
@@ -26,7 +28,7 @@ KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
 
-prompt: STRING_LINE*
+prompt: ws "\n" STRING_LINE*
 STRING_LINE: /[^!#\n][^\n]*(\n|$)/ | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
@@ -53,12 +55,11 @@ class ToAst(Transformer):
         return [command[0] for command in tree if command]
 
     def command(self, tree):
-        command_sign, opname, varnames, *args = tree
+        print("TREE", tree)
+        command_sign, opname, varnames, (args, kwargs), prompt = tree
 
-        # Remove optional newline tokens.
-        args = [arg for arg in args if arg is not None]
-
-        kwargs = {clean_to_id(k): trynum(v) for k, v in args if k is not None}
+        if prompt is not None:
+            kwargs['prompt'] = prompt
 
         return AstCommand(
             opname=clean_to_id(tree[1].value),
@@ -66,9 +67,18 @@ class ToAst(Transformer):
             linenum=command_sign.line,
             immediate=command_sign.type == 'IMMEDIATE_COMMAND',
             varnames=varnames,
-            args=[trynum(v) for k, v in args if k is None and v is not None],
+            args=args,
             kwargs=kwargs,
         )
+
+
+    def arg_list(self, arg_list):
+        print("Arg list: ", arg_list)
+        args = [trynum(arg) for key, arg in arg_list if key is None]
+        kwargs = {clean_to_id(key): trynum(value) for key, value in arg_list if key is not None}
+        print("Kwargs: ", kwargs)
+
+        return args, kwargs
 
     def varnames(self, tree):
         return [token.value for token in tree]
@@ -81,8 +91,8 @@ class ToAst(Transformer):
     def prompt(self, lines):
         prompt = textwrap.dedent('\n'.join(token.value for token in lines).strip())
         if not prompt:
-            return Discard
-        return ('prompt', prompt)
+            return None
+        return prompt
 
     def ws(self, tree):
         return Discard
