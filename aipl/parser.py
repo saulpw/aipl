@@ -11,8 +11,12 @@ start: line*
 ws: [ WS ]
 WS: /[ \t]+/
 
-line: command | "\n"
-command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg_list [prompt] ws
+line: (command ws)* command_prompt | EMPTY_LINE
+
+command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg_list
+command_prompt: command prompt
+
+EMPTY_LINE: "\n"
 
 COMMAND: "!"
 IMMEDIATE_COMMAND: "!!"
@@ -28,7 +32,7 @@ KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
 
-prompt: ws "\n" STRING_LINE*
+prompt: ws [ "\n" STRING_LINE* ]
 STRING_LINE: /[^!#\n][^\n]*(\n|$)/ | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
@@ -52,14 +56,14 @@ class ToAst(Transformer):
         return tree
 
     def start(self, tree):
-        return [command[0] for command in tree if command]
+        output = []
+        for line in tree:
+            output.extend(line)
+        return output
 
     def command(self, tree):
         print("TREE", tree)
-        command_sign, opname, varnames, (args, kwargs), prompt = tree
-
-        if prompt is not None:
-            kwargs['prompt'] = prompt
+        command_sign, opname, varnames, (args, kwargs) = tree
 
         return AstCommand(
             opname=clean_to_id(tree[1].value),
@@ -71,12 +75,22 @@ class ToAst(Transformer):
             kwargs=kwargs,
         )
 
+    def command_prompt(self, tree):
+        command, prompt = tree
+        if prompt:
+            command.kwargs['prompt'] = prompt
+        return command
 
     def arg_list(self, arg_list):
-        print("Arg list: ", arg_list)
-        args = [trynum(arg) for key, arg in arg_list if key is None]
-        kwargs = {clean_to_id(key): trynum(value) for key, value in arg_list if key is not None}
-        print("Kwargs: ", kwargs)
+        args = []
+        kwargs = {}
+
+        for key, arg in arg_list:
+            arg = trynum(arg)
+            if key is None:
+                args.append(arg)
+            else:
+                kwargs[clean_to_id(key)] = arg
 
         return args, kwargs
 
@@ -95,6 +109,9 @@ class ToAst(Transformer):
         return prompt
 
     def ws(self, tree):
+        return Discard
+
+    def EMPTY_LINE(self, token):
         return Discard
 
 def parse(program_text):
@@ -120,5 +137,6 @@ if __name__ == '__main__':
     for file in sys.argv[1:]:
         print("Parsing: ", file)
         parse_tree = aipl_grammar.parse(open(file).read())
+        print("Parse tree: ", parse_tree.pretty())
         for command in ToAst().transform(parse_tree):
             print(command)
