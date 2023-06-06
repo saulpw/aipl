@@ -13,8 +13,10 @@ WS: /[ \t]+/
 
 line: (command ws)* command_prompt | EMPTY_LINE
 
-command: command_sign IDENTIFIER varnames arg_list
+command: command_sign OPNAME varnames arg_list
 command_prompt: command prompt
+
+OPNAME: IDENTIFIER
 
 command_sign: COMMAND | IMMEDIATE_COMMAND
 
@@ -64,11 +66,10 @@ class ToAst(Transformer):
         return output
 
     def command(self, tree):
-        print("TREE", tree)
         command_sign, opname, varnames, (args, kwargs) = tree
 
         return AstCommand(
-            opname=clean_to_id(tree[1].value),
+            opname=opname,
             line=None, # TODO Not yet preserving line contents.
             linenum=command_sign.line,
             immediate=command_sign.type == 'IMMEDIATE_COMMAND',
@@ -76,6 +77,9 @@ class ToAst(Transformer):
             args=args,
             kwargs=kwargs,
         )
+
+    def OPNAME(self, token):
+        return clean_to_id(token.value)
 
     def command_prompt(self, tree):
         command, prompt = tree
