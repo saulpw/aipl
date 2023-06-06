@@ -3,7 +3,7 @@ from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 
-from aipl import AIPLException
+from aipl import Error, AIPLException
 from .table import Table, LazyRow, Column
 from .db import Database
 from .utils import stderr, fmtargs, fmtkwargs, AttrDict
@@ -141,7 +141,12 @@ class AIPL:
         return inputs
 
     def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs, newkey=''):
-        ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+        try:
+            ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+        except Exception as e:
+            if self.options.debug:
+                raise
+            return Error(cmd.linenum, cmd.opname, e)
 
         if cmd.op.rankout is not None and cmd.varnames:
             varname = cmd.varnames[-1]
@@ -210,7 +215,10 @@ def update_dict(d:dict, elem, key:str='') -> dict:
     return d
 
 
-def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+def prep_input(operand:LazyRow|Table|Error, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+    if isinstance(operand, Error):
+        return operand
+
     if rankin is None:
         return None
     if rankin == 0:
