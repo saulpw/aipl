@@ -36,18 +36,38 @@ def test_no_final_newline_prompt():
     assert commands[0].opname == "split"
     assert commands[0].kwargs == {"prompt": "some text"}
 
+
+def test_random_spaces():
+    commands = parse("!a !b  \n c  d\n  \n d\n  e\n")
+    assert ops(commands) == ["a", "b"]
+    assert commands[0].args == []
+    assert commands[0].kwargs == {}
+    assert commands[1].kwargs == {"prompt": "c  d\n\nd\n e"}
+
+
+def test_args():
+    commands = parse("!fn arg1 arg2 arg3")
+    assert commands[0].args == ["arg1", "arg2", "arg3"]
+
+
+def test_args_with_kwargs():
+    commands = parse("!fn arg1 key=abc arg2 key2=def arg3")
+    assert commands[0].args == ["arg1", "arg2", "arg3"]
+    assert commands[0].kwargs == {"key": "abc", "key2": "def"}
+
+
 def test_nested_parse():
     commands = parse(textwrap.dedent('''
     !!def split-join
      !split
+
      !join
 
     !split-join
     '''))
 
     assert ops(commands) == ["def", "split_join"]
-
-
+    assert commands[0].kwargs == {'prompt': "!split\n\n!join"}
 
 def ops(commands):
     return [command.opname for command in commands]
