@@ -5,3 +5,6 @@ trafilatura  # for html extraction
 beautifulsoup4  # for xml/html extraction
 pdfminer  # for pdf extraction
 tiktoken  # for cost-estimation
+lxml      # for xml/html extraction
+lark      # for parser
+rich      # for --step-rich table display
