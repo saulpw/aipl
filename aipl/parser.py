@@ -103,7 +103,7 @@ class ToAst(Transformer):
         return (None, tree[0].value)
 
     def prompt(self, lines):
-        prompt = textwrap.dedent('\n'.join(token.value for token in lines).strip())
+        prompt = textwrap.dedent(''.join(token.value for token in lines)).strip()
         if not prompt:
             return None
         return prompt
