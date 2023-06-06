@@ -9,7 +9,9 @@ import re
 from aipl import AIPLException
 from .table import Table, LazyRow, Column, Row
 from .db import Database
-from .utils import stderr, trynum, fmtargs, fmtkwargs, AttrDict
+from .utils import stderr, fmtargs, fmtkwargs, AttrDict
+from .parser import trynum
+from . import parser
 
 
 Scalar = int|float|str
