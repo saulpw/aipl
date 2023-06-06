@@ -10,7 +10,7 @@ from aipl import AIPLException
 from .table import Table, LazyRow, Column, Row
 from .db import Database
 from .utils import stderr, fmtargs, fmtkwargs, AttrDict
-from .parser import trynum
+from .parser import trynum, clean_to_id
 from . import parser
 
 
@@ -31,8 +31,12 @@ class Command:
         return f'-> {self.opname} (line {self.linenum})'
 
 
-def clean_to_id(s:str) -> str:
-    return s.replace('-', '_').strip('!')
+class AIPLException(Exception):
+    'A nice error message to print to stderr and exit without a stacktrace.'
+
+
+class UserAbort(BaseException):
+    'UserAbort not caught by internal error handling; will always exit.'
 
 
 def rank(v):
