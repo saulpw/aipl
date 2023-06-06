@@ -98,6 +98,10 @@ def trynum(x:str) -> int|float|str:
             return x
 
 
+def clean_to_id(s:str) -> str:
+    return s.replace('-', '_').strip('!')
+
+
 if __name__ == '__main__':
     for file in sys.argv[1:]:
         print("Parsing: ", file)
