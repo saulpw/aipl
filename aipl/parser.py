@@ -13,8 +13,10 @@ WS: /[ \t]+/
 
 line: (command ws)* command_prompt | EMPTY_LINE
 
-command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg_list
+command: command_sign IDENTIFIER varnames arg_list
 command_prompt: command prompt
+
+command_sign: COMMAND | IMMEDIATE_COMMAND
 
 EMPTY_LINE: "\n"
 
@@ -80,6 +82,9 @@ class ToAst(Transformer):
         if prompt:
             command.kwargs['prompt'] = prompt
         return command
+
+    def command_sign(self, tree):
+        return tree[0]
 
     def arg_list(self, arg_list):
         args = []
