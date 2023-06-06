@@ -1,12 +1,15 @@
 from functools import wraps
 
-from aipl import AIPL
+from aipl import AIPL, stderr
 
 
 def dbcache(func):
     'Decorator to persistently cache result from func(aipl, *args, *kwargs).'
     @wraps(func)
     def cachingfunc(aipl:AIPL, *args, **kwargs):
+        if not aipl.cache_db:
+            return func(aipl, *args, **kwargs)
+
         key = f'{args} {kwargs}'
         tbl = 'cached_'+func.__name__
         ret = aipl.cache_db.select(tbl, key=key)
@@ -16,6 +19,7 @@ def dbcache(func):
                 return row['output']
 
             del row['key']
+            stderr('[using cached value]')
             return row
 
         result = func(aipl, *args, **kwargs)

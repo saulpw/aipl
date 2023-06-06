@@ -49,8 +49,12 @@ class AIPL:
     def __init__(self, **kwargs):
         self.globals = {}  # base context
         self.options = AttrDict(kwargs)
-        self.cache_db = Database('aipl-cache.sqlite')
         self.output_db = Database(self.options.outdbfn)
+
+        self.cache_db = None
+        if self.options.cachedbfn:
+            self.cache_db = Database(self.options.cachedbfn)
+
 
     @property
     def unique_key(self) -> str:
