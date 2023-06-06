@@ -3,30 +3,31 @@ import textwrap
 import sys
 from dataclasses import dataclass
 
-from lark import Lark, Transformer
+from lark import Lark, Transformer, Discard
 
 aipl_grammar = Lark(r'''
-%ignore " "
-
 start: line*
 
+ws: [ WS ]
+WS: /[ \t]+/
+
 line: command | "\n"
-command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg* ["\n" prompt]
+command: (COMMAND | IMMEDIATE_COMMAND) IDENTIFIER varnames arg* ws ["\n" prompt]
 
 COMMAND: "!"
 IMMEDIATE_COMMAND: "!!"
 
-varnames: ( ">" IDENTIFIER? )*
+varnames: ( ">" IDENTIFIER )*
 
-arg: KEY "=" VALUE | VALUE
+arg: ws (KEY "=" VALUE | VALUE)
 
-VALUE: /[^ \t\n!]\S*/
+VALUE: /[^ \t\n!>]\S*/
 KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
 
 prompt: STRING_LINE*
-STRING_LINE: [ /[^!#][^\n]*/ ] "\n"
+STRING_LINE: /[^!#\n][^\n]*(\n|$)/ | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
 
@@ -54,18 +55,18 @@ class ToAst(Transformer):
     def command(self, tree):
         command_sign, opname, varnames, *args = tree
 
-        prompt = args.pop()
-        kwargs = {k: v for k, v in args if k is not None}
-        if prompt is not None:
-            kwargs['prompt'] = prompt
+        # Remove optional newline tokens.
+        args = [arg for arg in args if arg is not None]
+
+        kwargs = {clean_to_id(k): trynum(v) for k, v in args if k is not None}
 
         return AstCommand(
-            opname=tree[1].value,
+            opname=clean_to_id(tree[1].value),
             line=None, # TODO Not yet preserving line contents.
             linenum=command_sign.line,
             immediate=command_sign.type == 'IMMEDIATE_COMMAND',
             varnames=varnames,
-            args=[v for k, v in args if k is None and v is not None],
+            args=[trynum(v) for k, v in args if k is None and v is not None],
             kwargs=kwargs,
         )
 
@@ -80,8 +81,11 @@ class ToAst(Transformer):
     def prompt(self, lines):
         prompt = textwrap.dedent('\n'.join(token.value for token in lines).strip())
         if not prompt:
-            return None
-        return prompt
+            return Discard
+        return ('prompt', prompt)
+
+    def ws(self, tree):
+        return Discard
 
 def parse(program_text):
     parse_tree = aipl_grammar.parse(program_text)
@@ -95,7 +99,7 @@ def trynum(x:str) -> int|float|str:
         try:
             return float(x)
         except Exception:
-            return x
+            return x.replace('\\n', '\n').replace('\\t', '\t').replace('\\\\', '\\')
 
 
 def clean_to_id(s:str) -> str:
