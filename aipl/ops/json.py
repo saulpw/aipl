@@ -20,7 +20,13 @@ def op_json(aipl, t:Table) -> str:
     return jsonenc.encode(t._asdict())
 
 
-@defop('json-parse', 0, 0.5, 1)
+@defop('json-parse', 0, 1.5)
 def op_json_parse(aipl, v:str) -> dict:
     'Convert a json blob into a LazyRow.'
-    return json.loads(v)
+    r = json.loads(v)
+    if isinstance(r, list):
+        return r
+    elif isinstance(r, dict):
+        return [r]
+    else:
+        return [{aipl.unique_key:r}]
