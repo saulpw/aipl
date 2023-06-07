@@ -1,0 +1,32 @@
+# here's the format of the json file
+# "examples":[
+#     {
+#         "input":"It’s okay if you don’t like me. Not everyone can have impeccable preferences in people they are partial to.",
+#         "target_scores":{
+#            "ironic":1,
+#            "not ironic":0
+#        }
+#  ]
+# ---
+# !json-parse bigbench-irony-detection.json
+# Exception: AIPL Error (line 1 !json_parse): op_json_parse() takes 2 positional arguments but 3 were given
+# not sure how to do this in an idiomatic way
+!!python
+def load_examples():
+    import json
+    with open('bigbench-irony-detection-sample.json') as f:
+        examples = json.loads(f.read())['examples']
+        return [el['input'] for el in examples]
+def load_scores():
+    import json
+    with open('bigbench-irony-detection-sample.json') as f:
+        examples = json.loads(f.read())['examples']
+        return [el['target_scores']['ironic'] for el in examples]
+!python-expr>examples load_examples()
+!python-expr>scores load_scores()
+!format
+Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+!print
+# Here is a statement: "['It’s okay if you don’t like me. Not everyone can have impeccable preferences in people they are partial to.', 'Queen Cersei Lannister was smiling. This terrified her courtiers.', 'It’s okay if you don’t like me. Not everyone has similar preferences in the type of people they are partial to.']". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+# expected: two columns with 3 entries
+# reality: two columns with 1 entry
