@@ -2,8 +2,7 @@ from typing import List
 import textwrap
 import sys
 from dataclasses import dataclass
-import re
-
+import ast
 from lark import Lark, Transformer, Discard, Token, Tree
 
 aipl_grammar = Lark(r'''
@@ -96,7 +95,6 @@ class ToAst(Transformer):
         kwargs = {}
 
         for key, arg in arg_list:
-            arg = trynum(arg)
             if key is None:
                 args.append(arg)
             else:
@@ -127,9 +125,8 @@ class ToAst(Transformer):
     def IDENTIFIER(self, token):
         return token.value
 
-    def string(self, tree):
-        unescaped = re.sub(r'\\(.)', r'\1', re.sub(r'\\n', '\n', tree[0].value[1:-1]))
-        return unescaped
+    def ESCAPED_STRING(self, token):
+        return ast.literal_eval(token.value)
 
 def parse(program_text):
     parse_tree = aipl_grammar.parse(program_text)
