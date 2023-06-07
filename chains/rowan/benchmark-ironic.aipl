@@ -33,5 +33,7 @@ Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherw
 # !format
 # {examples} 
 # {scores_gpt35} {score_fs13b} {scores}
+# Exception: AIPL Error (line 33 !format): 'examples'
+
 # TODO: calculate matrix (models x N-shot)
 !print
