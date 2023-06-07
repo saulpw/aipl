@@ -1,0 +1,37 @@
+# load the JSON
+!!python
+@defop('load-examples', None, 1.5)
+def load_examples(aipl):
+    import json
+    with open('bigbench-irony-detection-sample.json') as f:
+        examples = json.loads(f.read())['examples']
+        return [el['input'] for el in examples]
+@defop('load-scores', None, 1.5)
+def load_scores(aipl):
+    import json
+    with open('bigbench-irony-detection-sample.json') as f:
+        examples = json.loads(f.read())['examples']
+        return [el['target_scores']['ironic'] for el in examples]
+!load-examples>examples
+
+# do queries on a couple of models
+# TODO: input non-last column?
+!format
+Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+!llm>scores_gpt35 model=gpt-3.5-turbo
+!format
+Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+!llm>score_fs13b model=fairseq-13b
+!format
+Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+!llm>score_neox model=gpt-neo-20b
+# TODO: add in 2-shot example before query so we can see how much it improves the model responses
+
+# load ground truth and calculate accuracy matrix
+!load-scores>scores
+# TODO: reformat into direct comparison
+# !format
+# {examples} 
+# {scores_gpt35} {score_fs13b} {scores}
+# TODO: calculate matrix (models x N-shot)
+!print

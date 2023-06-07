@@ -34,6 +34,10 @@ gooseai_pricing = {
     "fairseq-13b": {
         "base": 0.001250,
         "token": 0.000036
+    },
+    "gpt-neo-20b": {
+        "base": 0.002650, 
+        "token": 0.000063
     }
 }
 
@@ -89,6 +93,7 @@ def op_llm(aipl, v:str, **kwargs) -> str:
     stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.02f}')
     return result
 
+@expensive()
 def query_goose(aipl, v:str, **kwargs) -> str:
     print("llm.py debug: query_goose with", v)
     import requests
@@ -97,11 +102,17 @@ def query_goose(aipl, v:str, **kwargs) -> str:
         raise AIPLException(f'''GOOSE_AI_KEY envvar must be set for !llm to use {model}''')
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': f'Bearer {os.environ.GOOSE_AI_KEY}'
+        'Authorization': f'Bearer {os.environ["GOOSE_AI_KEY"]}'
     }
     data = {'prompt': v, "max_tokens": 100, 'temperature': 0.8}
     r = requests.post(f'https://api.goose.ai/v1/engines/{model}/completions', headers=headers, json=data)
     j = r.json()
+    if 'error' in j:
+        raise AIPLException(f'''GooseAI returned an error: {j["error"]}''')
+    # TODO: check if it returns tokens used count
+    # cost = gooseai_pricing[model]['base'] + gooseai_pricing[model]['token']*used
+    # aipl.cost_usd += cost
+    # stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.04f}')
     return j['choices'][0]['text']
 
 @defop('llm-embedding', 0, 0.5, 1)
