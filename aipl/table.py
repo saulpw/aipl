@@ -238,7 +238,4 @@ class Table:
             if c.name == name:
                 return c
 
-        if self.parent:
-            return self.parent.get_column(name)
-
         return None
