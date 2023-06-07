@@ -32,11 +32,10 @@ arg_list: arg*
 
 arg: ws (KEY "=" literal | literal)
 
-?literal: BARE_STRING | string
-BARE_STRING: /[^ \t\n!">]\S*/
+?literal: BARE_STRING | ESCAPED_STRING
+BARE_STRING: /[^ \t\n!"'>]\S*/
 
-%import common.ESCAPED_STRING
-string: ESCAPED_STRING
+ESCAPED_STRING: /(["']).*?(?<!\\)\1/
 
 KEY: IDENTIFIER
 

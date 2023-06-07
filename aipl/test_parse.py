@@ -73,5 +73,9 @@ def test_quoted():
     commands = parse(r'!fn "arg1" "\"\n"')
     assert commands[0].args == ["arg1", '"\n']
 
+def test_single_quoted():
+    commands = parse(r"!fn 'arg1' '\'\n'")
+    assert commands[0].args == ["arg1", "'\n"]
+
 def ops(commands):
     return [command.opname for command in commands]
