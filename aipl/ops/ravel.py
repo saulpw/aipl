@@ -21,8 +21,8 @@ def op_ravel(aipl, v:Table) -> Table:
     for row in _ravel(v, newkey):
         ret.rows.append(row._row)
 
-    for c in row._table.columns:
-        ret.add_column(copy(c))
+        for c in row._table.columns:
+            ret.add_column(copy(c))
     return ret
 
 
