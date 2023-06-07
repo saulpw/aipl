@@ -2,25 +2,26 @@ from typing import List
 import textwrap
 import sys
 from dataclasses import dataclass
+import re
 
-from lark import Lark, Transformer, Discard
+from lark import Lark, Transformer, Discard, Token, Tree
 
 aipl_grammar = Lark(r'''
 start: line*
 
-ws: [ WS ]
-WS: /[ \t]+/
+ws: [ _WS ]
+_WS: /[ \t]+/
 
-line: (command ws)* command_prompt | EMPTY_LINE
+line: (command ws)* command_prompt | _EMPTY_LINE
 
 command: command_sign OPNAME varnames arg_list
 command_prompt: command prompt
 
 OPNAME: IDENTIFIER
 
-command_sign: COMMAND | IMMEDIATE_COMMAND
+?command_sign: COMMAND | IMMEDIATE_COMMAND
 
-EMPTY_LINE: "\n"
+_EMPTY_LINE: "\n"
 
 COMMAND: "!"
 IMMEDIATE_COMMAND: "!!"
@@ -29,9 +30,14 @@ varnames: ( ">" IDENTIFIER )*
 
 arg_list: arg*
 
-arg: ws (KEY "=" VALUE | VALUE)
+arg: ws (KEY "=" literal | literal)
 
-VALUE: /[^ \t\n!>]\S*/
+?literal: BARE_STRING | string
+BARE_STRING: /[^ \t\n!">]\S*/
+
+%import common.ESCAPED_STRING
+string: ESCAPED_STRING
+
 KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
@@ -40,7 +46,6 @@ prompt: ws [ "\n" STRING_LINE* ]
 STRING_LINE: /[^!#\n][^\n]*(\n|$)/ | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
-
 %ignore COMMENT_LINE
 ''')
 
@@ -87,9 +92,6 @@ class ToAst(Transformer):
             command.kwargs['prompt'] = prompt
         return command
 
-    def command_sign(self, tree):
-        return tree[0]
-
     def arg_list(self, arg_list):
         args = []
         kwargs = {}
@@ -104,12 +106,12 @@ class ToAst(Transformer):
         return args, kwargs
 
     def varnames(self, tree):
-        return [token.value for token in tree]
+        return list(tree)
 
     def arg(self, tree):
-        if tree[0].type == 'KEY':
-            return (tree[0].value, tree[1].value)
-        return (None, tree[0].value)
+        if isinstance(tree[0], Token) and tree[0].type == 'KEY':
+            return (tree[0].value, tree[1])
+        return (None, tree[0])
 
     def prompt(self, lines):
         prompt = textwrap.dedent(''.join(token.value for token in lines)).strip()
@@ -120,8 +122,15 @@ class ToAst(Transformer):
     def ws(self, tree):
         return Discard
 
-    def EMPTY_LINE(self, token):
-        return Discard
+    def BARE_STRING(self, token):
+        return trynum(token.value)
+
+    def IDENTIFIER(self, token):
+        return token.value
+
+    def string(self, tree):
+        unescaped = re.sub(r'\\(.)', r'\1', re.sub(r'\\n', '\n', tree[0].value[1:-1]))
+        return unescaped
 
 def parse(program_text):
     parse_tree = aipl_grammar.parse(program_text)
