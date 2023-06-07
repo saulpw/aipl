@@ -289,21 +289,24 @@ def prep_output(aipl,
                 raise Exception(f'unknown type for in_row: {type(in_row)}')
 
             rows = []
-            d = {}  # in case there are no rows in out
+            latest_row = {}  # in case there are no rows in out
+            all_keys = set()
             for v in out:
-                d = {'__parent': parent_row} if parent_row is not None else {}
+                latest_row = {'__parent': parent_row} if parent_row is not None else {}
                 if isinstance(v, dict):
-                    d.update(v)
+                    all_keys |= set(v.keys())
+                    latest_row.update(v)
                 else:
-                    d[varname] = v
-                rows.append(d)
+                    latest_row[varname] = v
+                rows.append(latest_row)
 
+            # use final latest_row to figure out columns
             ret = Table(rows, parent=parent_table)
             if outcols:
                 for k in outcols:
                     ret.add_column(Column(k))
-            elif d:  # we figure it out and it's gay
-                for k in d:
+            elif all_keys:  # we have to figure out the keys, for better or worse
+                for k in all_keys:
                     ret.add_column(Column(k))
 
             return ret

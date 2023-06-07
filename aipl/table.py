@@ -76,7 +76,7 @@ class LazyRow(Mapping):
             if c:
                 return c.get_value(obj._row)
 
-            obj = obj.parent
+            obj = obj.parent_row
 
             if obj is None:
                 raise KeyError(k)
@@ -117,11 +117,11 @@ class LazyRow(Mapping):
         return d
 
     @property
-    def parent(self) -> 'LazyRow':
+    def parent_row(self) -> 'LazyRow':
         return self._row.get('__parent', None)
 
     def __repr__(self):
-        return f"<LazyRow row={self._asdict()} parent={self.parent!r}>"
+        return f"<LazyRow row={self._asdict()} parent={self.parent_row!r}>"
 
 
 class Table:
