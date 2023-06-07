@@ -1,0 +1,29 @@
+#!/usr/bin/env bin/aipl
+
+# loads a JSON file from a hardcoded URL and accesses a sample from a list inside (AIPL idiomatic), filtering on string matching
+
+# allow user to select if they want to filter by ironic=True/1 or False/0
+!require-input
+ironic? 1 or 0
+!split>choice sep=\n
+
+# load the JSON
+!format
+https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/irony_identification/task.json
+!fetch-url
+
+# access 'examples' list in JSON blob
+!json-parse examples=examples
+
+# map each element to its 'input' attribute
+!format>statement
+{input}
+
+# !ravel
+!format
+{target_scores_ironic}: {statement}
+
+# filter to only ironic or non-ironic statements
+!match {choice}:
+!filter
+!print
