@@ -3,7 +3,7 @@ from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 
-from aipl import AIPLException
+from aipl import Error, AIPLException
 from .table import Table, LazyRow, Column
 from .db import Database
 from .utils import stderr, fmtargs, fmtkwargs, AttrDict
@@ -49,8 +49,12 @@ class AIPL:
     def __init__(self, **kwargs):
         self.globals = {}  # base context
         self.options = AttrDict(kwargs)
-        self.cache_db = Database('aipl-cache.sqlite')
         self.output_db = Database(self.options.outdbfn)
+
+        self.cache_db = None
+        if self.options.cachedbfn:
+            self.cache_db = Database(self.options.cachedbfn)
+
 
     @property
     def unique_key(self) -> str:
@@ -137,7 +141,12 @@ class AIPL:
         return inputs
 
     def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs, newkey=''):
-        ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+        try:
+            ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+        except Exception as e:
+            if self.options.debug:
+                raise
+            return Error(cmd.linenum, cmd.opname, e)
 
         if cmd.op.rankout is not None and cmd.varnames:
             varname = cmd.varnames[-1]
@@ -206,7 +215,10 @@ def update_dict(d:dict, elem, key:str='') -> dict:
     return d
 
 
-def prep_input(operand:LazyRow|Table, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+def prep_input(operand:LazyRow|Table|Error, rankin:int|float) -> Scalar|List[Scalar]|Table|LazyRow:
+    if isinstance(operand, Error):
+        return operand
+
     if rankin is None:
         return None
     if rankin == 0:
@@ -277,21 +289,24 @@ def prep_output(aipl,
                 raise Exception(f'unknown type for in_row: {type(in_row)}')
 
             rows = []
-            d = {}  # in case there are no rows in out
+            latest_row = {}  # in case there are no rows in out
+            all_keys = set()
             for v in out:
-                d = {'__parent': parent_row} if parent_row is not None else {}
+                latest_row = {'__parent': parent_row} if parent_row is not None else {}
                 if isinstance(v, dict):
-                    d.update(v)
+                    all_keys |= set(v.keys())
+                    latest_row.update(v)
                 else:
-                    d[varname] = v
-                rows.append(d)
+                    latest_row[varname] = v
+                rows.append(latest_row)
 
+            # use final latest_row to figure out columns
             ret = Table(rows, parent=parent_table)
             if outcols:
                 for k in outcols:
                     ret.add_column(Column(k))
-            elif d:  # we figure it out and it's gay
-                for k in d:
+            elif all_keys:  # we have to figure out the keys, for better or worse
+                for k in all_keys:
                     ret.add_column(Column(k))
 
             return ret

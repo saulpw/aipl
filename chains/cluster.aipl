@@ -53,7 +53,7 @@
 
 URL: {url}
 """
-{input}
+{_}
 """
 
 !join
@@ -64,7 +64,7 @@ Also suggest the subreddit that would most welcome the content.
 
 Summaries:
 
-{input}
+{_}
 
 Theme and subreddit:
 

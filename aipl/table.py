@@ -5,6 +5,7 @@ from aipl import AIPLException
 from .utils import fmtargs, fmtkwargs, stderr, strify
 
 UNWORKING = object()
+CURRENT_COLNAME='_'
 
 class Row(dict):
     pass
@@ -76,7 +77,7 @@ class LazyRow(Mapping):
             if c:
                 return c.get_value(obj._row)
 
-            obj = obj.parent
+            obj = obj.parent_row
 
             if obj is None:
                 raise KeyError(k)
@@ -89,7 +90,7 @@ class LazyRow(Mapping):
         return self._asdict().items()
 
     def _asdict(self, named_only=False):
-        'if named_only=False, add current_col as "input" if it is hidden.  otherwise ignore it too'
+        'if named_only=False, add current_col as "{CURRENT_COLNAME}" if it is hidden.  otherwise ignore it too'
         d = {}
 
         for c in self._table.columns:
@@ -97,7 +98,7 @@ class LazyRow(Mapping):
                 if named_only or c is not self._table.current_col:
                     continue
 
-                k = 'input'
+                k = CURRENT_COLNAME
             else:
                 k = c.name
 
@@ -117,11 +118,11 @@ class LazyRow(Mapping):
         return d
 
     @property
-    def parent(self) -> 'LazyRow':
+    def parent_row(self) -> 'LazyRow':
         return self._row.get('__parent', None)
 
     def __repr__(self):
-        return f"<LazyRow row={self._asdict()} parent={self.parent!r}>"
+        return f"<LazyRow row={self._asdict()} parent={self.parent_row!r}>"
 
 
 class Table:
@@ -224,6 +225,7 @@ class Table:
                 self.add_column(Column(k))
 
     def add_column(self, col:Column):
+        assert not col.name.startswith('__')
         if self.rows:
             assert col.get_value(self.rows[0]) is not UNWORKING
         if col.key in self.colkeys or col.name in self.colnames:
@@ -231,14 +233,11 @@ class Table:
         self.columns.append(col)
 
     def get_column(self, name:str) -> Column:
-        if name == 'input':
+        if name == CURRENT_COLNAME:
             return self.columns[-1]
 
         for c in self.columns:
             if c.name == name:
                 return c
-
-        if self.parent:
-            return self.parent.get_column(name)
 
         return None

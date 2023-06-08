@@ -1,3 +1,23 @@
+
+from dataclasses import dataclass
+
+@dataclass
+class Error:
+    'A cascading error that does not break the pipeline'
+    linenum:int = 0
+    opname:str = ''
+    exception:Exception = None
+
+    def __str__(self):
+        return f'AIPL Error (line {self.linenum} !{self.opname}): {self.exception}'
+
+    def __getitem__(self, k):
+        return self
+
+
+class AIPLCompileError(Exception):
+    'A nice error message during compilation to print to stderr and exit without a stacktrace.'
+
 class AIPLException(Exception):
     'A nice error message to print to stderr and exit without a stacktrace.'
 

@@ -11,7 +11,7 @@ d e f g
 # and that named columns remain visible to a top-level json
 
 !assert-json
-[{"arg": "a b c\nd e f g", "input": [{"line": "a b c"}, {"line": "d e f g"}]}]
+[{"arg": "a b c\nd e f g", "_": [{"line": "a b c"}, {"line": "d e f g"}]}]
 
 !split>chars>char
 
@@ -19,7 +19,7 @@ d e f g
 
 [{
     "arg": "a b c\nd e f g",
-    "input": [
+    "_": [
        {"line": "a b c",   "chars": [{"char": "a"}, {"char": "b"}, {"char": "c"}]},
        {"line": "d e f g", "chars": [{"char": "d"}, {"char": "e"}, {"char": "f"}, {"char": "g"}]}
      ]

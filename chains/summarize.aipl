@@ -21,7 +21,7 @@ article" or "this webpage" or "this section" or "the author". Ensure the tone
 is precise and concise, and provide an overview of the entire section:
 
 """
-{input}
+{_}
 """
 
 !llm model=gpt-3.5-turbo
@@ -43,7 +43,7 @@ and readable, while preserving important keywords and main content topics.
 Remove all unnecessary text like "The document" and "the author".
 
 """
-{input}
+{_}
 """
 
 !llm model=gpt-3.5-turbo

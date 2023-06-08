@@ -13,72 +13,6 @@ A tiny DSL to make it easier to explore and experiment with AI pipelines.
   - including inline prompt templates
 - persistent cache of expensive operations into a sqlite db
 
-## Why?
-
-The recent developments in LLMs and AI are a whole new level of capabilities (and costs).
-I wanted to see what all the fuss was about, so I tried to do some basic things with [langchain](https://github.com/hwchase17/langchain) but it was this big complicated system.
-So instead I implemented some small workflows myself with raw Python, and it turned out that AI is actually pretty straightforward.
-This is just a small hackable platform that makes it easy to experiment and get small-scale results.
-For now it's called AIPL.
-
-## Design
-
-AIPL is intended as a simple platform for quick proof of concept data pipelines to be implemented and tested.
-
-### Emphasize the Dataflow
-
-An AIPL script represents the essence of a data pipeline, with only the high-level operations and their parameters and prompts.
-No boilerplate or quoting or complicated syntax.
-Not even much of a language--just commands executed in order.
-This keeps the focus on data flow and the high-level operations--the actual links in the chain.
-It can be expanded or optimized or parallelized as needed.
-
-### Very Little Overhead
-
-AIPL is array-oriented and concatenative, drawing inspiration from APL and Forth, both of which have powerful operators and very simple syntax.
-Passing data implicitly between operators allows for efficient representation of data flows, and avoids [one of the hardest problems in computer science](https://www.namingthings.co/).
-And the implicit looping of array languages makes it easier to scale interactivity.
-
-### Take Advantage of Python Ecosystem
-
-AIPL is also intended to be practical (if only at small scale), so operators are easy to write using the existing cadre of Python libraries, and allow options and parameters passed to them verbatim.
-
-### Keep It Simple
-
-The implementation is intentionally homespun, to remove layers of abstraction and reduce the friction of setup and operation.
-It doesn't parallelize anything yet but it still should be able to handle hundreds of items even as it is, enough to prove a concept.
-I expect it to be straightforward to scale it to mag 5 (up to a million items) if something takes off.
-
-### Learn and Explore
-
-At the very least, AIPL should be a useful tool to learn, explore, and prototype small-scale data pipelines that have expensive operations like API calls and LLM generation.
-
-## Usage
-
-```
-usage: aipl [-h] [--debug] [--step STEP] [--step-breakpoint] [--step-rich]
-            [--step-vd] [--dry-run] [--output-db OUTDBFN]
-            script_or_global [script_or_global ...]
-
-AIPL interpreter
-
-positional arguments:
-  script_or_global      scripts to run, or k=v global parameters
-
-options:
-  -h, --help            show this help message and exit
-  --debug, -d           abort on exception
-  --step STEP           call aipl.step_<func>(cmd, input) before each step
-  --step-breakpoint, -x
-                        breakpoint() before each step
-  --step-rich, -v       output rich table before each step
-  --step-vd, --vd       open VisiData with input before each step
-  --dry-run, -n         do not execute @expensive operations
-  --output-db OUTDBFN, -o OUTDBFN
-                        sqlite database accessible to !db operators
-
-```
-
 ### `summarize.aipl`
 
 Here's a prime example, a multi-level summarizer in the "map-reduce" style of langchain:
@@ -87,9 +21,6 @@ Here's a prime example, a multi-level summarizer in the "map-reduce" style of la
 #!/usr/bin/env bin/aipl
 
 # fetch url, split webpage into chunks, summarize each chunk, then summarize the summaries.
-
-# one input -> multiple urls
-!split sep=\n
 
 # the inputs are urls
 !fetch-url
@@ -141,6 +72,38 @@ Remove all unnecessary text like "The document" and "the author".
 
 ```
 
+## Usage
+
+```
+usage: aipl [-h] [--debug] [--step STEP] [--step-breakpoint] [--step-rich]
+            [--step-vd] [--dry-run] [--cache-db CACHEDBFN] [--no-cache]
+            [--output-db OUTDBFN] [--split SEPARATOR]
+            script_or_global [script_or_global ...]
+
+AIPL interpreter
+
+positional arguments:
+  script_or_global      scripts to run, or k=v global parameters
+
+options:
+  -h, --help            show this help message and exit
+  --debug, -d           abort on exception
+  --step STEP           call aipl.step_<func>(cmd, input) before each step
+  --step-breakpoint, -x
+                        breakpoint() before each step
+  --step-rich, -v       output rich table before each step
+  --step-vd, --vd       open VisiData with input before each step
+  --dry-run, -n         do not execute @expensive operations
+  --cache-db CACHEDBFN, -c CACHEDBFN
+                        sqlite database for caching operators
+  --no-cache            sqlite database for caching operators
+  --output-db OUTDBFN, -o OUTDBFN
+                        sqlite database accessible to !db operators
+  --split SEPARATOR, --separator SEPARATOR, -s SEPARATOR
+                        separator to split input on
+
+```
+
 ## Command Syntax
 
 This is the basic syntax:
@@ -172,56 +135,125 @@ Notes:
 
 ## List of operators
 
-- `!abort` (in=None out=None): None
-- `!assert_equal` (in=0 out=None): Error if value is not equal to prompt.
-- `!assert_json` (in=100 out=None): Error if value Column is not equal to json blob in prompt.
-- `!cluster` (in=1 out=1): Cluster rows by embedding into n clusters; add label column.
-- `!columns` (in=1.5 out=1.5): Create new table containing only these columns.
-- `!comment` (in=None out=None): Do nothing (ignoring args and prompt).
-- `!dbinsert` (in=0.5 out=None): Insert each row into database table.
-- `!dbdrop` (in=None out=None): Drop database table.
-- `!option` (in=None out=None): None
-- `!debug` (in=None out=None): set debug flag and call breakpoint() before each command
-- `!def` (in=None out=None): Define composite operator from cmds in prompt (must be indented).
-- `!extract_text_all` (in=0 out=0): Extract all text from HTML
-- `!extract_text` (in=0 out=0): Extract meaningful text from HTML
-- `!extract_links` (in=0 out=1.5): Extract (linktext, title, href) from <a> tags in HTML
-- `!fetch_url` (in=0 out=0.5): Fetch URL as text HTML.
-- `!fetch_url_bytes` (in=0 out=0.5): Fetch URL as raw bytes.
-- `!filter` (in=1.5 out=1.5): Return copy of table, keeping only rows whose value is Truthy.
-- `!format` (in=0.5 out=0): Format prompt text as a Python string template, substituting values from row and global context.
-- `!groupby` (in=1.5 out=1.5): Group rows into tables, by set of columns given as args.
-- `!require_input` (in=100 out=100): Ensure there is any input at all; if not, display the prompt and read input from the user.
-- `!join` (in=1 out=0): Join inputs with sep into a single output scalar.
-- `!json` (in=100 out=0): Convert Table into a json blob.
-- `!json_parse` (in=0 out=0.5): Convert a json blob into a LazyRow.
-- `!literal` (in=None out=0): None
-- `!llm` (in=0 out=0): Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.
-- `!llm_embedding` (in=0 out=0.5): Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.
-- `!match` (in=0 out=0): Return a bool with whether value matched regex. Used with !filter.
-- `!name` (in=1.5 out=1.5): Rename current input column to given name.
-- `!pdf_extract` (in=0 out=0): None
-- `!print` (in=0 out=None): Print to stdout.
-- `!python` (in=None out=None): exec() Python toplevel statements.
-- `!python_input` (in=100 out=1.5): eval() Python expression and use as toplevel input table.
-- `!ravel` (in=100 out=1.5): All of the leaf scalars in the value column become a single 1-D array.
-- `!read` (in=None out=0): Open, read, and return contents in given local filename.
-- `!ref` (in=1.5 out=1.5): Move column on table to end of columns list (becoming the new .value)
-- `!replace` (in=0 out=0): None
-- `!sample` (in=1.5 out=1.5): Sample n random rows from the input table.
-- `!save` (in=0 out=None): Save to given filename.
-- `!sh` (in=0 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
-- `!shtty` (in=0.5 out=0.5): Run the command described by args.  Return (retcode, stderr, stdout) columns.
-- `!sort` (in=1.5 out=1.5): None
-- `!grade_up` (in=1.5 out=1): None
-- `!split` (in=0 out=1): Split text into chunks based on sep, keeping each chunk below maxsize.
-- `!split_into` (in=0 out=0.5): None
-- `!take` (in=1.5 out=1.5): Return a table with first n rows of `t`
-- `!url_split` (in=0 out=0.5): Split url into components (scheme, netloc, path, params, query, fragment).
-- `!url_defrag` (in=0 out=0): Remove fragment from url.
-- `!xml_xpath` (in=0 out=1): None
-- `!xml_xpaths` (in=0 out=0.5): None
-- `!aipl_ops` (in=100 out=0): None
+- `!abort` (in=None out=None)
+   None
+- `!assert_equal` (in=0 out=None)
+   Error if value is not equal to prompt.
+- `!assert_json` (in=100 out=None)
+   Error if value Column is not equal to json blob in prompt.
+- `!cluster` (in=1 out=1)
+   Cluster rows by embedding into n clusters; add label column.
+- `!columns` (in=1.5 out=1.5)
+   Create new table containing only these columns.
+- `!comment` (in=None out=None)
+   Do nothing (ignoring args and prompt).
+- `!dbopen` (in=None out=0)
+   
+- `!dbquery` (in=0.5 out=1.5)
+   
+- `!dbdrop` (in=None out=None)
+   Drop database table.
+- `!dbinsert` (in=0.5 out=None)
+   Insert each row into database table.
+- `!option` (in=None out=None)
+   None
+- `!debug` (in=None out=None)
+   set debug flag and call breakpoint() before each command
+- `!def` (in=None out=None)
+   Define composite operator from cmds in prompt (must be indented).
+- `!errors` (in=0 out=0)
+   True if value is an Error
+- `!not_errors` (in=0 out=0)
+   True if value is not an Error
+- `!extract_text_all` (in=0 out=0)
+   Extract all text from HTML
+- `!extract_text` (in=0 out=0)
+   Extract meaningful text from HTML
+- `!extract_links` (in=0 out=1.5)
+   Extract (linktext, title, href) from <a> tags in HTML
+- `!fetch_url` (in=0 out=0.5)
+   Fetch URL as text HTML.
+- `!fetch_url_bytes` (in=0 out=0.5)
+   Fetch URL as raw bytes.
+- `!filter` (in=1.5 out=1.5)
+   Return copy of table, keeping only rows whose value is Truthy.
+- `!format` (in=0.5 out=0)
+   Format prompt text as a Python string template, substituting values from row and global context.
+- `!groupby` (in=1.5 out=1.5)
+   Group rows into tables, by set of columns given as args.
+- `!require_input` (in=100 out=100)
+   Ensure there is any input at all; if not, display the prompt and read input from the user.
+- `!join` (in=1 out=0)
+   Join inputs with sep into a single output scalar.
+- `!json` (in=100 out=0)
+   Convert Table into a json blob.
+- `!json_parse` (in=0 out=1.5)
+   Convert a json blob into a Table.
+- `!literal` (in=None out=0)
+   None
+- `!llm` (in=0 out=0)
+   Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.
+- `!llm_embedding` (in=0 out=0.5)
+   Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.
+- `!match` (in=0 out=0)
+   Return a bool with whether value matched regex. Used with !filter.
+- `!name` (in=1.5 out=1.5)
+   Rename current input column to given name.
+- `!not` (in=0 out=0)
+   None
+- `!pdf_extract` (in=0 out=0)
+   None
+- `!print` (in=0 out=None)
+   Print to stdout.
+- `!python` (in=None out=None)
+   exec() Python toplevel statements.
+- `!python_expr` (in=0.5 out=0)
+   Add columns for Python expressions.
+- `!python_input` (in=100 out=1.5)
+   eval() Python expression and use as toplevel input table.
+- `!ravel` (in=100 out=1.5)
+   All of the leaf scalars in the value column become a single 1-D array.
+- `!read` (in=None out=0)
+   Open, read, and return contents in given local filename.
+- `!ref` (in=1.5 out=1.5)
+   Move column on table to end of columns list (becoming the new .value)
+- `!regex_capture` (in=0 out=0.5)
+   Capture from prompt regex into named matching groups.
+- `!regex_translate` (in=0 out=0)
+   Translate input according to regex translation rules in prompt, one per line, with regex and output separated by whitespace:
+        Dr\.? Doctor
+        Jr\.? Junior
+    
+- `!replace` (in=0 out=0)
+   None
+- `!sample` (in=1.5 out=1.5)
+   Sample n random rows from the input table.
+- `!save` (in=0 out=None)
+   Save to given filename.
+- `!sh` (in=0 out=0.5)
+   Run the command described by args.  Return (retcode, stderr, stdout) columns.
+- `!shtty` (in=0.5 out=0.5)
+   Run the command described by args.  Return (retcode, stderr, stdout) columns.
+- `!sort` (in=1.5 out=1.5)
+   None
+- `!grade_up` (in=1.5 out=1)
+   None
+- `!split` (in=0 out=1)
+   Split text into chunks based on sep, keeping each chunk below maxsize.
+- `!split_into` (in=0 out=0.5)
+   None
+- `!take` (in=1.5 out=1.5)
+   Return a table with first n rows of `t`
+- `!url_split` (in=0 out=0.5)
+   Split url into components (scheme, netloc, path, params, query, fragment).
+- `!url_defrag` (in=0 out=0)
+   Remove fragment from url.
+- `!xml_xpath` (in=0 out=1)
+   None
+- `!xml_xpaths` (in=0 out=0.5)
+   None
+- `!aipl_ops` (in=100 out=0)
+   None
 
 
 ## Defining a new operator
@@ -250,6 +282,45 @@ The join operator is `rankin=1 rankout=0` which means that it takes a list of st
 - Add the `@expensive` decorator to operators that actually go to the network or use an LLM; this will persistently cache the results in a local sqlite database.
    - running the same inputs through a pipeline multiple times won't keep refetching the same data impolitely, and won't run up a large bill during development.
 
+## Design
+
+AIPL is intended as a simple platform for quick proof of concept data pipelines to be implemented and tested.
+
+## Why?
+
+The recent developments in LLMs and AI are a whole new level of capabilities (and costs).
+I wanted to see what all the fuss was about, so I tried to do some basic things with [langchain](https://github.com/hwchase17/langchain) but it was this big complicated system.
+So instead I implemented some small workflows myself with raw Python, and it turned out that AI is actually pretty straightforward.
+This is just a small hackable platform that makes it easy to experiment and get small-scale results.
+For now it's called AIPL.
+
+### Emphasize the Dataflow
+
+An AIPL script represents the essence of a data pipeline, with only the high-level operations and their parameters and prompts.
+No boilerplate or quoting or complicated syntax.
+Not even much of a language--just commands executed in order.
+This keeps the focus on data flow and the high-level operations--the actual links in the chain.
+It can be expanded or optimized or parallelized as needed.
+
+### Very Little Overhead
+
+AIPL is array-oriented and concatenative, drawing inspiration from APL and Forth, both of which have powerful operators and very simple syntax.
+Passing data implicitly between operators allows for efficient representation of data flows, and avoids [one of the hardest problems in computer science](https://www.namingthings.co/).
+And the implicit looping of array languages makes it easier to scale interactivity.
+
+### Take Advantage of Python Ecosystem
+
+AIPL is also intended to be practical (if only at small scale), so operators are easy to write using the existing cadre of Python libraries, and allow options and parameters passed to them verbatim.
+
+### Keep It Simple
+
+The implementation is intentionally homespun, to remove layers of abstraction and reduce the friction of setup and operation.
+It doesn't parallelize anything yet but it still should be able to handle hundreds of items even as it is, enough to prove a concept.
+I expect it to be straightforward to scale it to mag 5 (up to a million items) if something takes off.
+
+### Learn and Explore
+
+At the very least, AIPL should be a useful tool to learn, explore, and prototype small-scale data pipelines that have expensive operations like API calls and LLM generation.
 
 
 # Architecture

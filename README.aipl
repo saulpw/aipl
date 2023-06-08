@@ -35,58 +35,18 @@
       - including inline prompt templates
     - persistent cache of expensive operations into a sqlite db
 
-    ## Why?
-
-    The recent developments in LLMs and AI are a whole new level of capabilities (and costs).
-    I wanted to see what all the fuss was about, so I tried to do some basic things with [langchain](https://github.com/hwchase17/langchain) but it was this big complicated system.
-    So instead I implemented some small workflows myself with raw Python, and it turned out that AI is actually pretty straightforward.
-    This is just a small hackable platform that makes it easy to experiment and get small-scale results.
-    For now it's called AIPL.
-
-    ## Design
-
-    AIPL is intended as a simple platform for quick proof of concept data pipelines to be implemented and tested.
-
-    ### Emphasize the Dataflow
-
-    An AIPL script represents the essence of a data pipeline, with only the high-level operations and their parameters and prompts.
-    No boilerplate or quoting or complicated syntax.
-    Not even much of a language--just commands executed in order.
-    This keeps the focus on data flow and the high-level operations--the actual links in the chain.
-    It can be expanded or optimized or parallelized as needed.
-
-    ### Very Little Overhead
-
-    AIPL is array-oriented and concatenative, drawing inspiration from APL and Forth, both of which have powerful operators and very simple syntax.
-    Passing data implicitly between operators allows for efficient representation of data flows, and avoids [one of the hardest problems in computer science](https://www.namingthings.co/).
-    And the implicit looping of array languages makes it easier to scale interactivity.
-
-    ### Take Advantage of Python Ecosystem
-
-    AIPL is also intended to be practical (if only at small scale), so operators are easy to write using the existing cadre of Python libraries, and allow options and parameters passed to them verbatim.
-
-    ### Keep It Simple
-
-    The implementation is intentionally homespun, to remove layers of abstraction and reduce the friction of setup and operation.
-    It doesn't parallelize anything yet but it still should be able to handle hundreds of items even as it is, enough to prove a concept.
-    I expect it to be straightforward to scale it to mag 5 (up to a million items) if something takes off.
-
-    ### Learn and Explore
-
-    At the very least, AIPL should be a useful tool to learn, explore, and prototype small-scale data pipelines that have expensive operations like API calls and LLM generation.
-
-    ## Usage
-
-    ```
-    {aipl_usage}
-    ```
-
     ### `summarize.aipl`
 
     Here's a prime example, a multi-level summarizer in the "map-reduce" style of langchain:
 
     ```
     {summarize_aipl}
+    ```
+
+    ## Usage
+
+    ```
+    {aipl_usage}
     ```
 
     ## Command Syntax
@@ -149,6 +109,45 @@
     - Add the `@expensive` decorator to operators that actually go to the network or use an LLM; this will persistently cache the results in a local sqlite database.
        - running the same inputs through a pipeline multiple times won't keep refetching the same data impolitely, and won't run up a large bill during development.
 
+    ## Design
+
+    AIPL is intended as a simple platform for quick proof of concept data pipelines to be implemented and tested.
+
+    ## Why?
+
+    The recent developments in LLMs and AI are a whole new level of capabilities (and costs).
+    I wanted to see what all the fuss was about, so I tried to do some basic things with [langchain](https://github.com/hwchase17/langchain) but it was this big complicated system.
+    So instead I implemented some small workflows myself with raw Python, and it turned out that AI is actually pretty straightforward.
+    This is just a small hackable platform that makes it easy to experiment and get small-scale results.
+    For now it's called AIPL.
+
+    ### Emphasize the Dataflow
+
+    An AIPL script represents the essence of a data pipeline, with only the high-level operations and their parameters and prompts.
+    No boilerplate or quoting or complicated syntax.
+    Not even much of a language--just commands executed in order.
+    This keeps the focus on data flow and the high-level operations--the actual links in the chain.
+    It can be expanded or optimized or parallelized as needed.
+
+    ### Very Little Overhead
+
+    AIPL is array-oriented and concatenative, drawing inspiration from APL and Forth, both of which have powerful operators and very simple syntax.
+    Passing data implicitly between operators allows for efficient representation of data flows, and avoids [one of the hardest problems in computer science](https://www.namingthings.co/).
+    And the implicit looping of array languages makes it easier to scale interactivity.
+
+    ### Take Advantage of Python Ecosystem
+
+    AIPL is also intended to be practical (if only at small scale), so operators are easy to write using the existing cadre of Python libraries, and allow options and parameters passed to them verbatim.
+
+    ### Keep It Simple
+
+    The implementation is intentionally homespun, to remove layers of abstraction and reduce the friction of setup and operation.
+    It doesn't parallelize anything yet but it still should be able to handle hundreds of items even as it is, enough to prove a concept.
+    I expect it to be straightforward to scale it to mag 5 (up to a million items) if something takes off.
+
+    ### Learn and Explore
+
+    At the very least, AIPL should be a useful tool to learn, explore, and prototype small-scale data pipelines that have expensive operations like API calls and LLM generation.
 
 
     # Architecture
