@@ -104,7 +104,11 @@ def query_goose(aipl, v:str, **kwargs) -> str:
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {os.environ["GOOSE_AI_KEY"]}'
     }
-    data = {'prompt': v, "max_tokens": 100, 'temperature': 0.8}
+    params = dict(
+        temperature=0
+    )
+    params.update(**kwargs)
+    data = {'prompt': v, **params}
     r = requests.post(f'https://api.goose.ai/v1/engines/{model}/completions', headers=headers, json=data)
     j = r.json()
     if 'error' in j:

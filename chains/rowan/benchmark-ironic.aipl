@@ -1,34 +1,38 @@
 # load the JSON
-!!python
-@defop('load-examples', None, 1.5)
-def load_examples(aipl):
-    import json
-    with open('bigbench-irony-detection-sample.json') as f:
-        examples = json.loads(f.read())['examples']
-        return [el['input'] for el in examples]
-@defop('load-scores', None, 1.5)
-def load_scores(aipl):
-    import json
-    with open('bigbench-irony-detection-sample.json') as f:
-        examples = json.loads(f.read())['examples']
-        return [el['target_scores']['ironic'] for el in examples]
-!load-examples>examples
+!literal
+https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/irony_identification/task.json
+!fetch-url
+!json-parse examples=examples
+
+!format>statement
+{input}
+
+!columns statement ironic=target_scores_ironic
+!ravel
+
+!take 10
 
 # do queries on a couple of models
 # TODO: input non-last column?
-!format
-Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
-!llm>scores_gpt35 model=gpt-3.5-turbo
-!format
-Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
-!llm>score_fs13b model=fairseq-13b
-!format
-Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
-!llm>score_neox model=gpt-neo-20b
+# !format
+# Here is a statement: "{statement}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+# !llm>scores_gpt35 model=gpt-3.5-turbo
+# !format
+# Here is a statement: "{statement}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+# !llm>scores_fs13b model=fairseq-13b
+!format>two-shot
+You will be given a number of statements and determine if they are ironic. If the statement is ironic, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+Statement: Queen Cersei Lannister was smiling. This terrified her courtiers.
+Score: 1
+Statement: It’s okay if you don’t like me. Not everyone has similar preferences in the type of people they are partial to.
+Score: 0
+Statement: {statement}
+Score: 
+!llm>scores_neox model=gpt-neo-20b max_tokens=1
 # TODO: add in 2-shot example before query so we can see how much it improves the model responses
 
 # load ground truth and calculate accuracy matrix
-!load-scores>scores
+
 # TODO: reformat into direct comparison
 # !format
 # {examples} 
@@ -36,4 +40,7 @@ Here is a statement: "{examples}". Is this ironic? If so, respond with 1, otherw
 # Exception: AIPL Error (line 33 !format): 'examples'
 
 # TODO: calculate matrix (models x N-shot)
+!format
+# {scores_gpt35} {scores_fs13b} {scores_neox} ({ironic}): {statement}
+{scores_neox} ({ironic}): {statement}
 !print
