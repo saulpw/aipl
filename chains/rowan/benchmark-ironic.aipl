@@ -1,3 +1,14 @@
+# models: 
+# gpt-neo-20b
+# fairseq-13b
+# gpt-3.5-turbo
+
+!require-input>model
+
+!format
+got: {model}
+!print
+
 # load the JSON
 !literal
 https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/irony_identification/task.json
@@ -12,24 +23,25 @@ https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks
 
 !take 10
 
-# do queries on a couple of models
 # TODO: input non-last column?
-# !format
-# Here is a statement: "{statement}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
-# !llm>scores_gpt35 model=gpt-3.5-turbo
-# !format
-# Here is a statement: "{statement}". Is this ironic? If so, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
-# !llm>scores_fs13b model=fairseq-13b
-!format>two-shot
+!format>zero-shot
 You will be given a number of statements and determine if they are ironic. If the statement is ironic, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+
+!format
+{zero-shot}
+Statement: {statement}
+Score: 
+!llm>score_zero_shot model={model} max_tokens=1
+
+!format
+{zero-shot}
 Statement: Queen Cersei Lannister was smiling. This terrified her courtiers.
 Score: 1
 Statement: It’s okay if you don’t like me. Not everyone has similar preferences in the type of people they are partial to.
 Score: 0
 Statement: {statement}
 Score: 
-!llm>scores_neox model=gpt-neo-20b max_tokens=1
-# TODO: add in 2-shot example before query so we can see how much it improves the model responses
+!llm>score_two_shot model=fairseq-13b max_tokens=1
 
 # load ground truth and calculate accuracy matrix
 
@@ -41,6 +53,8 @@ Score:
 
 # TODO: calculate matrix (models x N-shot)
 !format
-# {scores_gpt35} {scores_fs13b} {scores_neox} ({ironic}): {statement}
-{scores_neox} ({ironic}): {statement}
+{score_zero_shot} {score_two_shot} ({ironic}): {statement}
 !print
+# !columns score_zero_shot score_two_shot ironic statement model
+!json
+!save {model}-irony-detection.json
