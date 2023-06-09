@@ -1,10 +1,6 @@
-# TODO: would like to do all this in idiomatic AIPL
-# 0. use hardcoded json URL (since we're hardcoding accesses anyway)
-# 1. load json
-# 2. select 'element' list
-# 3. take a random subset of the list of size N (can use `take` for now)
-# 4. map each object to its attribute 'input'
-# 5. separately, map each object to 'ironic'
+#!/usr/bin/env bin/aipl
+
+# loads a JSON file from a hardcoded URL and accesses a sample from a list inside (with Python)
 
 # load the JSON
 !fetch-url https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/irony_identification/task.json

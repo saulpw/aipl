@@ -1,16 +1,24 @@
-# models: 
+# in: list of models; out: % accuracy in classifying ironic statements
+# desired output format example:
+# { 'gpt-X': { 'irony_identification': { 'precision': 1.0, 'recall': 1.0 }, ... }
+
+# list of models: 
 # gpt-neo-20b
 # fairseq-13b
 # gpt-3.5-turbo
 
-!require-input>model
 
-!format
-got: {model}
-!print
+# get models as input
+# !require-input
+# input model IDs
+# !split>model sep=\n
+
+# TODO: remove this convenience
+!!literal>model
+gpt-3.5-turbo
 
 # load the JSON
-!literal
+!format
 https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/irony_identification/task.json
 !fetch-url
 !json-parse examples=examples
@@ -18,10 +26,7 @@ https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks
 !format>statement
 {input}
 
-!columns statement ironic=target_scores_ironic
-!ravel
-
-!take 10
+# !take 10
 
 # TODO: input non-last column?
 !format>zero-shot
@@ -31,30 +36,53 @@ You will be given a number of statements and determine if they are ironic. If th
 {zero-shot}
 Statement: {statement}
 Score: 
-!llm>score_zero_shot model={model} max_tokens=1
+!llm>classification model={model} max_tokens=1
 
 !format
-{zero-shot}
-Statement: Queen Cersei Lannister was smiling. This terrified her courtiers.
-Score: 1
-Statement: It’s okay if you don’t like me. Not everyone has similar preferences in the type of people they are partial to.
-Score: 0
-Statement: {statement}
-Score: 
-!llm>score_two_shot model=fairseq-13b max_tokens=1
-
-# load ground truth and calculate accuracy matrix
-
-# TODO: reformat into direct comparison
-# !format
-# {examples} 
-# {scores_gpt35} {score_fs13b} {scores}
-# Exception: AIPL Error (line 33 !format): 'examples'
-
-# TODO: calculate matrix (models x N-shot)
-!format
-{score_zero_shot} {score_two_shot} ({ironic}): {statement}
+{classification} ({target_scores_ironic}): {statement}
 !print
-# !columns score_zero_shot score_two_shot ironic statement model
-!json
-!save {model}-irony-detection.json
+
+# not necessary, makes it easier to debug
+!ravel
+
+# compute precision and recall
+!!python
+from aipl.table import Table
+from aipl import defop, LazyRow
+import numpy as np
+
+def to_np_int_array(t:Table, colname) -> np.array:
+    # this seems non-ideal
+    column = [int(row[colname]) for row in t]
+    print(colname, column)
+    return np.array([[int(val) for val in column]])
+
+    # return np.array([[0,0,1,1,0,0,1]])
+
+def recall(t:Table, predictions:str, true_values:str) -> float:
+    N = true_values.shape[1]
+    return (true_values == predictions).sum() / N
+
+def precision(t:Table, predictions:str, true_values:str) -> float:
+    TP = ((predictions == 1) & (true_values == 1)).sum()
+    FP = ((predictions == 1) & (true_values == 0)).sum()
+    return TP / (TP+FP)
+
+@defop('compute-accuracy', 1.5, 0.5)
+def compute(aipl, t:Table, predictions_colname, true_values_colname) -> dict:
+    true_values = to_np_int_array(t, true_values_colname)
+    predictions = to_np_int_array(t, predictions_colname)
+
+    return {
+        'recall': recall(t, predictions, true_values),
+        'precision': precision(t, predictions, true_values)
+    }
+
+!compute-accuracy>accuracy classification target_scores_ironic
+# TODO: structure into desired JSON format
+# TODO: looks like model is inaccessible
+# !columns model accuracy
+# !json
+# !save irony_identification_{model}.json
+
+!print

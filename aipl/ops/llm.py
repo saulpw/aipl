@@ -95,7 +95,6 @@ def op_llm(aipl, v:str, **kwargs) -> str:
 
 @expensive()
 def query_goose(aipl, v:str, **kwargs) -> str:
-    print("llm.py debug: query_goose with", v)
     import requests
     model = kwargs.get('model')
     if 'GOOSE_AI_KEY' not in os.environ:
