@@ -1,0 +1,115 @@
+# in: list of models; out: % accuracy in classifying ironic statements
+# desired output format example:
+# { 'gpt-X': { 'irony_identification': { 'precision': 1.0, 'recall': 1.0 }, ... }
+
+# list of models:
+# gpt-neo-20b
+# random chance
+# fairseq-13b
+# gpt-3.5-turbo
+# gpt-4
+
+# get models as input
+# !require-input
+# input model IDs
+# !split>model sep=\n
+
+# TODO: remove this convenience
+!!literal>model
+gpt-3.5-turbo
+
+# load the JSON
+!format
+https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/abstract_narrative_understanding/4_distractors/task.json
+!fetch-url
+
+!python
+# TODO: just transform the json parse into a list of str prompts
+print("can I just do a quick and dirty json transform without using defop?")
+# !take 1
+
+!format>story
+Karen continued to yell at the cashier about her order. \"This is the third time this week you have gotten my order wrong! What is wrong with you?!\" Karen yelled. \"I'm so sorry,\" the cashier explained, \"I will get my manager for you immediately and remake your order. It has been a busy week here.\" Karen nods and waits for the manager.",
+!format>choices
+Honey catches more flies than vinegar
+A cat may look at a king
+Beat swords into ploughshares
+A soft answer turneth away wrath
+A barking dog never bites
+
+# TODO: input non-last column?
+!format>zero-shot
+Given a narrative choose the most related proverb from a list of 5 proverbs.
+story:
+{story}
+choices:
+{choices}
+!format
+{zero-shot}
+choice: 
+!llm>choice model={model} max_tokens=30
+
+# transform from array of strings into 0 or 1 using lookup in JSON
+
+# !!python
+# @defop('guess', 0, 0)
+# def d4(aipl, v:str) -> str:
+#     import random
+#     return random.choice([0, 1, 2, 3])
+# !guess>classification
+
+!format
+{choice}: {story}
+!print
+
+# not necessary, makes it easier to debug
+# !ravel
+
+# compute precision and recall
+!!python
+from aipl.table import Table
+from aipl import defop, LazyRow
+import numpy as np
+
+def is_int(val):
+    try:
+        int(val)
+        return True
+    except ValueError:
+        return False
+
+def to_np_int_array(t:Table, colname:str) -> np.array:
+    column = [int(row[colname]) if is_int(row[colname]) else np.nan for row in t]
+    return np.array(column)
+
+def recall(t:Table, predictions:str, true_values:str) -> float:
+    N = true_values.shape[0]
+    return (true_values == predictions).sum() / N
+
+def precision(t:Table, predictions:str, true_values:str) -> float:
+    TP = ((predictions == 1) & (true_values == 1)).sum()
+    FP = ((predictions == 1) & (true_values == 0)).sum()
+    return TP / (TP+FP)
+
+@defop('compute-accuracy', 1.5, 0.5)
+def compute(aipl, t:Table, predictions_colname, true_values_colname) -> dict:
+    true_values = to_np_int_array(t, true_values_colname)
+    predictions = to_np_int_array(t, predictions_colname)
+    r = recall(t, predictions, true_values)
+    print(r)
+    p = precision(t, predictions, true_values)
+    print(p)
+    return {
+        'recall': recall(t, predictions, true_values),
+        'precision': precision(t, predictions, true_values)
+    }
+
+# !compute-accuracy>accuracy classification target_scores_ironic
+# TODO: structure into desired JSON format
+# TODO: looks like model is inaccessible
+# !columns model accuracy
+# !json
+# !save irony_identification_{model}.json
+!literal
+done
+!print

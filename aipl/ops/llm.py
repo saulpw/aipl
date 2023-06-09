@@ -21,7 +21,7 @@ def _parse_msg(s:str):
 
 # from the horse's mouth, 2023-05-30
 openai_pricing = {
-    "gpt-4-8k": 0.06,
+    "gpt-4": 0.06,
     "gpt-4-32k": 0.12,
     "gpt-3.5-turbo": 0.002,
     "ada": 0.0016,
