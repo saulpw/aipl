@@ -42,7 +42,7 @@ STRING_LINE: /^[^!#\n][^\n]*(\n|$)/m | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
 %ignore COMMENT_LINE
-''')
+''', propagate_positions=True)
 
 
 @dataclass
