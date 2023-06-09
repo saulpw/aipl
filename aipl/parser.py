@@ -11,19 +11,16 @@ start: line*
 ws: [ _WS ]
 _WS: /[ \t]+/
 
-line: (command ws)* command_prompt | _EMPTY_LINE
+line: commands prompt | _EMPTY_LINE
 
-command: command_sign OPNAME varnames arg_list
-command_prompt: command prompt
+commands: (command)+
+command: command_sign OPNAME varnames ws arg_list ws
 
 OPNAME: IDENTIFIER
 
-?command_sign: COMMAND | IMMEDIATE_COMMAND
+?command_sign: /!!?/
 
 _EMPTY_LINE: "\n"
-
-COMMAND: "!"
-IMMEDIATE_COMMAND: "!!"
 
 varnames: ( ">" IDENTIFIER )*
 
@@ -40,8 +37,8 @@ KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
 
-prompt: ws [ "\n" STRING_LINE* ]
-STRING_LINE: /[^!#\n][^\n]*(\n|$)/ | "\n"
+prompt: "\n" STRING_LINE*
+STRING_LINE: /^[^!#\n][^\n]*(\n|$)/m | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
 %ignore COMMENT_LINE
@@ -60,7 +57,15 @@ class AstCommand:
 
 class ToAst(Transformer):
     def line(self, tree):
-        return tree
+        if len(tree) == 0:
+            return tree
+        (commands, prompt) = tree
+        if prompt:
+            commands[-1].kwargs['prompt'] = prompt
+        return commands
+
+    def commands(self, tree):
+        return list(tree)
 
     def start(self, tree):
         output = []
@@ -75,7 +80,7 @@ class ToAst(Transformer):
             opname=opname,
             line=None, # TODO Not yet preserving line contents.
             linenum=command_sign.line,
-            immediate=command_sign.type == 'IMMEDIATE_COMMAND',
+            immediate=command_sign.value == '!!',
             varnames=varnames,
             args=args,
             kwargs=kwargs,
@@ -129,7 +134,7 @@ class ToAst(Transformer):
         return ast.literal_eval(token.value)
 
 def parse(program_text):
-    parse_tree = aipl_grammar.parse(program_text)
+    parse_tree = aipl_grammar.parse(program_text + "\n")
     return ToAst().transform(parse_tree)
 
 
