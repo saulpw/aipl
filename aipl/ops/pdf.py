@@ -7,4 +7,3 @@ def op_pdf_extract(aipl, pdfdata:bytes) -> str:
     from io import BytesIO
     s = BytesIO(pdfdata)
     return extract_text(s)
-    
