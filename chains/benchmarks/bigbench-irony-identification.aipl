@@ -1,0 +1,96 @@
+# in: list of models; out: % accuracy in classifying ironic statements
+# desired output format example:
+# { 'gpt-X': { 'irony_identification': { 'precision': 1.0, 'recall': 1.0 }, ... }
+
+# list of models: 
+# random chance: {'recall': 0.5656565656565656, 'precision': 0.5714285714285714}
+# gpt-neo-20b: {'recall': 0.3838383838383838, 'precision': 0.391304347826087}
+# fairseq-13b: {'recall': 0.5050505050505051, 'precision': 0.5050505050505051}
+# gpt-3.5-turbo: {'recall': 0.7171717171717171, 'precision': 0.6571428571428571}
+# gpt-4: {'recall': 0.9191919191919192, 'precision': 0.8888888888888888}
+
+# get models as input
+# !require-input
+# input model IDs
+# !split>model sep=\n
+
+# TODO: remove this convenience
+!!literal>model
+gpt-3.5-turbo
+
+# load the JSON
+!format
+https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/irony_identification/task.json
+!fetch-url
+!json-parse examples=examples
+
+!format>statement
+{input}
+
+!take 10
+
+# TODO: input non-last column?
+!format>zero-shot
+You will be given a number of statements and determine if they are ironic. If the statement is ironic, respond with 1, otherwise respond with 0. Do not respond with anything except a single digit.
+
+!format
+{zero-shot}
+Statement: {statement}
+Score: 
+!llm>classification model={model} max_tokens=1
+
+!format
+{classification} ({target_scores_ironic}): {statement}
+!print
+
+# not necessary, makes it easier to debug
+!ravel
+
+# compute precision and recall
+!!python
+from aipl.table import Table
+from aipl import defop, LazyRow
+import numpy as np
+
+def is_int(val):
+    try:
+        int(val)
+        return True
+    except ValueError:
+        return False
+
+def to_np_int_array(t:Table, colname:str) -> np.array:
+    column = [int(row[colname]) if is_int(row[colname]) else np.nan for row in t]
+    return np.array(column)
+
+def recall(t:Table, predictions:str, true_values:str) -> float:
+    N = true_values.shape[0]
+    return (true_values == predictions).sum() / N
+
+def precision(t:Table, predictions:str, true_values:str) -> float:
+    TP = ((predictions == 1) & (true_values == 1)).sum()
+    FP = ((predictions == 1) & (true_values == 0)).sum()
+    return TP / (TP+FP)
+
+@defop('compute-accuracy', 1.5, 0.5)
+def compute(aipl, t:Table, predictions_colname, true_values_colname) -> dict:
+    true_values = to_np_int_array(t, true_values_colname)
+    predictions = to_np_int_array(t, predictions_colname)
+    r = recall(t, predictions, true_values)
+    print(r)
+    p = precision(t, predictions, true_values)
+    print(p)
+    return {
+        'recall': recall(t, predictions, true_values),
+        'precision': precision(t, predictions, true_values)
+    }
+
+
+!compute-accuracy>accuracy classification target_scores_ironic
+# TODO: structure into desired JSON format
+# TODO: looks like model is inaccessible
+# !columns model accuracy
+# !json
+# !save irony_identification_{model}.json
+
+!print
