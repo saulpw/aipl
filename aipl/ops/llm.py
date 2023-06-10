@@ -85,8 +85,8 @@ def completion_openai(aipl, v:str, **kwargs) -> str:
     'Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.'
     import openai
     model = kwargs.get('model')
-    if model in gooseai_models:
-        return query_goose(aipl, v, **kwargs)
+    if model in gooseai_pricing:
+        return completion_gooseai(aipl, v, **kwargs)
     parms = dict(
         temperature=0,
         top_p=1,

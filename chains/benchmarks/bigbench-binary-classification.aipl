@@ -1,20 +1,75 @@
-# in: list of models; out: % accuracy in classifying ironic statements
+# in: list of models; out: % accuracy in classifying the given task
 # desired output format example:
 # { 'gpt-X': { 'irony_identification': { 'precision': 1.0, 'recall': 1.0 }, ... }
 
 # TODO: remove this convenience
 # inputs: model and task json file
-!!literal>model
+!literal
 gpt-3.5-turbo
+gpt-neo-20b
+!split>model sep=\n
+!!literal>task
+causal_judgment
+
 !format
-https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/causal_judgment/task.json
+https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/{task}/task.json
 !fetch-url
+# name=name description=description 
+!json-parse examples=examples
 
-!json-parse examples=examples name=name description=description 
+!format>statement
+{input}
+!take 10
 
-# print some info on what this script is doing
+# try these tasks without any prompt context and see what happens!
+!format>zero-shot
+{statement}
+---
+Classify with 1 if yes, 0 if no.
+Classification: 
+!llm>classification model={model} max_tokens=1
+
+# TODO: be able to look at responses per-model; currently can't tell what model had what classification
+# !format
+# {model} {classification} ({target_scores_Yes}): {statement}
 !format
-BIG Bench task: {name}
-{description}
-model: {model}
+{classification} ({target_scores_Yes}): {statement}
+!print
+
+!!python
+from aipl.table import Table
+from aipl import defop, LazyRow
+import numpy as np
+
+def _is_int(val):
+    try:
+        int(val)
+        return True
+    except ValueError:
+        return False
+
+def _to_np_int_array(t:Table, colname:str) -> np.array:
+    column = [int(row[colname]) if _is_int(row[colname]) else np.nan for row in t]
+    return np.array(column)
+
+def _recall(t:Table, predictions:str, true_values:str) -> float:
+    N = true_values.shape[0]
+    return (true_values == predictions).sum() / N
+
+def _precision(t:Table, predictions:str, true_values:str) -> float:
+    TP = ((predictions == 1) & (true_values == 1)).sum()
+    FP = ((predictions == 1) & (true_values == 0)).sum()
+    return TP / (TP+FP)
+
+@defop('compute-precision', 1.5, 0.5)
+def _compute(aipl, t:Table, predictions_colname, true_values_colname) -> dict:
+    true_values = _to_np_int_array(t, true_values_colname)
+    predictions = _to_np_int_array(t, predictions_colname)
+    return _precision(t, predictions, true_values)
+
+!compute-precision>precision classification target_scores_Yes
+# TODO: 'model' not found
+# !columns model precision
+!format
+{model:15} {task:15} {precision}
 !print
