@@ -29,6 +29,17 @@ openai_pricing = {
     "text-curie-001": 0.0120,
     "text-davinci-003": 0.1200
 }
+# base price covers the first 25 tokens, then it's the per-token price (2023-06-06)
+gooseai_pricing = {
+    "fairseq-13b": {
+        "base": 0.001250,
+        "token": 0.000036
+    },
+    "gpt-neo-20b": {
+        "base": 0.002650, 
+        "token": 0.000063
+    }
+}
 
 # base price covers the first 25 tokens, then it's the per-token price (2023-06-06)
 gooseai_pricing = {
@@ -74,6 +85,8 @@ def completion_openai(aipl, v:str, **kwargs) -> str:
     'Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.'
     import openai
     model = kwargs.get('model')
+    if model in gooseai_models:
+        return query_goose(aipl, v, **kwargs)
     parms = dict(
         temperature=0,
         top_p=1,
