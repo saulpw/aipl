@@ -1,0 +1,20 @@
+# in: list of models; out: % accuracy in classifying ironic statements
+# desired output format example:
+# { 'gpt-X': { 'irony_identification': { 'precision': 1.0, 'recall': 1.0 }, ... }
+
+# TODO: remove this convenience
+# inputs: model and task json file
+!!literal>model
+gpt-3.5-turbo
+!format
+https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/causal_judgment/task.json
+!fetch-url
+
+!json-parse examples=examples name=name description=description 
+
+# print some info on what this script is doing
+!format
+BIG Bench task: {name}
+{description}
+model: {model}
+!print

@@ -81,6 +81,7 @@ def op_json_parse(aipl, v:str, **kwargs) -> Table:
     if not kwargs:
         return pyobj_to_table(r)
     else:
+        named = dict()
         for colname, findstr in kwargs.items():
             for ret in _json_find(r, findstr.split('.')):
-                return pyobj_to_table(ret)
+                yield {colname: pyobj_to_table(ret)}

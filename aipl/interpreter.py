@@ -103,7 +103,6 @@ class AIPL:
 
     def run(self, script:str, *args):
         cmds = self.parse(script)
-
         argkey = self.unique_key
         inputs = Table([{argkey:arg} for arg in args])
         return self.run_cmdlist(cmds, inputs)

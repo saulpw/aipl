@@ -39,13 +39,6 @@ Statement: {statement}
 Score: 
 !llm>classification model={model} max_tokens=1
 
-# !!python
-# @defop('guess', 0, 0)
-# def coinflip(aipl, v:str) -> str:
-#     import random
-#     return random.choice([0, 1])
-# !guess>classification
-
 !format
 {classification} ({target_scores_ironic}): {statement}
 !print
