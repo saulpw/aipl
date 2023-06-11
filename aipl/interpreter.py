@@ -3,7 +3,7 @@ from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 
-from aipl import Error, AIPLException
+from aipl import Error, AIPLException, InnerPythonException
 from .table import Table, LazyRow, Column
 from .db import Database
 from .utils import stderr, fmtargs, fmtkwargs, AttrDict
@@ -91,8 +91,13 @@ class AIPL:
                     f'[line {command.linenum}] no such operator "!{command.opname}"',
                     command)
 
-            if (command.immediate):
+            if command.immediate:
                 result = self.eval_op(command, Table(), contexts=[self.globals])
+                if isinstance(result, Error):
+                    if isinstance(result.exception, InnerPythonException):
+                        result.exception.command = command
+                        raise result.exception
+
                 if command.varnames:
                     last_variable = command.varnames[-1]
                     self.globals[last_variable] = result
