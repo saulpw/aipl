@@ -139,27 +139,3 @@ def op_llm_embedding(aipl, v:str, **kwargs) -> dict:
                 used_tokens=used,
                 embedding=resp['data'][0]['embedding'])
 
-@defop('llm-local', 0, 0, 1)
-@expensive(op_llm_mock)
-def op_llm(aipl, v:str, **kwargs) -> str:
-    if 'LLAMA_CPP_DIR' not in os.environ or 'OPENAI_API_ORG' not in os.environ:
-        raise AIPLException('''LLAMA_CPP_DIR envvar must be set for !llm-local''')
-    import subprocess
-    from pathlib import Path
-    llm_dir = Path(os.environ['LLAMA_CPP_DIR'])
-    model = kwargs.get('model')
-    max_tokens = kwargs.get('max_tokens') or '-1'
-    
-    print(model, '\n>>>\n' + v, end='')
-    res = subprocess.run([
-            llm_dir/'main', 
-            '--model', llm_dir/'models'/model, 
-            '--n_predict', str(max_tokens), 
-            '--prompt', v
-        ],
-        capture_output=True)
-    if len(res.stdout) == 0:
-        raise Exception(res.stderr.decode())
-    output_without_prompt = res.stdout.decode().replace(v, '', 1)
-    print(output_without_prompt, '\n<<<')
-    return output_without_prompt
