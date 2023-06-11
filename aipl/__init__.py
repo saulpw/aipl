@@ -18,8 +18,24 @@ class Error:
 class AIPLCompileError(Exception):
     'A nice error message during compilation to print to stderr and exit without a stacktrace.'
 
+
 class AIPLException(Exception):
     'A nice error message to print to stderr and exit without a stacktrace.'
+
+
+class InnerPythonException(AIPLException):
+    'A nice error message when inner Python exec/eval raises.'
+    def __str__(self):
+        exc, tb, codestr = self.args
+        r = []
+        r.append(f'In "!{self.command.opname}" (line {self.command.linenum}):')
+        for frame in tb:
+            r.append(f'Line ~{frame.lineno+self.command.linenum}, in {frame.name}')
+            r.append('    ' + codestr.splitlines()[frame.lineno-1])
+
+        r.append(f'{type(exc).__name__}: {exc}')
+
+        return '\n'.join(r)
 
 
 class UserAbort(BaseException):
