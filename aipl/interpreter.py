@@ -49,8 +49,8 @@ class AIPL:
     def __init__(self, **kwargs):
         self.globals = {}  # base context
         self.options = AttrDict(kwargs)
+        self.forced_input = None  # via !test-input
         self.output_db = Database(self.options.outdbfn)
-
         self.cache_db = None
         if self.options.cachedbfn:
             self.cache_db = Database(self.options.cachedbfn)
@@ -101,15 +101,16 @@ class AIPL:
                 commands.append(command)
         return commands
 
-    def run_test(self, script:str, *inputlines):
+    def new_input(self, *inputlines):
         argkey = self.unique_key
-        inputs = [Table([{argkey:line} for line in inputlines])]
+        return Table([{argkey:line} for line in inputlines])
+
+    def run_test(self, script:str, *inputlines):
+        inputs = [self.new_input(*inputlines)]
         return self.run(script, inputs)[-1]
 
     def run(self, script:str, inputs:list[Table]=None):
         cmds = self.parse(script)
-        if not inputs:
-            inputs = [Table()]
 
         return self.run_cmdlist(cmds, inputs)
 
@@ -118,6 +119,10 @@ class AIPL:
 
     def run_cmdlist(self, cmds:List[Command], inputs:List[Table]):
         for cmd in cmds:
+            if self.forced_input is not None:
+                inputs.append(self.forced_input)
+                self.forced_input = None
+
             self.pre_command(cmd, inputs[-1])
 
             if self.options.step:
@@ -143,13 +148,16 @@ class AIPL:
             except Exception as e:
                 raise Exception(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
 
+        if isinstance(inputs[-1], Error):
+            raise inputs[-1].exception
+
         return inputs
 
     def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs, newkey=''):
         try:
             ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
         except Exception as e:
-            if self.options.debug:
+            if self.options.debug or self.options.test:
                 raise
             return Error(cmd.linenum, cmd.opname, e)
 

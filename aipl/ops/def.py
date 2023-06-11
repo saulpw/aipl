@@ -21,11 +21,9 @@ def op_def(aipl, opname, prompt=''):
     def new_operator(aipl, *args, **kwargs):
         arity = cmds[0].op.arity
         if arity == 0:
-            t = Table()
+            t = aipl.new_input()
         elif arity == 1:
-            t = args[0]
-            argkey = aipl.unique_key
-            t = Table([{argkey:t}])
+            t = aipl.new_input(args[0])
         ret = aipl.run_cmdlist(cmds, [t], *args[arity:])
         return ret[-1][0].value
 

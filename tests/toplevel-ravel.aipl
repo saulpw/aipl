@@ -1,6 +1,6 @@
 
 
-!literal>arg
+!test-input
 
 pizza toppings:tomato,cheese,onion
 sex:m,f,y,n
@@ -14,7 +14,7 @@ sex:m,f,y,n
 {category}: {member}
 
 !join sep=\n
-!assert-equal
+!test-equal
 pizza toppings: tomato
 pizza toppings: cheese
 pizza toppings: onion

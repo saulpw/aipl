@@ -4,10 +4,10 @@
  !take 3
  !join
 
-!format
+!test-input
 now is the time for all good men
 
 !first-3-words
 
-!assert-equal
+!test-equal
 now is the

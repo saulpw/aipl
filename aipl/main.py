@@ -7,6 +7,7 @@ from aipl import AIPL, Table, UserAbort, AIPLException, parse
 def parse_args(args):
     parser = argparse.ArgumentParser(description='AIPL interpreter')
     parser.add_argument('--debug', '-d', action='store_true', help='abort on exception')
+    parser.add_argument('--test', '-t', action='store_true', help='enable test mode')
     parser.add_argument('--interactive', '-i', action='store_true', help='interactive REPL')
     parser.add_argument('--step', action='store', default='', help='call aipl.step_<func>(cmd, input) before each step')
     parser.add_argument('--step-breakpoint', '-x', action='store_const', dest='step', const='breakpoint', help='breakpoint() before each step')
@@ -79,15 +80,14 @@ def main():
             else:
                 inputlines = [input_text]
 
-            argkey = self.unique_key
-            inputs.append(Table([{argkey:line} for line in inputlines]))
+            inputs.append(aipl.new_input(*inputlines))
             inputs = aipl.run(open(fn).read(), inputs)
         except UserAbort as e:
             print(f'aborted', e, file=sys.stderr)
             break
         except AIPLException as e:
             print(e, file=sys.stderr)
-            break
+            sys.exit(1)
 
     if args.interactive:
         import rich

@@ -1,8 +1,8 @@
-!literal
+!test-input
 ab zh cd zq azzz z
 !split>keep
 !match ^z
 !filter
 !join
-!assert-equal
+!test-equal
 zh zq z

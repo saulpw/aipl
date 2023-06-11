@@ -1,6 +1,6 @@
 # testing xml operators
 
-!format
+!test-input
 
     <?xml version="1.0" encoding="UTF-8"?>
     <feed xmlns="http://www.w3.org/2005/Atom">
@@ -31,7 +31,7 @@
 !xml-xpaths published=../published updated=../updated title=../title href=@href
 
 !ravel
-!assert-json
+!test-json
 
 [{
     "published": "2011-09-11T20:09:48Z",
