@@ -29,7 +29,7 @@ def op_columns(aipl, t:'Table', *colnames, **renamedcols) -> Table:
     return ret
 
 def test_columns(aipl):
-    r = aipl.run('!name letters !split !ravel !columns letters', 'a b c', 'd e f')
+    r = aipl.run_test('!name letters !split !ravel !columns letters', 'a b c', 'd e f')
     assert r[0].value == 'a b c'
     assert r[3].value == 'd e f'
     assert len(r) == 6

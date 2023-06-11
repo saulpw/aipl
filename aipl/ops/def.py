@@ -26,12 +26,12 @@ def op_def(aipl, opname, prompt=''):
             t = args[0]
             argkey = aipl.unique_key
             t = Table([{argkey:t}])
-        ret = aipl.run_cmdlist(cmds, t, *args[arity:])
-        return ret[0].value
+        ret = aipl.run_cmdlist(cmds, [t], *args[arity:])
+        return ret[-1][0].value
 
 
 def test_def(aipl):
-    r = aipl.run('''
+    r = aipl.run_test('''
 !!def split-join
  !split
  !join

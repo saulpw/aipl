@@ -8,7 +8,7 @@ def op_join(aipl, v:List[str], sep=' ') -> str:
     return sep.join(v)
 
 def test_toplevel_join(aipl):
-    t = aipl.run('!join', 'now', 'is', 'the')
+    t = aipl.run_test('!join', 'now', 'is', 'the')
     assert len(t.rows) == 1
     assert t[0].value == 'now is the'
 

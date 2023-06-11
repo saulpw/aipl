@@ -18,9 +18,9 @@ def op_grade_up(aipl, t:Table, *args):
 
 
 def test_sort(aipl):
-    r = aipl.run('!sort', 3,1,4,2,8,5)
+    r = aipl.run_test('!sort', 3,1,4,2,8,5)
     assert r.values == [1,2,3,4,5,8]
 
 def test_grade_up(aipl):
-    r = aipl.run('!grade-up', 3,1,4,2,8,5)
+    r = aipl.run_test('!grade-up', 3,1,4,2,8,5)
     assert r.values == [1, 3, 0, 2, 5, 4]

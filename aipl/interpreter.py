@@ -101,6 +101,11 @@ class AIPL:
                 commands.append(command)
         return commands
 
+    def run_test(self, script:str, *inputlines):
+        argkey = self.unique_key
+        inputs = [Table([{argkey:line} for line in inputlines])]
+        return self.run(script, inputs)[-1]
+
     def run(self, script:str, inputs:list[Table]=None):
         cmds = self.parse(script)
         if not inputs:

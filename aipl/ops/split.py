@@ -27,7 +27,7 @@ def op_split_into(aipl, v:str, *args, sep=None) -> dict:
     return dict(zip(args, v.split(sep)))
 
 def test_split_join(aipl):
-    t = aipl.run('!split !take 3 !join', 'now is the time')
+    t = aipl.run_test('!split !take 3 !join', 'now is the time')
     assert len(t.rows) == 1
     assert t[0].value == 'now is the'
 

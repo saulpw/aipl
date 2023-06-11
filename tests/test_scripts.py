@@ -8,4 +8,4 @@ def test_script(aipl, input_file):
     aipl.stdout = StringIO()
 
     with open(input_file) as fh:
-        aipl.run(fh.read(), '')
+        aipl.run_test(fh.read(), '')
