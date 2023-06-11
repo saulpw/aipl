@@ -1,0 +1,26 @@
+{
+    "name": "vsc-aipl-extension",
+    "displayName": "vsc_aipl_extension",
+    "description": "A VSC extension to support basic AIPL syntax highlighting",
+    "publisher": "0",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.35.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "aipl", 
+            "aliases": ["AIPL", "aipl"],
+            "extensions": [".aipl"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "aipl",
+            "scopeName": "source.aipl",
+            "path": "./syntaxes/aipl.tmLanguage.json"
+        }]
+    }
+}
