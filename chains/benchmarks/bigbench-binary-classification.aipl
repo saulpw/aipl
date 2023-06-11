@@ -1,15 +1,16 @@
 # in: list of models; out: % accuracy in classifying the given task
-# desired output format example:
-# { 'gpt-X': { 'irony_identification': { 'precision': 1.0, 'recall': 1.0 }, ... }
 
-# TODO: these should probably be input as a command line arg
-!require-input
-Enter the model IDs you would like to run on.
-!split>model sep=\n
-
-# TODO: how to handle file path?
-!read chains/benchmarks/bigbench-binary-classification-tasks.txt
-!split>task sep=\n
+# make all pairwise combinations of model and task
+!python
+with open('bigbench-tasks.txt') as f:
+    tasks = f.read().split('\n')
+with open('models.txt') as f:
+    models = f.read().split('\n')
+s = 'model,task\n' + "\n".join([model+","+task for model in models for task in tasks])
+with open('model-task.csv', 'w') as f:
+    f.write(s)
+print(s)
+!csv-parse model-task.csv
 
 !format
 https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/{task}/task.json
@@ -52,24 +53,58 @@ def _to_np_int_array(t:Table, colname:str) -> np.array:
     column = [int(row[colname]) if _is_int(row[colname]) else np.nan for row in t]
     return np.array(column)
 
-def _recall(t:Table, predictions:str, true_values:str) -> float:
+def _true_positives(predictions:np.array, true_values:np.array) -> float:
+    return ((predictions == 1) & (true_values == 1)).sum()
+
+def _true_negatives(predictions:np.array, true_values:np.array) -> float:
+    return ((predictions == 0) & (true_values == 0)).sum()
+
+def _false_positives(predictions:np.array, true_values:np.array) -> float:
+    return ((predictions == 1) & (true_values == 0)).sum()
+
+def _false_negatives(predictions:np.array, true_values:np.array) -> float:
+    return ((predictions == 0) & (true_values == 1)).sum()
+
+def _recall(predictions:np.array, true_values:np.array) -> float:
     N = true_values.shape[0]
     return (true_values == predictions).sum() / N
 
-def _precision(t:Table, predictions:str, true_values:str) -> float:
-    TP = ((predictions == 1) & (true_values == 1)).sum()
-    FP = ((predictions == 1) & (true_values == 0)).sum()
+def _precision(predictions:np.array, true_values:np.array) -> float:
+    TP = _true_positives(predictions, true_values)
+    FP = _false_positives(predictions, true_values)
     return TP / (TP+FP)
 
-@defop('compute-precision', 1.5, 0.5)
-def _compute(aipl, t:Table, predictions_colname, true_values_colname) -> dict:
+def _balanced_accuracy(predictions:np.array, true_values:np.array, add_one_smoothing:bool) -> float:
+    TP = _true_positives(predictions, true_values)
+    TN = _true_negatives(predictions, true_values)
+    FP = _false_positives(predictions, true_values)
+    FN = _false_negatives(predictions, true_values)
+    if add_one_smoothing:
+        true_positive_rate = (TP + 1) / (TP + FN + 1)
+        true_negative_rate = (TN + 1) / (TN + FP + 1)
+    else:
+        true_positive_rate = TP / (TP + FN)
+        true_negative_rate = TN / (TN + FP)
+    return (true_positive_rate + true_negative_rate) / 2
+
+@defop('metrics-accuracy', 1.5, 0)
+def op_accuracy(aipl, t:Table, predictions_colname:str, true_values_colname:str, add_one_smoothing:bool=None) -> float:
     true_values = _to_np_int_array(t, true_values_colname)
     predictions = _to_np_int_array(t, predictions_colname)
-    return _precision(t, predictions, true_values)
+    return _balanced_accuracy(predictions, true_values, add_one_smoothing=='True')
 
-!compute-precision>precision classification target_scores_Yes
+@defop('metrics-precision', 1.5, 0)
+def op_precision(aipl, t:Table, predictions_colname, true_values_colname) -> float:
+    true_values = _to_np_int_array(t, true_values_colname)
+    predictions = _to_np_int_array(t, predictions_colname)
+    return _precision(predictions, true_values)
+
+# !ravel
+# !columns zero-shot classification target_scores_Yes
+# !json 2
+!metrics-accuracy>accuracy classification target_scores_Yes
 # TODO: 'model' not found
 # !columns model precision
-!format
-{model:15} {task:15} {precision}
+# !format
+# {model:15} {task:15} {precision}
 !print
