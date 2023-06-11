@@ -1,0 +1,52 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "aipl",
+    "patterns": [
+        {
+            "begin": "#",
+            "beginCaptures": {
+                "0": {
+                    "name": "punctuation.definition.comment.aipl"
+                }
+            },
+            "end": "\\n",
+            "name": "comment.line.number-sign.aipl",
+            "patterns": [
+                {
+                    "match": "(\\bTODO\\b|\\bFIXME\\b|\\bNOTE\\b|@todo)",
+                    "name": "keyword.other.documentation.task.aipl"
+                }
+            ]
+        },
+        
+        {
+            "begin": "!",
+            "beginCaptures": {
+                "0": {
+                    "name": "punctuation.definition.command.aipl"
+                }
+            },
+            "end": "\\s|\\n",
+            "name": "keyword.control.command.aipl",
+            "patterns": [
+                {
+                    "begin": ">",
+                    "end": "\\s|$",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "punctuation.separator.command.aipl"
+                        }
+                    },
+                    "endCaptures": {
+                        "0": {
+                            "name": "variable.parameter.command.aipl"
+                        }
+                    }
+                }
+            ]
+        }
+        
+    ],
+    "repository": {},
+    "scopeName": "source.aipl"
+}
