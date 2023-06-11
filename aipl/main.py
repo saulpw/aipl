@@ -2,11 +2,12 @@ import os
 import sys
 import argparse
 
-from aipl import AIPL, Table, UserAbort, AIPLException
+from aipl import AIPL, Table, UserAbort, AIPLException, parse
 
 def parse_args(args):
     parser = argparse.ArgumentParser(description='AIPL interpreter')
     parser.add_argument('--debug', '-d', action='store_true', help='abort on exception')
+    parser.add_argument('--interactive', '-i', action='store_true', help='interactive REPL')
     parser.add_argument('--step', action='store', default='', help='call aipl.step_<func>(cmd, input) before each step')
     parser.add_argument('--step-breakpoint', '-x', action='store_const', dest='step', const='breakpoint', help='breakpoint() before each step')
     parser.add_argument('--step-rich', '-v', action='store_const', dest='step', const='rich', help='output rich table before each step')
@@ -16,7 +17,7 @@ def parse_args(args):
     parser.add_argument('--no-cache', action='store_const', dest='cachedbfn', const='', help='sqlite database for caching operators')
     parser.add_argument('--output-db', '-o', action='store', default='aipl-cache.sqlite', dest='outdbfn', help='sqlite database accessible to !db operators')
     parser.add_argument('--split', '--separator', '-s', action='store', default='\n', dest='separator', help='separator to split input on')
-    parser.add_argument('script_or_global', nargs='+', help='scripts to run, or k=v global parameters')
+    parser.add_argument('script_or_global', nargs='*', help='scripts to run, or k=v global parameters')
     return parser.parse_args(args)
 
 
@@ -26,6 +27,7 @@ def main():
     args = parse_args(None)
     global_parameters = {}
     scripts = []
+    inputs = []
 
     for arg in args.script_or_global:
         if '=' in arg:
@@ -34,7 +36,7 @@ def main():
         else:
             scripts.append(arg)
 
-    if not scripts:
+    if not scripts and not args.interactive:
         print('no script on stdin: nothing to do', file=sys.stderr)
         return
 
@@ -73,16 +75,48 @@ def main():
         try:
             input_text = stdin_contents.strip()
             if args.separator:
-                inputs = input_text.split(args.separator)
+                inputlines = input_text.split(args.separator)
             else:
-                inputs = [input_text]
-            aipl.run(open(fn).read(), *inputs)
+                inputlines = [input_text]
+
+            argkey = self.unique_key
+            inputs.append(Table([{argkey:line} for line in inputlines]))
+            inputs = aipl.run(open(fn).read(), inputs)
         except UserAbort as e:
             print(f'aborted', e, file=sys.stderr)
             break
         except AIPLException as e:
             print(e, file=sys.stderr)
             break
+
+    if args.interactive:
+        import rich
+        import inspect
+        while True:
+            print('> ', end='')
+            sys.stdout.flush()
+            try:
+                cmdtext = sys.stdin.readline()
+            except KeyboardInterrupt as e:
+                break  # exit on ^C
+
+            if not cmdtext.strip():  # do nothing empty line
+                continue
+
+            try:
+                cmds = parse(cmdtext)
+                op = aipl.get_op(cmds[0].opname)
+                if 'prompt' in inspect.signature(op).parameters:
+                    while True:
+                        line = sys.stdin.readline()
+                        if not line.strip():
+                            break
+                        cmdtext += '\n' + line
+
+                inputs = aipl.run(cmdtext, inputs)
+                rich.print(inputs[-1])
+            except AIPLException as e:
+                print(e.args[0])
 
     if aipl.cost_usd:
         print(f'total cost: ${aipl.cost_usd:.02f}', file=sys.stderr)

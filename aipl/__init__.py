@@ -31,6 +31,7 @@ from .db import Database
 from .table import Table, Column, LazyRow
 from .interpreter import AIPL, defop, Command
 from .caching import expensive, dbcache
+from .parser import parse
 from .main import main
 
 

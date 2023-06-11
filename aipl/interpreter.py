@@ -101,37 +101,37 @@ class AIPL:
                 commands.append(command)
         return commands
 
-    def run(self, script:str, *args):
+    def run(self, script:str, inputs:list[Table]=None):
         cmds = self.parse(script)
+        if not inputs:
+            inputs = [Table()]
 
-        argkey = self.unique_key
-        inputs = Table([{argkey:arg} for arg in args])
         return self.run_cmdlist(cmds, inputs)
 
-    def pre_command(self, t:Table, cmd:Command):
+    def pre_command(self, cmd:Command, t:Table):
         stderr(t, str(cmd))
 
-    def run_cmdlist(self, cmds:List[Command], inputs):
+    def run_cmdlist(self, cmds:List[Command], inputs:List[Table]):
         for cmd in cmds:
-            self.pre_command(inputs, cmd)
+            self.pre_command(cmd, inputs[-1])
 
             if self.options.step:
                 for stepfuncname in self.options.step.split(','):
                     stepfunc = getattr(self, 'step_'+stepfuncname, None)
                     if stepfunc:
-                        stepfunc(inputs, cmd)
+                        stepfunc(inputs[-1], cmd)
                     else:
                         stderr(f'no aipl.step_{stepfuncname}!')
 
             try:
-                result = self.eval_op(cmd, inputs, contexts=[self.globals])
+                result = self.eval_op(cmd, inputs[-1], contexts=[self.globals])
                 if cmd.op.rankout is None:
                     continue # just keep former inputs
                 elif isinstance(result, Table):
-                    inputs = result
+                    inputs[-1] = result
                 else:
                     k = cmd.varnames[-1] if cmd.varnames else self.unique_key
-                    inputs = Table([{k:result}])
+                    inputs[-1] = Table([{k:result}])
 
             except AIPLException as e:
                 raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
