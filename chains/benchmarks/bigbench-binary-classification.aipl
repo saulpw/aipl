@@ -2,14 +2,14 @@
 # desired output format example:
 # { 'gpt-X': { 'irony_identification': { 'precision': 1.0, 'recall': 1.0 }, ... }
 
-# TODO: remove this convenience
-# inputs: model and task json file
-!literal
-gpt-3.5-turbo
-gpt-neo-20b
+# TODO: these should probably be input as a command line arg
+!require-input
+Enter the model IDs you would like to run on.
 !split>model sep=\n
-!!literal>task
-causal_judgment
+
+# TODO: how to handle file path?
+!read chains/benchmarks/bigbench-binary-classification-tasks.txt
+!split>task sep=\n
 
 !format
 https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/{task}/task.json

@@ -74,6 +74,9 @@ def op_llm_mock(aipl, v:str, **kwargs) -> str:
 @expensive(op_llm_mock)
 def route_llm_query(aipl, v:str, **kwargs) -> str:
     model = kwargs.get('model')
+    if model is None:
+        kwargs['model'] = 'gpt-3.5-turbo'
+        return completion_openai(aipl, v, **kwargs)
     if model in gooseai_pricing:
         return completion_gooseai(aipl, v, **kwargs)
     elif model in openai_pricing:
@@ -85,8 +88,6 @@ def completion_openai(aipl, v:str, **kwargs) -> str:
     'Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.'
     import openai
     model = kwargs.get('model')
-    if model in gooseai_pricing:
-        return completion_gooseai(aipl, v, **kwargs)
     parms = dict(
         temperature=0,
         top_p=1,
