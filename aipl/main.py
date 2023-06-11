@@ -92,13 +92,28 @@ def main():
     if args.interactive:
         import rich
         import inspect
+
+        import readline
+        def completer(text, state):
+            ops = list(aipl.operators.keys())
+            text = text[1:]
+            results = [x for x in ops if x.startswith(text)]
+            if results:
+                return "!" + results[state]
+
+        readline.parse_and_bind("tab: complete")
+        readline.set_completer_delims(' \n=')
+        readline.set_completer(completer)
+
         while True:
-            print('> ', end='')
             sys.stdout.flush()
             try:
-                cmdtext = sys.stdin.readline()
+                cmdtext = input('> ')
             except KeyboardInterrupt as e:
                 break  # exit on ^C
+            except EOFError:
+                print("\n")
+                continue
 
             if not cmdtext.strip():  # do nothing empty line
                 continue
