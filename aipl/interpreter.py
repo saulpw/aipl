@@ -171,8 +171,7 @@ class AIPL:
         if cmd.op.arity == 0:
             ret = self.call_cmd(cmd, contexts, newkey=newkey)
             if cmd.op.rankout is None:
-                assert not ret  # ignore return value (no rankout)
-                return t
+                return ret
 
         elif rank(t) <= cmd.op.rankin:
             ret = self.call_cmd(cmd, contexts, t, newkey=newkey)
