@@ -29,27 +29,22 @@ openai_pricing = {
     "text-curie-001": 0.0120,
     "text-davinci-003": 0.1200
 }
-# base price covers the first 25 tokens, then it's the per-token price (2023-06-06)
-gooseai_pricing = {
-    "fairseq-13b": {
-        "base": 0.001250,
-        "token": 0.000036
-    },
-    "gpt-neo-20b": {
-        "base": 0.002650, 
-        "token": 0.000063
-    }
-}
 
 # base price covers the first 25 tokens, then it's the per-token price (2023-06-06)
-gooseai_pricing = {
+gooseai_models = {
     "fairseq-13b": {
-        "base": 0.001250,
-        "token": 0.000036
+        "pricing": {
+            "base": 0.001250,
+            "token": 0.000036
+        },
+        "encoding": ""
     },
     "gpt-neo-20b": {
-        "base": 0.002650, 
-        "token": 0.000063
+        "pricing": {
+            "base": 0.002650, 
+            "token": 0.000063
+        },
+        "encoding": "gpt2"
     }
 }
 
@@ -61,7 +56,9 @@ def count_tokens(s:str, model:str=''):
     except ModuleNotFoundError as e:
 #        stderr(str(e))
         return len(s)//4
-
+    except KeyError as e:
+        # just estimate
+        return len(s)//4
 
 def op_llm_mock(aipl, v:str, **kwargs) -> str:
     model = kwargs.get('model')
@@ -77,7 +74,7 @@ def route_llm_query(aipl, v:str, **kwargs) -> str:
     if model is None:
         kwargs['model'] = 'gpt-3.5-turbo'
         return completion_openai(aipl, v, **kwargs)
-    if model in gooseai_pricing:
+    if model in gooseai_models:
         return completion_gooseai(aipl, v, **kwargs)
     elif model in openai_pricing:
         return completion_openai(aipl, v, **kwargs)
@@ -109,7 +106,7 @@ def completion_openai(aipl, v:str, **kwargs) -> str:
 
     cost = openai_pricing[model]*used/1000
     aipl.cost_usd += cost
-    stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.02f}')
+    stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.03f}')
     return result
 
 def completion_gooseai(aipl, v:str, **kwargs) -> str:
@@ -131,16 +128,22 @@ def completion_gooseai(aipl, v:str, **kwargs) -> str:
     j = r.json()
     if 'error' in j:
         raise AIPLException(f'''GooseAI returned an error: {j["error"]}''')
-    # TODO: GooseAI does not return number of tokens used, so we would need to use a tokenizer library to compute that separately
-    # (also note that some of their models don't use the gpt2 tokenizer either, so we'd need to store that data too)
-    return j['choices'][0]['text']
+    
+    response = j['choices'][0]['text']
+    # Only output tokens are charged
+    used = count_tokens(response, gooseai_models[model]['encoding'])
+    # GooseAI's base cost provides the first 25 tokens, then each token after is charged at the token rate
+    cost = gooseai_models[model]['pricing']['token'] * max(0, used-25) + gooseai_models[model]['pricing']['base']
+    aipl.cost_usd += cost
+    stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.03f}')
+    return response
 
 @defop('llm-embedding', 0, 0.5, 1)
 @expensive()
 def route_llm_embedding_query(aipl, v:str, **kwargs) -> str:
     model = kwargs.get('model')
-    if model in gooseai_pricing:
-        raise AIPLException("GooseAI models not yet supported")
+    if model in gooseai_models:
+        raise AIPLException("GooseAI embeddings not yet supported")
     elif model in openai_pricing:
         return embedding_openai(aipl, v, **kwargs)
     else:
