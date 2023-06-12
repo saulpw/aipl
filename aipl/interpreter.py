@@ -205,7 +205,6 @@ class AIPL:
             else:
                 newkey = newkey or self.unique_key
 
-            x = dict()
             for row in t:
                 x = self.eval_op(cmd, row, contexts=contexts+[row], newkey=newkey)
 

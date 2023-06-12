@@ -1,5 +1,25 @@
 from aipl import defop, Table, SubColumn, LazyRow
 
+__test__ = '''
+!test-input
+a b c
+!split>col1
+!global t1
+!test-input
+d e f
+!split>col2
+!cross>t2 t1
+!format
+  {col1}/{col2}
+!ravel
+!join
+!test-equal
+a/d b/d c/d a/e b/e c/e a/f b/f c/f
+'''
+
+def test_cross(aipl):
+    aipl.run_test(__test__)
+
 
 def iterate_tables(t:Table, rankin=1):
     if t.rank <= rankin:
@@ -12,7 +32,6 @@ def iterate_tables(t:Table, rankin=1):
 @defop('cross', 0.5, 1.5)
 def op_cross(aipl, row:LazyRow, tname:str) -> Table:
     'Construct cross-product of current input with given global table'
-    newkey = aipl.unique_key
     ret = Table()
     tleft = row._table
 
