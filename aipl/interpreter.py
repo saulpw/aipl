@@ -332,9 +332,29 @@ def prep_output(aipl,
         raise Exception("Unexpected rankout")
 
 
-def defop(opname:str, rankin:None|int|float=0, rankout:int|float=0, arity=1, outcols:str='', preprompt=lambda x: x):
+ranktypes = dict(
+    all = 100,
+    scalar = 0,
+    row = 0.5,
+    vector = 1,
+    table = 1.5,
+)
+
+def defop(opname:str,
+          rankin:None|int|float|str=0,
+          rankout:None|int|float|str=0,
+          arity:int=1,
+          outcols:str='',
+          preprompt=lambda x: x):
+    '''
+
+    '''
     if rankin is None:
         arity = 0  # no explict arity for nonary or unary ops
+
+    # replace string mnemonic with 'actual' rank
+    rankin = ranktypes.get(rankin, rankin)
+    rankout = ranktypes.get(rankout, rankout)
 
     def _decorator(f):
         @wraps(f)
