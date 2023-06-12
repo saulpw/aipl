@@ -1,5 +1,6 @@
 import os
 import sys
+import traceback
 import argparse
 
 from aipl import AIPL, Table, UserAbort, AIPLException, parse
@@ -134,6 +135,8 @@ def main():
                 rich.print(inputs[-1])
             except AIPLException as e:
                 print(e.args[0])
+            except Exception as e:
+                traceback.print_exc()
 
     if aipl.cost_usd:
         print(f'total cost: ${aipl.cost_usd:.02f}', file=sys.stderr)
