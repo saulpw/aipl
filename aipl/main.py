@@ -3,7 +3,7 @@ import sys
 import traceback
 import argparse
 
-from aipl import AIPL, Table, UserAbort, AIPLException, parse
+from aipl import AIPL, Table, UserAbort, AIPLException, parse, repl
 
 def parse_args(args):
     parser = argparse.ArgumentParser(description='AIPL interpreter')
@@ -93,50 +93,7 @@ def main():
             sys.exit(1)
 
     if args.interactive:
-        import rich
-        import inspect
-
-        import readline
-        def completer(text, state):
-            ops = list(aipl.operators.keys())
-            text = text[1:]
-            results = [x for x in ops if x.startswith(text)]
-            if results:
-                return "!" + results[state]
-
-        readline.parse_and_bind("tab: complete")
-        readline.set_completer_delims(' \n=')
-        readline.set_completer(completer)
-
-        while True:
-            sys.stdout.flush()
-            try:
-                cmdtext = input('> ')
-            except KeyboardInterrupt as e:
-                break  # exit on ^C
-            except EOFError:
-                print("\n")
-                continue
-
-            if not cmdtext.strip():  # do nothing empty line
-                continue
-
-            try:
-                cmds = parse(cmdtext)
-                op = aipl.get_op(cmds[0].opname)
-                if 'prompt' in inspect.signature(op).parameters:
-                    while True:
-                        line = sys.stdin.readline()
-                        if not line.strip():
-                            break
-                        cmdtext += '\n' + line
-
-                inputs = aipl.run(cmdtext, inputs)
-                rich.print(inputs[-1])
-            except AIPLException as e:
-                print(e.args[0])
-            except Exception as e:
-                traceback.print_exc()
+        repl(aipl, inputs)
 
     if aipl.cost_usd:
         print(f'total cost: ${aipl.cost_usd:.02f}', file=sys.stderr)
