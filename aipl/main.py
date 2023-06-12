@@ -37,9 +37,8 @@ def main():
         else:
             scripts.append(arg)
 
-    if not scripts and not args.interactive:
-        print('no script on stdin: nothing to do', file=sys.stderr)
-        return
+    if not scripts:  # nothing to run -> REPL
+        args.interactive = True
 
     aipl = AIPL(**vars(args))
 
