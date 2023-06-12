@@ -82,18 +82,18 @@ def main():
 
     inputs.append(aipl.new_input(*inputlines))
 
-    for fn in scripts:
-        try:
+    try:
+        for fn in scripts:
             inputs = aipl.run(open(fn).read(), inputs)
-        except UserAbort as e:
-            print(f'aborted', e, file=sys.stderr)
-            break
-        except AIPLException as e:
-            print(e, file=sys.stderr)
-            sys.exit(1)
 
-    if args.interactive:
-        repl(aipl, inputs)
-
-    if aipl.cost_usd:
-        print(f'total cost: ${aipl.cost_usd:.02f}', file=sys.stderr)
+        if not scripts or args.interactive:
+            repl(aipl, inputs)
+    except UserAbort as e:
+        print(f'aborted', e, file=sys.stderr)
+        sys.exit(2)
+    except AIPLException as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
+    finally:
+        if aipl.cost_usd:
+            print(f'total cost: ${aipl.cost_usd:.02f}', file=sys.stderr)

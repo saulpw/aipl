@@ -21,6 +21,8 @@ class AIPLCompileError(Exception):
 
 class AIPLException(Exception):
     'A nice error message to print to stderr and exit without a stacktrace.'
+    def __str__(self):
+        return f'{self.args[1]}: {self.args[0]}'
 
 
 class InnerPythonException(AIPLException):
