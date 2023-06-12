@@ -1,0 +1,5 @@
+causal_judgment
+strategyqa
+moral_permissibility
+anachronisms
+mathematical_induction

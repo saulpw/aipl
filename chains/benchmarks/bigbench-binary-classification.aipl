@@ -1,0 +1,49 @@
+# in: list of models; out: % accuracy in classifying the given task
+
+# make all pairwise combinations of model and task
+!python
+with open('bigbench-tasks.txt') as f:
+    tasks = f.read().split('\n')
+    tasks = [t for t in tasks if '#' not in t]
+with open('models.txt') as f:
+    models = f.read().split('\n')
+    models = [m for m in models if '#' not in m]
+s = 'model,task\n' + "\n".join([model+","+task for model in models for task in tasks])
+with open('model-task.csv', 'w') as f:
+    f.write(s)
+!csv-parse model-task.csv
+
+!format
+https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks/{task}/task.json
+!fetch-url
+# name=name description=description 
+!json-parse examples=examples
+
+!format>statement
+{input}
+!take 20
+
+# try these tasks without any prompt context and see what happens!
+!format>zero-shot
+{statement}
+---
+Classify with 1 if yes, 0 if no.
+Classification: 
+!llm>classification model={model} max_tokens=1
+
+# TODO: be able to look at responses per-model; currently can't tell what model had what classification
+# !format
+# {model} {classification} ({target_scores_Yes}): {statement}
+!format
+{classification} ({target_scores_Yes}): {statement}
+!print
+
+!metrics-accuracy>accuracy classification target_scores_Yes
+!format
+{model:15} {task:25} {accuracy:.2f}
+!print
+# !columns zero-shot classification target_scores_Yes
+# !json 2
+# !save {model}_{task}.json
+
+!print
