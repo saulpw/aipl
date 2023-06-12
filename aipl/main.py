@@ -72,15 +72,18 @@ def main():
 
     aipl.globals = global_parameters
 
+    # add input from stdin
+    input_text = stdin_contents.strip()
+
+    if args.separator:
+        inputlines = input_text.split(args.separator)
+    else:
+        inputlines = [input_text]
+
+    inputs.append(aipl.new_input(*inputlines))
+
     for fn in scripts:
         try:
-            input_text = stdin_contents.strip()
-            if args.separator:
-                inputlines = input_text.split(args.separator)
-            else:
-                inputlines = [input_text]
-
-            inputs.append(aipl.new_input(*inputlines))
             inputs = aipl.run(open(fn).read(), inputs)
         except UserAbort as e:
             print(f'aborted', e, file=sys.stderr)
