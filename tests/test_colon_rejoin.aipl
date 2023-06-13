@@ -1,8 +1,8 @@
-!format
+!test-input
 a
 b
 c
 !split
 !join sep=:
-!assert_equal
+!test-equal
 a:b:c

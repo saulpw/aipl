@@ -69,5 +69,18 @@ def test_nested_parse():
     assert ops(commands) == ["def", "split_join"]
     assert commands[0].kwargs == {'prompt': "!split\n\n!join"}
 
+def test_quoted():
+    commands = parse(r'!fn "arg1" "\"\n"')
+    assert commands[0].args == ["arg1", '"\n']
+
+def test_single_quoted():
+    commands = parse(r"!fn 'arg1' '\'\n'")
+    assert commands[0].args == ["arg1", "'\n"]
+
+def test_numbers():
+    commands = parse("!fn 1 2.0 3.0e10 -3 -2e-7")
+    assert commands[0].args == [1, 2.0, 3.0e10, -3, -2e-7]
+
+
 def ops(commands):
     return [command.opname for command in commands]

@@ -17,6 +17,6 @@ def op_filter(aipl, t:Table) -> Table:
     return ret
 
 def test_filter(aipl):
-    r = aipl.run('!match ^c !filter', 'a b c', 'b c d', 'c d e')
+    r = aipl.run_test('!match ^c !filter', 'a b c', 'b c d', 'c d e')
     assert len(r.rows) == 1
     assert r[0].value == 'c d e'

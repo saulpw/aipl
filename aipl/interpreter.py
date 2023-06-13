@@ -3,7 +3,7 @@ from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 
-from aipl import Error, AIPLException
+from aipl import Error, AIPLException, InnerPythonException
 from .table import Table, LazyRow, Column
 from .db import Database
 from .utils import stderr, fmtargs, fmtkwargs, AttrDict
@@ -49,8 +49,8 @@ class AIPL:
     def __init__(self, **kwargs):
         self.globals = {}  # base context
         self.options = AttrDict(kwargs)
+        self.forced_input = None  # via !test-input
         self.output_db = Database(self.options.outdbfn)
-
         self.cache_db = None
         if self.options.cachedbfn:
             self.cache_db = Database(self.options.cachedbfn)
@@ -91,8 +91,13 @@ class AIPL:
                     f'[line {command.linenum}] no such operator "!{command.opname}"',
                     command)
 
-            if (command.immediate):
+            if command.immediate:
                 result = self.eval_op(command, Table(), contexts=[self.globals])
+                if isinstance(result, Error):
+                    if isinstance(result.exception, InnerPythonException):
+                        result.exception.command = command
+                        raise result.exception
+
                 if command.varnames:
                     last_variable = command.varnames[-1]
                     self.globals[last_variable] = result
@@ -101,42 +106,55 @@ class AIPL:
                 commands.append(command)
         return commands
 
-    def run(self, script:str, *args):
+    def new_input(self, *inputlines):
+        argkey = self.unique_key
+        return Table([{argkey:line} for line in inputlines])
+
+    def run_test(self, script:str, *inputlines):
+        inputs = [self.new_input(*inputlines)]
+        return self.run(script, inputs)[-1]
+
+    def run(self, script:str, inputs:list[Table]=None):
         cmds = self.parse(script)
 
-        argkey = self.unique_key
-        inputs = Table([{argkey:arg} for arg in args])
         return self.run_cmdlist(cmds, inputs)
 
-    def pre_command(self, t:Table, cmd:Command):
+    def pre_command(self, cmd:Command, t:Table):
         stderr(t, str(cmd))
 
-    def run_cmdlist(self, cmds:List[Command], inputs):
+    def run_cmdlist(self, cmds:List[Command], inputs:List[Table]):
         for cmd in cmds:
-            self.pre_command(inputs, cmd)
+            if self.forced_input is not None:
+                inputs.append(self.forced_input)
+                self.forced_input = None
+
+            self.pre_command(cmd, inputs[-1])
 
             if self.options.step:
                 for stepfuncname in self.options.step.split(','):
                     stepfunc = getattr(self, 'step_'+stepfuncname, None)
                     if stepfunc:
-                        stepfunc(inputs, cmd)
+                        stepfunc(inputs[-1], cmd)
                     else:
                         stderr(f'no aipl.step_{stepfuncname}!')
 
             try:
-                result = self.eval_op(cmd, inputs, contexts=[self.globals])
+                result = self.eval_op(cmd, inputs[-1], contexts=[self.globals])
                 if cmd.op.rankout is None:
                     continue # just keep former inputs
                 elif isinstance(result, Table):
-                    inputs = result
+                    inputs[-1] = result
                 else:
                     k = cmd.varnames[-1] if cmd.varnames else self.unique_key
-                    inputs = Table([{k:result}])
+                    inputs[-1] = Table([{k:result}])
 
             except AIPLException as e:
                 raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
             except Exception as e:
                 raise Exception(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
+
+        if isinstance(inputs[-1], Error):
+            raise inputs[-1].exception
 
         return inputs
 
@@ -144,7 +162,7 @@ class AIPL:
         try:
             ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
         except Exception as e:
-            if self.options.debug:
+            if self.options.debug or self.options.test:
                 raise
             return Error(cmd.linenum, cmd.opname, e)
 
@@ -166,8 +184,7 @@ class AIPL:
         if cmd.op.arity == 0:
             ret = self.call_cmd(cmd, contexts, newkey=newkey)
             if cmd.op.rankout is None:
-                assert not ret  # ignore return value (no rankout)
-                return t
+                return ret
 
         elif rank(t) <= cmd.op.rankin:
             ret = self.call_cmd(cmd, contexts, t, newkey=newkey)
@@ -188,7 +205,6 @@ class AIPL:
             else:
                 newkey = newkey or self.unique_key
 
-            x = dict()
             for row in t:
                 x = self.eval_op(cmd, row, contexts=contexts+[row], newkey=newkey)
 
@@ -315,9 +331,29 @@ def prep_output(aipl,
         raise Exception("Unexpected rankout")
 
 
-def defop(opname:str, rankin:None|int|float=0, rankout:int|float=0, arity=1, outcols:str='', preprompt=lambda x: x):
+ranktypes = dict(
+    all = 100,
+    scalar = 0,
+    row = 0.5,
+    vector = 1,
+    table = 1.5,
+)
+
+def defop(opname:str,
+          rankin:None|int|float|str=0,
+          rankout:None|int|float|str=0,
+          arity:int=1,
+          outcols:str='',
+          preprompt=lambda x: x):
+    '''
+
+    '''
     if rankin is None:
         arity = 0  # no explict arity for nonary or unary ops
+
+    # replace string mnemonic with 'actual' rank
+    rankin = ranktypes.get(rankin, rankin)
+    rankout = ranktypes.get(rankout, rankout)
 
     def _decorator(f):
         @wraps(f)

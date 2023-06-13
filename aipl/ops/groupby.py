@@ -37,5 +37,5 @@ def op_groupby(aipl, t:Table, *args) -> Table:
 
 
 def test_groupby(aipl):
-    r = aipl.run('!split-into name num  !groupby name', 'Bob 4', 'Alice 3', 'Carol 8', 'Bob 2', 'Alice 5', 'Bob 1')
+    r = aipl.run_test('!split-into name num  !groupby name', 'Bob 4', 'Alice 3', 'Carol 8', 'Bob 2', 'Alice 5', 'Bob 1')
     assert len(r) == 3

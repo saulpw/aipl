@@ -16,4 +16,4 @@
 
 # leading and trailing newlines are also stripped
 
-!assert-equal {golden}
+!test-equal {golden}

@@ -2,47 +2,47 @@ from typing import List
 import textwrap
 import sys
 from dataclasses import dataclass
-
-from lark import Lark, Transformer, Discard
+import ast
+from lark import Lark, Transformer, Discard, Token, Tree
 
 aipl_grammar = Lark(r'''
 start: line*
 
-ws: [ WS ]
-WS: /[ \t]+/
+ws: [ _WS ]
+_WS: /[ \t]+/
 
-line: (command ws)* command_prompt | EMPTY_LINE
+line: commands prompt | _EMPTY_LINE
 
-command: command_sign OPNAME varnames arg_list
-command_prompt: command prompt
+commands: (command)+
+command: command_sign OPNAME varnames ws arg_list ws
 
 OPNAME: IDENTIFIER
 
-command_sign: COMMAND | IMMEDIATE_COMMAND
+?command_sign: /!!?/
 
-EMPTY_LINE: "\n"
-
-COMMAND: "!"
-IMMEDIATE_COMMAND: "!!"
+_EMPTY_LINE: "\n"
 
 varnames: ( ">" IDENTIFIER )*
 
 arg_list: arg*
 
-arg: ws (KEY "=" VALUE | VALUE)
+arg: ws (KEY "=" literal | literal)
 
-VALUE: /[^ \t\n!>]\S*/
+?literal: BARE_STRING | ESCAPED_STRING
+BARE_STRING: /[^ \t\n!"'>]\S*/
+
+ESCAPED_STRING: /(["']).*?(?<!\\)\1/
+
 KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
 
-prompt: ws [ "\n" STRING_LINE* ]
-STRING_LINE: /[^!#\n][^\n]*(\n|$)/ | "\n"
+prompt: "\n" STRING_LINE*
+STRING_LINE: /^[^!#\n][^\n]*(\n|$)/m | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
-
 %ignore COMMENT_LINE
-''')
+''', propagate_positions=True)
 
 
 @dataclass
@@ -57,7 +57,15 @@ class AstCommand:
 
 class ToAst(Transformer):
     def line(self, tree):
-        return tree
+        if len(tree) == 0:
+            return tree
+        (commands, prompt) = tree
+        if prompt:
+            commands[-1].kwargs['prompt'] = prompt
+        return commands
+
+    def commands(self, tree):
+        return list(tree)
 
     def start(self, tree):
         output = []
@@ -72,7 +80,7 @@ class ToAst(Transformer):
             opname=opname,
             line=None, # TODO Not yet preserving line contents.
             linenum=command_sign.line,
-            immediate=command_sign.type == 'IMMEDIATE_COMMAND',
+            immediate=command_sign.value == '!!',
             varnames=varnames,
             args=args,
             kwargs=kwargs,
@@ -87,15 +95,11 @@ class ToAst(Transformer):
             command.kwargs['prompt'] = prompt
         return command
 
-    def command_sign(self, tree):
-        return tree[0]
-
     def arg_list(self, arg_list):
         args = []
         kwargs = {}
 
         for key, arg in arg_list:
-            arg = trynum(arg)
             if key is None:
                 args.append(arg)
             else:
@@ -104,12 +108,12 @@ class ToAst(Transformer):
         return args, kwargs
 
     def varnames(self, tree):
-        return [token.value for token in tree]
+        return list(tree)
 
     def arg(self, tree):
-        if tree[0].type == 'KEY':
-            return (tree[0].value, tree[1].value)
-        return (None, tree[0].value)
+        if isinstance(tree[0], Token) and tree[0].type == 'KEY':
+            return (tree[0].value, tree[1])
+        return (None, tree[0])
 
     def prompt(self, lines):
         prompt = textwrap.dedent(''.join(token.value for token in lines)).strip()
@@ -120,11 +124,17 @@ class ToAst(Transformer):
     def ws(self, tree):
         return Discard
 
-    def EMPTY_LINE(self, token):
-        return Discard
+    def BARE_STRING(self, token):
+        return trynum(token.value)
+
+    def IDENTIFIER(self, token):
+        return token.value
+
+    def ESCAPED_STRING(self, token):
+        return ast.literal_eval(token.value)
 
 def parse(program_text):
-    parse_tree = aipl_grammar.parse(program_text)
+    parse_tree = aipl_grammar.parse(program_text + "\n")
     return ToAst().transform(parse_tree)
 
 

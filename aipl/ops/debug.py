@@ -39,7 +39,7 @@ def stderr_rich(*args):
 
 def install_rich(aipl, *args):
     import rich
-    AIPL.pre_command = lambda aipl, t, cmd: stderr_rich(t, cmd)
+    AIPL.pre_command = lambda aipl, cmd, t: stderr_rich(t, cmd)
 
 
 def _rich_table(t:Table, console, console_options):

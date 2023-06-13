@@ -1,4 +1,4 @@
-!literal>arg
+!test-input
 
 a b c
 d e f g
@@ -10,15 +10,14 @@ d e f g
 # make sure columns are named correctly
 # and that named columns remain visible to a top-level json
 
-!assert-json
-[{"arg": "a b c\nd e f g", "_": [{"line": "a b c"}, {"line": "d e f g"}]}]
+!test-json
+[{"_": [{"line": "a b c"}, {"line": "d e f g"}]}]
 
 !split>chars>char
 
-!assert-json
+!test-json
 
 [{
-    "arg": "a b c\nd e f g",
     "_": [
        {"line": "a b c",   "chars": [{"char": "a"}, {"char": "b"}, {"char": "c"}]},
        {"line": "d e f g", "chars": [{"char": "d"}, {"char": "e"}, {"char": "f"}, {"char": "g"}]}
@@ -30,7 +29,7 @@ d e f g
 !join>out sep=.
 !columns out
 
-!assert-json
+!test-json
 [{
     "out": "a.b.c.d.e.f.g"
 }]

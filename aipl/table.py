@@ -46,13 +46,14 @@ class Column:
         return self.name or self.key
 
 
-class ParentColumn(Column):
-    def __init__(self, name, origcol):
-        super().__init__(name)
+class SubColumn(Column):
+    'Use for tables that have nested rows from other tables in the row dict at *self.key*'
+    def __init__(self, key, name='', origcol=None):
+        super().__init__(key, name)
         self.origcol = origcol
 
-    def get_value(self, row):
-        return self.origcol.get_value(row['__parent']._row)
+    def get_value(self, row:dict):
+        return self.origcol.get_value(row[self.key])
 
 
 class LazyRow(Mapping):
