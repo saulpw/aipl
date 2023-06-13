@@ -115,7 +115,7 @@ class AIPL:
         return self.run(script, inputs)[-1]
 
     def run(self, script:str, inputs:list[Table]=None):
-        cmds = self.parse(script)
+        cmds = self.parse(script + '\n!nop')  # add nop at end to do final single-steps
 
         return self.run_cmdlist(cmds, inputs)
 
@@ -371,3 +371,8 @@ def defop(opname:str,
         AIPL.operators[name] = _wrapped
         return _wrapped
     return _decorator
+
+
+@defop('nop', None, None)
+def op_nop(aipl):
+    pass
