@@ -5,7 +5,7 @@
 
 # the input is some urls
 !name sourceurl
-!fetch-url
+!read
 !extract-links baseurl={sourceurl}
 !name url
 
@@ -14,7 +14,7 @@
 !filter
 !url-defrag>mainurl
 
-!fetch-url
+!read
 !extract-text>text
 
 !split maxsize=4000
