@@ -1,6 +1,7 @@
 import sys
 import inspect
 import readline
+import traceback
 
 from aipl import parse, Table, AIPLException
 
