@@ -88,8 +88,7 @@ class AIPL:
 
             if not command.op:
                 raise AIPLException(
-                    f'[line {command.linenum}] no such operator "!{command.opname}"',
-                    command)
+                    f'[line {command.linenum}] no such operator "!{command.opname}"')
 
             if command.immediate:
                 result = self.eval_op(command, Table(), contexts=[self.globals])
