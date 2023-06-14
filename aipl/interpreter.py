@@ -47,7 +47,7 @@ class AIPL:
     cost_usd:float = 0.0
 
     def __init__(self, **kwargs):
-        self.globals = {}  # base context
+        self.globals = {'aipl':self}  # base context
         self.options = AttrDict(kwargs)
         self.forced_input = None  # via !test-input
         self.output_db = Database(self.options.outdbfn)
