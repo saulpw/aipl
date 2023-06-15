@@ -229,7 +229,7 @@ class Table:
         assert not col.name.startswith('__')
         if self.rows:
             assert col.get_value(self.rows[0]) is not UNWORKING
-        if col.key in self.colkeys or col.name in self.colnames:
+        if col.name in self.colnames:
             return
         self.columns.append(col)
 
