@@ -24,7 +24,7 @@ def op_read(aipl, url:str) -> str:
     'Return contents of local filename.'
     if '://' in url:
         url = urlunparse(urlparse(url)._replace(fragment=''))
-        return _fetch_url(url)
+        return _fetch_url(aipl, url)
 
     return open(url).read()
 
