@@ -9,7 +9,7 @@ def op_split(aipl, v: str, sep:str=None, maxsize:int=0) -> List[str]:
     tot = 0
     for i, unit in enumerate(v.split(sep)):
         n = len(unit)
-        if tot+n > maxsize:
+        if tot+n > int(maxsize):
             if win:
                 yield (sep or ' ').join(win)
                 win = []
