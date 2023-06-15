@@ -28,9 +28,14 @@ class InnerPythonException(AIPLException):
     def __str__(self):
         exc, tb, codestr = self.args
         r = []
-        r.append(f'In "!{self.command.opname}" (line {self.command.linenum}):')
+        if hasattr(self, 'command'):  # added by other error handling
+            linenum = self.command.linenum
+            r.append(f'In "!{self.command.opname}" (line {self.command.linenum}):')
+        else:
+            linenum = 0
+
         for frame in tb:
-            r.append(f'Line ~{frame.lineno+self.command.linenum}, in {frame.name}')
+            r.append(f'Line ~{frame.lineno+linenum}, in {frame.name}')
             r.append('    ' + codestr.splitlines()[frame.lineno-1])
 
         r.append(f'{type(exc).__name__}: {exc}')
