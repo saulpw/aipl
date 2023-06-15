@@ -36,10 +36,9 @@ def op_cross(aipl, row:LazyRow, tname:str) -> Table:
     tleft = row._table
     for tright in iterate_tables(aipl.globals[tname]):
         for rightrow in tright:
-            ret.rows.append(dict(__parent=row._row.get('__parent', None), left=row._row, right=rightrow._row))
+            ret.rows.append(dict(__parent=row, left=row._row, right=rightrow._row))
 
     # left columns will be added automatically
-#
     for c in tright.columns:
         ret.add_column(SubColumn('right', c))
 
