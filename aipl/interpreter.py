@@ -337,14 +337,17 @@ ranktypes = dict(
 def defop(opname:str,
           rankin:None|int|float|str=0,
           rankout:None|int|float|str=0,
-          arity:int=1,
+          *,
           outcols:str='',
           preprompt=lambda x: x):
     '''
 
     '''
+    # arity implied by rankin
     if rankin is None:
-        arity = 0  # no explict arity for nonary or unary ops
+        arity = 0
+    else:
+        arity = 1
 
     # replace string mnemonic with 'actual' rank
     rankin = ranktypes.get(rankin, rankin)
