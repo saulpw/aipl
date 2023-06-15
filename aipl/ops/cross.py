@@ -34,16 +34,14 @@ def op_cross(aipl, row:LazyRow, tname:str) -> Table:
     'Construct cross-product of current input with given global table'
     ret = Table()
     tleft = row._table
-
     for tright in iterate_tables(aipl.globals[tname]):
         for rightrow in tright:
-            ret.rows.append(dict(left=row._row, right=rightrow._row))
+            ret.rows.append(dict(__parent=row._row.get('__parent', None), left=row._row, right=rightrow._row))
 
-    for c in tleft.columns:
-        ret.add_column(SubColumn('left', c.name, c))
-
+    # left columns will be added automatically
+#
     for c in tright.columns:
-        ret.add_column(SubColumn('right', c.name, c))
+        ret.add_column(SubColumn('right', c))
 
     return ret
 

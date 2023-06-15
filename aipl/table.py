@@ -48,8 +48,8 @@ class Column:
 
 class SubColumn(Column):
     'Use for tables that have nested rows from other tables in the row dict at *self.key*'
-    def __init__(self, key, name='', origcol=None):
-        super().__init__(key, name)
+    def __init__(self, key, origcol):
+        super().__init__(key, origcol.name)
         self.origcol = origcol
 
     def get_value(self, row:dict):
