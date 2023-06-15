@@ -54,7 +54,9 @@ def test_flattening_dict():
     assert r == dict(a_b=1, a_c=2, d=4, e_f_g=5)
 
 def pyobj_to_table(r) -> Table|dict|int|float|str:
-    if isinstance(r, (list, tuple)):
+    if r is None:
+        return None
+    elif isinstance(r, (list, tuple)):
         keys = set()
         ret = Table()
         for inobj in r:
