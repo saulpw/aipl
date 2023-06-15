@@ -2,7 +2,7 @@ from aipl import defop
 
 from typing import List
 
-@defop('join', 1, 0, 1)
+@defop('join', 1, 0)
 def op_join(aipl, v:List[str], sep=' ') -> str:
     'Join inputs with sep into a single output scalar.'
     return sep.join(v)

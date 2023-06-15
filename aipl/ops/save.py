@@ -1,6 +1,6 @@
 from aipl import defop
 
-@defop('save', 0, None, 1)
+@defop('save', 0, None)
 def op_save(aipl, v:str, filename=''):
     'Save to given filename.'
     assert '{' not in filename, filename

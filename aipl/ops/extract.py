@@ -4,14 +4,14 @@ from urllib.parse import urljoin
 from aipl import defop
 
 
-@defop('extract-text-all', 0, 0, 1)
+@defop('extract-text-all', 0, 0)
 def op_extract_text_all(aipl, html:str, **kwargs) -> str:
     'Extract all text from HTML'
     import trafilatura
     return trafilatura.html2txt(html, **kwargs)
 
 
-@defop('extract-text', 0, 0, 1)
+@defop('extract-text', 0, 0)
 def op_extract_text(aipl, html:str, **kwargs) -> str:
     'Extract meaningful text from HTML'
     parms = dict(include_comments=False,

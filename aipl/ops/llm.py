@@ -67,7 +67,7 @@ def op_llm_mock(aipl, v:str, **kwargs) -> str:
     aipl.cost_usd += cost
     return f'<llm {model} answer>'
 
-@defop('llm', 0, 0, 1)
+@defop('llm', 0, 0)
 @expensive(op_llm_mock)
 def route_llm_query(aipl, v:str, **kwargs) -> str:
     model = kwargs.get('model')
@@ -128,7 +128,7 @@ def completion_gooseai(aipl, v:str, **kwargs) -> str:
     j = r.json()
     if 'error' in j:
         raise AIPLException(f'''GooseAI returned an error: {j["error"]}''')
-    
+
     response = j['choices'][0]['text']
     # Only output tokens are charged
     used = count_tokens(response, gooseai_models[model]['encoding'])
@@ -138,7 +138,7 @@ def completion_gooseai(aipl, v:str, **kwargs) -> str:
     stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.03f}')
     return response
 
-@defop('llm-embedding', 0, 0.5, 1)
+@defop('llm-embedding', 0, 0.5)
 @expensive()
 def route_llm_embedding_query(aipl, v:str, **kwargs) -> str:
     model = kwargs.get('model')
@@ -148,7 +148,7 @@ def route_llm_embedding_query(aipl, v:str, **kwargs) -> str:
         return embedding_openai(aipl, v, **kwargs)
     else:
         raise AIPLException(f"{model} not found!")
-    
+
 def embedding_openai(aipl, v:str, **kwargs) -> dict:
     'Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.'
     import openai

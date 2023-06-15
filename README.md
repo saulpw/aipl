@@ -262,7 +262,7 @@ It's pretty easy to define a new operator that can be used right away.
 For instance, here's how the `!join` operator might be defined:
 
 ```
-@defop('join', rankin=1, rankout=0, arity=1)
+@defop('join', rankin=1, rankout=0)
 def op_join(aipl:AIPL, v:List[str], sep=' ') -> str:
     'Concatenate text values with *sep* into a single string.'
     return sep.join(v)
