@@ -190,13 +190,9 @@ class AIPL:
 
         else:
             if isinstance(t, Table):
-                ret = Table()
-                for c in t.columns:
-                    ret.add_column(copy(c))
+                ret = copy(t)
             else:
-                ret = Table()
-                for c in t.value.columns:
-                    ret.add_column(copy(c))
+                ret = copy(t.value)
 
             # !op>var1>var2 names the deepest column "var2" and the column one-level up (for rankout==1) "var1"
             if cmd.op.rankout is not None and len(cmd.varnames) > cmd.op.rankout and rank(t) == int(cmd.op.rankin+1):
