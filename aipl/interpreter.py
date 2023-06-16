@@ -327,6 +327,7 @@ def prep_output(aipl,
 
 
 ranktypes = dict(
+    none = None,
     all = 100,
     scalar = 0,
     row = 0.5,
@@ -365,7 +366,7 @@ def defop(opname:str,
         _wrapped.arity = arity
         _wrapped.outcols = outcols
         _wrapped.__name__ = name
-        _wrapped.preprompt = lambda prompt: preprompt(prompt)
+        _wrapped.preprompt = preprompt
         AIPL.operators[name] = _wrapped
         return _wrapped
     return _decorator
