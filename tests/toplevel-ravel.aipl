@@ -10,8 +10,7 @@ sex:m,f,y,n
 !split>member sep=,
 !ravel
 
-!format
-{category}: {member}
+!format prompt="{category}: {member}"
 
 !join sep=\n
 !test-equal
