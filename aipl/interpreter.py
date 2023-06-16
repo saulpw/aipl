@@ -95,7 +95,7 @@ class AIPL:
                 if isinstance(result, Error):
                     if isinstance(result.exception, InnerPythonException):
                         result.exception.command = command
-                        raise result.exception
+                    raise result.exception
 
                 if command.varnames:
                     last_variable = command.varnames[-1]
