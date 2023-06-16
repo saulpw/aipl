@@ -16,7 +16,7 @@ def op_debug(aipl, *args):
     'set debug flag and call breakpoint() before each command'
     aipl.options.debug = True
 
-def _vd_singlestep(aipl, inputs:List[LazyRow], cmd):
+def _vd_singlestep(aipl, cmd:Command, *inputs:List[LazyRow]):
     import visidata
     @visidata.VisiData.api
     def uberquit(vd):
@@ -39,7 +39,7 @@ def stderr_rich(*args):
 
 def install_rich(aipl, *args):
     import rich
-    AIPL.pre_command = lambda aipl, cmd, t: stderr_rich(t, cmd)
+    AIPL.pre_command = lambda aipl, cmd, t=Table(), *args: stderr_rich(t, cmd)
 
 
 def _rich_table(t:Table, console, console_options):

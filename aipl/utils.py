@@ -24,12 +24,12 @@ def fmtarg(v:str, r:Mapping=None) -> str:
 
 def fmtargs(args, contexts:List[Mapping]):
     d = ChainMap(*reversed(contexts))
-    return [fmtarg(arg, d) for arg in args]
+    return [fmtarg(arg, d) for arg in args if not isinstance(arg, str) or not arg.startswith('<')]
 
 
 def fmtkwargs(kwargs, contexts:List[Mapping]):
     d = ChainMap(*contexts)
-    return {k:(fmtarg(v, d) if k != 'prompt' else v) for k,v in kwargs.items()}
+    return {k:fmtarg(v, d) for k,v in kwargs.items() if k != 'prompt'}
 
 
 class AttrDict(dict):

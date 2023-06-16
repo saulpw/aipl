@@ -8,7 +8,7 @@ a b c
 !test-input
 d e f
 !split>col2
-!cross>t2 t1
+!cross <t1
 !format
   {col1}/{col2}
 !ravel
@@ -29,16 +29,15 @@ def iterate_tables(t:Table, rankin=1):
             yield from iterate_tables(row.value, rankin=rankin)
 
 
-@defop('cross', 0.5, 1.5)
-def op_cross(aipl, row:LazyRow, tname:str) -> Table:
+@defop('cross', 0.5, 1.5, rankin2=100)
+def op_cross(aipl, row:LazyRow, t:Table) -> Table:
     'Construct cross-product of current input with given global table'
     ret = Table()
-    tleft = row._table
-    for tright in iterate_tables(aipl.globals[tname]):
+    for tright in iterate_tables(t):
         for rightrow in tright:
             ret.rows.append(dict(__parent=row, left=row._row, right=rightrow._row))
 
-    # left columns will be added automatically
+    # left columns are available automatically or from __parent
     for c in tright.columns:
         ret.add_column(SubColumn('right', c))
 

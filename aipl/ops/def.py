@@ -9,8 +9,8 @@ Create a new op named <opname> that runs the AIPL in the prompt when invoked.
 from aipl import defop, Table
 
 
-@defop('def', None, None)  # immediate
-def op_def(aipl, opname, prompt=''):
+@defop('def', 0, None)  # immediate
+def op_def(aipl, prompt, opname):
     'Define composite operator from cmds in prompt (must be indented).'
     cmds = aipl.parse(prompt)
 

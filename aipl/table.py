@@ -131,15 +131,19 @@ class Table:
         self.rows = []  # list of dict
         self.columns = []  # list of Column
         self.parent = parent
+        self.scalar = None
 
-        for row in rows:
-            if isinstance(row, LazyRow):
-                self.rows.append(row._row)
-            elif isinstance(row, Mapping):
-                self.rows.append(row)
-                self.add_new_columns(row)
-            else:
-                raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")
+        if isinstance(rows, (list, tuple)):  # should be sequence-but-not-string
+            for row in rows:
+                if isinstance(row, LazyRow):
+                    self.rows.append(row._row)
+                elif isinstance(row, Mapping):
+                    self.rows.append(row)
+                    self.add_new_columns(row)
+                else:
+                    raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")
+        else:
+            self.scalar = rows
 
     def __len__(self):
         return len(self.rows)
@@ -170,13 +174,14 @@ class Table:
 
     @property
     def shape(self) -> List[int]:
-        if not self.rows:
-            return [0]
+        if self.scalar is not None:
+            return []
         dims = [len(self.rows)]
-        if self.columns:
-            firstrowval = self.current_col.get_value(self.rows[0])
-            if isinstance(firstrowval, Table):
-                dims += firstrowval.shape
+        if self.rows:
+            if self.columns:
+                firstrowval = self.current_col.get_value(self.rows[0])
+                if isinstance(firstrowval, Table):
+                    dims += firstrowval.shape
         return dims
 
     @property
