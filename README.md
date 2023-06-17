@@ -23,7 +23,7 @@ Here's a prime example, a multi-level summarizer in the "map-reduce" style of la
 # fetch url, split webpage into chunks, summarize each chunk, then summarize the summaries.
 
 # the inputs are urls
-!fetch-url
+!read
 
 # extract text from html
 !extract-text
@@ -41,7 +41,7 @@ article" or "this webpage" or "this section" or "the author". Ensure the tone
 is precise and concise, and provide an overview of the entire section:
 
 """
-{input}
+{_}
 """
 
 !llm model=gpt-3.5-turbo
@@ -63,7 +63,7 @@ and readable, while preserving important keywords and main content topics.
 Remove all unnecessary text like "The document" and "the author".
 
 """
-{input}
+{_}
 """
 
 !llm model=gpt-3.5-turbo
@@ -75,10 +75,9 @@ Remove all unnecessary text like "The document" and "the author".
 ## Usage
 
 ```
-usage: aipl [-h] [--debug] [--step STEP] [--step-breakpoint] [--step-rich]
-            [--step-vd] [--dry-run] [--cache-db CACHEDBFN] [--no-cache]
-            [--output-db OUTDBFN] [--split SEPARATOR]
-            script_or_global [script_or_global ...]
+usage: aipl [-h] [--debug] [--test] [--interactive] [--step STEP] [--step-breakpoint] [--step-rich] [--step-vd] [--dry-run]
+            [--cache-db CACHEDBFN] [--no-cache] [--output-db OUTDBFN] [--split SEPARATOR]
+            [script_or_global ...]
 
 AIPL interpreter
 
@@ -88,6 +87,8 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --debug, -d           abort on exception
+  --test, -t            enable test mode
+  --interactive, -i     interactive REPL
   --step STEP           call aipl.step_<func>(cmd, input) before each step
   --step-breakpoint, -x
                         breakpoint() before each step

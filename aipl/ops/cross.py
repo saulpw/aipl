@@ -49,3 +49,9 @@ def op_global(aipl, t:Table, tname:str) -> Table:
     'Save toplevel input into globals.'
     aipl.globals[tname] = t
     return t
+
+
+@defop('unbox', 1.5, 1.5)
+def op_unbox(aipl, t:Table):
+    assert len(t) == 1
+    return Table(t[0].value)

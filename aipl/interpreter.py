@@ -157,10 +157,10 @@ class AIPL:
                 if cmd.op.rankout is None:
                     continue # just keep former inputs
                 elif isinstance(result, Table):
-                    inputs[-1] = result
+                    inputs = [result]
                 else:
                     k = cmd.varnames[-1] if cmd.varnames else self.unique_key
-                    inputs[-1] = Table([{k:result}])
+                    inputs = [Table([{k:result}])]
 
             except AIPLException as e:
                 raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
@@ -199,12 +199,7 @@ class AIPL:
         'Recursively evaluate cmd.op(t) with cmd args formatted with contexts'
 
         if cmd.op.arity == 0:
-            ret = self.call_cmd(cmd, contexts, newkey=newkey)
-            if cmd.op.rankout is None:
-                return ret
-
-        elif rank(t) <= cmd.op.rankin:
-            ret = self.call_cmd(cmd, contexts, t, newkey=newkey)
+            return self.call_cmd(cmd, contexts, newkey=newkey)
 
         else:
             if len(operands) < cmd.op.arity:

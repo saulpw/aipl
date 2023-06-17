@@ -108,7 +108,10 @@ class LazyRow(Mapping):
             if v is None:
                 continue
             elif isinstance(v, Table):
-                v = [r._asdict() for r in v]
+                if v.rank == 0:
+                    v = v.scalar
+                else:
+                    v = [r._asdict() for r in v]
             elif not isinstance(v, (int, float, str)):
                 v = str(v)
 
@@ -159,6 +162,7 @@ class Table:
             ret.add_column(copy(c))
 
         ret.rows = []
+        ret.scalar = self.scalar
         return ret
 
     def axis(self, rank:int=0):
@@ -170,6 +174,8 @@ class Table:
 
     @property
     def values(self):
+        if self.scalar is not None:
+            return [self.scalar]
         return [r.value for r in self]
 
     @property
@@ -210,9 +216,14 @@ class Table:
         return LazyRow(self, self.rows[k])
 
     def _asdict(self):
+        if self.scalar is not None:
+            return self.scalar
         return [r._asdict() for r in self]
 
     def __repr__(self):
+        if self.scalar is not None:
+            return str(self.scalar)
+
         shapestr = 'x'.join(map(str, self.shape))
         contentstr = ''
         if self.rows:
@@ -222,8 +233,11 @@ class Table:
         return f'<Table [{shapestr} {self.deepcolnames}] {contentstr}>'
 
     def __iter__(self):
-        for r in self.rows:
-            yield LazyRow(self, r)
+        if self.scalar is not None:
+            yield self.scalar
+        else:
+            for r in self.rows:
+                yield LazyRow(self, r)
 
     def add_new_columns(self, row:Row):
         for k in row.keys():
