@@ -21,6 +21,7 @@ class Command:
     immediate:bool
     args:list
     kwargs:dict
+    prompt:str
     line:str
     linenum:int
 
@@ -79,6 +80,7 @@ class AIPL:
 
         commands = []
         for ast_command in ast:
+            prompt = ast_command.kwargs.pop('prompt', None)
             command = Command(
                 linenum=ast_command.linenum,
                 line="", # TODO Capture line contents (or not?)
@@ -86,6 +88,7 @@ class AIPL:
                 op=self.get_op(ast_command.opname),
                 immediate=ast_command.immediate,
                 varnames=ast_command.varnames,
+                prompt=prompt,
                 args=ast_command.args,
                 kwargs=ast_command.kwargs
             )
@@ -140,8 +143,8 @@ class AIPL:
                     args.append(arg)
 
             operands = [inputs[-1]] if inputs else []
-            if 'prompt' in cmd.kwargs:
-                inputargs.append(Table(cmd.kwargs['prompt']))
+            if cmd.prompt is not None:
+                inputargs.append(Table(cmd.prompt))
 
             if inputargs:
                 operands[cmd.op.arity-len(inputargs):] = inputargs

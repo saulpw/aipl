@@ -29,7 +29,7 @@ def fmtargs(args, contexts:List[Mapping]):
 
 def fmtkwargs(kwargs, contexts:List[Mapping]):
     d = ChainMap(*contexts)
-    return {k:fmtarg(v, d) for k,v in kwargs.items() if k != 'prompt'}
+    return {k:fmtarg(v, d) for k,v in kwargs.items()}
 
 
 class AttrDict(dict):
