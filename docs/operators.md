@@ -66,8 +66,7 @@ A table is a list of opaque rows and a list of columns.
 The table can generate a list of virtual rows, one for each opaque row, which appear as mappings from column names to values.
 
 A row can be part of many tables.
-A table can yield a ShiningRow
-A column is owned by one table, and a but an opaque row can be part of many tables.
+Each column is on only one table, but a specific opaque row can be part of many tables.
 
 The opaque row contains all the data, so both columns and tables can be lightweight objects.
 If rows are augmented but never need to be copied, then generating both column- and row-wise subsets of tables is a lightweight process.

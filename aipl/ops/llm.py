@@ -70,6 +70,7 @@ def op_llm_mock(aipl, v:str, **kwargs) -> str:
 @defop('llm', 0, 0)
 @expensive(op_llm_mock)
 def route_llm_query(aipl, v:str, **kwargs) -> str:
+    'Send chat messages to `model` (default: gpt-3.5-turbo).  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all named args directly to API.'
     model = kwargs.get('model')
     if model is None:
         kwargs['model'] = 'gpt-3.5-turbo'
@@ -141,6 +142,7 @@ def completion_gooseai(aipl, v:str, **kwargs) -> str:
 @defop('llm-embedding', 0, 0.5)
 @expensive()
 def route_llm_embedding_query(aipl, v:str, **kwargs) -> str:
+    'Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string from `model`: a measure of text-relatedness, to be used with e.g. !cluster.'
     model = kwargs.get('model')
     if model in gooseai_models:
         raise AIPLException("GooseAI embeddings not yet supported")
@@ -150,7 +152,7 @@ def route_llm_embedding_query(aipl, v:str, **kwargs) -> str:
         raise AIPLException(f"{model} not found!")
 
 def embedding_openai(aipl, v:str, **kwargs) -> dict:
-    'Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.'
+    'Get a an openai [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.'
     import openai
 
     if not v:
