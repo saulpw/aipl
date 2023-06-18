@@ -10,7 +10,7 @@ def repl(aipl, inputs:list[Table]):
     'Standard Read-Eval-Print-Loop (REPL)'
     import rich
     def completer(text, state):
-        ops = list(aipl.operators.keys())
+        ops = list(aipl.operators.keys()) + list(aipl.aliases.keys())
         text = text[1:]
         results = [x for x in ops if x.startswith(text)]
         if results:

@@ -50,7 +50,7 @@ class UserAbort(BaseException):
 from .utils import stderr
 from .db import Database
 from .table import Table, Column, SubColumn, LazyRow
-from .interpreter import AIPL, defop, Command
+from .interpreter import AIPL, defop, Command, alias
 from .caching import expensive, dbcache
 from .parser import parse
 from .repl import repl

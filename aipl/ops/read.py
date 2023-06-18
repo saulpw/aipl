@@ -1,6 +1,6 @@
 from urllib.parse import urlparse, urlunparse
 
-from aipl import defop, dbcache, stderr
+from aipl import defop, dbcache, stderr, alias
 
 
 @dbcache
@@ -37,3 +37,5 @@ def op_read_bytes(aipl, url:str) -> bytes:
         return _fetch_url_bytes(url)
 
     return open(url, mode='rb').read()
+
+alias('fetch-url', 'read')

@@ -43,6 +43,7 @@ def rank(v):
 
 class AIPL:
     operators = {}  # opname:str -> func(aipl, ..., *args, *kwargs)
+    aliases = {}  # aliasname:str -> builtinopname:str
     next_unique_key:int = 0
     cost_usd:float = 0.0
 
@@ -66,6 +67,9 @@ class AIPL:
         breakpoint()
 
     def get_op(self, opname:str):
+        while opname in self.aliases:
+            opname = self.aliases[opname]
+
         return self.operators.get(opname, None)
 
     def parse(self, source:str) -> List[Command]:
@@ -406,6 +410,9 @@ def defop(opname:str,
     return _decorator
 
 
-@defop('nop', None, None)
-def op_nop(aipl):
-    pass
+def alias(alias_name, builtin_name):
+    'Create an alias `alias_name` for the op `builtin_name`'
+    assert alias_name not in AIPL.aliases
+    if builtin_name not in AIPL.operators:
+        raise AIPLException(f"{builtin_name} is not a valid operator for alias")
+    AIPL.aliases[clean_to_id(alias_name)] = builtin_name
