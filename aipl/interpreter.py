@@ -69,7 +69,7 @@ class AIPL:
 
     def get_op(self, opname:str):
         while opname in self.aliases:
-            opname = self.aliases[opname]
+            opname = self.aliases[opname].opname
 
         return self.operators.get(opname, None)
 
@@ -413,9 +413,9 @@ def defop(opname:str,
     return _decorator
 
 
-def alias(alias_name, builtin_name):
+def alias(alias_name:str, builtin_name:str, dialect:str=''):
     'Create an alias `alias_name` for the op `builtin_name`'
     assert alias_name not in AIPL.aliases
     if builtin_name not in AIPL.operators:
         raise AIPLException(f"{builtin_name} is not a valid operator for alias")
-    AIPL.aliases[clean_to_id(alias_name)] = builtin_name
+    AIPL.aliases[clean_to_id(alias_name)] = AttrDict(opname=builtin_name, dialect=dialect)
