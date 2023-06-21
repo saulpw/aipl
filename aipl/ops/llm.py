@@ -175,11 +175,14 @@ def embedding_openai(aipl, v:str, **kwargs) -> dict:
 @defop('llm-local', 0, 0)
 @expensive(op_llm_mock)
 def completion_local(aipl, v:str, **kwargs) -> str:
-    if 'LLAMA_CPP_DIR' not in os.environ or 'OPENAI_API_ORG' not in os.environ:
+    print('hmm?')
+    if 'LLAMA_CPP_DIR' not in os.environ:
         raise AIPLException('''LLAMA_CPP_DIR envvar must be set for !llm-local''')
+    print("hmm.")
     llm_dir = Path(os.environ['LLAMA_CPP_DIR'])
     model = kwargs.get('model')
     max_tokens = kwargs.get('max_tokens') or '-1'
+    print(llm_dir, model)
     
     print(model, '\n>>>\n' + v, end='')
     res = subprocess.run([
