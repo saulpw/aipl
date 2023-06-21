@@ -172,7 +172,7 @@ def embedding_openai(aipl, v:str, **kwargs) -> dict:
                 used_tokens=used,
                 embedding=resp['data'][0]['embedding'])
 
-@defop('llm-local', 0, 0, 1)
+@defop('llm-local', 0, 0)
 @expensive(op_llm_mock)
 def completion_local(aipl, v:str, **kwargs) -> str:
     if 'LLAMA_CPP_DIR' not in os.environ or 'OPENAI_API_ORG' not in os.environ:
