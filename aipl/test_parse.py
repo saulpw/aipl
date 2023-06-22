@@ -19,6 +19,13 @@ def test_varname_afterwards():
     assert command[0].args == ["arg"]
     assert command[0].varnames == ["var"]
 
+def test_global():
+    command = parse("!op arg >>global_name")
+    assert command[0].opname == "op"
+    assert command[0].args == ["arg"]
+    assert command[0].varnames == []
+    assert command[0].globals == ["global_name"]
+
 def test_split_newlines():
     command = parse("!split sep=\\n\n")
     assert command[0].opname == "split"

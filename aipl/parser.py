@@ -24,9 +24,11 @@ _EMPTY_LINE: "\n"
 
 varname: ">" IDENTIFIER
 
+globalname: ">>" IDENTIFIER
+
 arg_list: arg*
 
-arg: ws (KEY "=" literal | literal | varname)
+arg: ws (KEY "=" literal | literal | varname | globalname)
 
 ?literal: BARE_STRING | ESCAPED_STRING
 BARE_STRING: /[^ \t\n!"'>]\S*/
@@ -49,6 +51,7 @@ COMMENT_LINE: /^#[^\n]*\n/m
 class AstCommand:
     opname:str
     varnames:List[str]
+    globals: List[str]
     immediate:bool
     args:list
     kwargs:dict
@@ -74,7 +77,7 @@ class ToAst(Transformer):
         return output
 
     def command(self, tree):
-        command_sign, opname, (varnames, args, kwargs) = tree
+        command_sign, opname, (varnames, globalnames, args, kwargs) = tree
 
         return AstCommand(
             opname=opname,
@@ -82,6 +85,7 @@ class ToAst(Transformer):
             linenum=command_sign.line,
             immediate=command_sign.value == '!!',
             varnames=varnames,
+            globals=globalnames,
             args=args,
             kwargs=kwargs,
         )
@@ -98,6 +102,7 @@ class ToAst(Transformer):
     def arg_list(self, arg_list):
         args = []
         varnames = []
+        globalnames = []
         kwargs = {}
 
         for key, arg in arg_list:
@@ -105,14 +110,19 @@ class ToAst(Transformer):
                 args.append(arg)
             elif key == '>':
                 varnames.append(arg)
+            elif key == '>>':
+                globalnames.append(arg)
             else:
                 kwargs[clean_to_id(key)] = arg
 
-        return varnames, args, kwargs
+        return varnames, globalnames, args, kwargs
 
 
     def varname(self, tree):
         return ('>', tree[0])
+
+    def globalname(self, tree):
+        return ('>>', tree[0])
 
     def arg(self, tree):
         if isinstance(tree[0], tuple):
