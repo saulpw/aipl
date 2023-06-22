@@ -14,7 +14,7 @@ _WS: /[ \t]+/
 line: commands prompt | _EMPTY_LINE
 
 commands: (command)+
-command: command_sign OPNAME varnames ws arg_list ws
+command: command_sign OPNAME arg_list ws
 
 OPNAME: IDENTIFIER
 
@@ -22,11 +22,11 @@ OPNAME: IDENTIFIER
 
 _EMPTY_LINE: "\n"
 
-varnames: ( ">" IDENTIFIER )*
+varname: ">" IDENTIFIER
 
 arg_list: arg*
 
-arg: ws (KEY "=" literal | literal)
+arg: ws (KEY "=" literal | literal | varname)
 
 ?literal: BARE_STRING | ESCAPED_STRING
 BARE_STRING: /[^ \t\n!"'>]\S*/
@@ -74,7 +74,7 @@ class ToAst(Transformer):
         return output
 
     def command(self, tree):
-        command_sign, opname, varnames, (args, kwargs) = tree
+        command_sign, opname, (varnames, args, kwargs) = tree
 
         return AstCommand(
             opname=opname,
@@ -97,22 +97,30 @@ class ToAst(Transformer):
 
     def arg_list(self, arg_list):
         args = []
+        varnames = []
         kwargs = {}
 
         for key, arg in arg_list:
             if key is None:
                 args.append(arg)
+            elif key == '>':
+                varnames.append(arg)
             else:
                 kwargs[clean_to_id(key)] = arg
 
-        return args, kwargs
+        return varnames, args, kwargs
 
-    def varnames(self, tree):
-        return list(tree)
+
+    def varname(self, tree):
+        return ('>', tree[0])
 
     def arg(self, tree):
+        if isinstance(tree[0], tuple):
+            return tree[0]
+
         if isinstance(tree[0], Token) and tree[0].type == 'KEY':
             return (tree[0].value, tree[1])
+
         return (None, tree[0])
 
     def prompt(self, lines):
