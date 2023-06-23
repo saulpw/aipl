@@ -3,8 +3,10 @@ from aipl import defop
 from typing import List
 
 @defop('split', 0, 1)
-def op_split(aipl, v: str, sep:str=None, maxsize:int=0) -> List[str]:
+def op_split(aipl, v: str, sep:str=None, maxsize:int=0, trim=False) -> List[str]:
     'Split text into chunks based on sep, keeping each chunk below maxsize.'
+    if trim:
+        v = v.strip()
     win = []
     tot = 0
     for i, unit in enumerate(v.split(sep)):
