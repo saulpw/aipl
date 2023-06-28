@@ -22,7 +22,7 @@ def inner_eval(obj, *args, **kwargs):
         raise InnerPythonException(exc_value, tb[1:], obj)
 
 
-@defop('python',None,None)
+@defop('python',0,None)
 def op_python(aipl, prompt:str=''):
     'exec() Python toplevel statements.'
     aipl.globals['defop'] = defop
