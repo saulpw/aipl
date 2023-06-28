@@ -407,6 +407,7 @@ def defop(opname:str,
         _wrapped.arity = arity
         _wrapped.outcols = outcols
         _wrapped.__name__ = name
+        _wrapped.opname = opname
         _wrapped.preprompt = preprompt
         AIPL.operators[name] = _wrapped
         return _wrapped

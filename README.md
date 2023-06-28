@@ -75,9 +75,8 @@ Remove all unnecessary text like "The document" and "the author".
 ## Usage
 
 ```
-usage: aipl [-h] [--debug] [--test] [--interactive] [--step STEP] [--step-breakpoint] [--step-rich]
-            [--step-vd] [--dry-run] [--cache-db CACHEDBFN] [--no-cache] [--output-db OUTDBFN]
-            [--split SEPARATOR]
+usage: aipl [-h] [--debug] [--test] [--interactive] [--step STEP] [--step-breakpoint] [--step-rich] [--step-vd] [--dry-run] [--cache-db CACHEDBFN] [--no-cache]
+            [--output-db OUTDBFN] [--split SEPARATOR]
             [script_or_global ...]
 
 AIPL interpreter
@@ -151,7 +150,7 @@ Notes:
    Save toplevel input into globals.
 - `!unbox` (in=1.5 out=1.5)
    None
-- `!csv_parse` (in=None out=1.5)
+- `!csv-parse` (in=None out=1.5)
    Converts a .csv into a table of rows.
 - `!dbopen` (in=None out=0)
    Open connection to database.
@@ -167,15 +166,11 @@ Notes:
    set debug flag and call breakpoint() before each command
 - `!def` (in=0 out=None)
    Define composite operator from cmds in prompt (must be indented).
-- `!errors` (in=0 out=0)
-   True if value is an Error
-- `!not_errors` (in=0 out=0)
-   True if value is not an Error
-- `!extract_text_all` (in=0 out=0)
+- `!extract-text-all` (in=0 out=0)
    Extract all text from HTML
-- `!extract_text` (in=0 out=0)
+- `!extract-text` (in=0 out=0)
    Extract meaningful text from HTML
-- `!extract_links` (in=0 out=1.5)
+- `!extract-links` (in=0 out=1.5)
    Extract (linktext, title, href) from <a> tags in HTML
 - `!filter` (in=1.5 out=1.5)
    Return copy of table, keeping only rows whose value is Truthy.
@@ -183,55 +178,53 @@ Notes:
    Format prompt text (right operand) as a Python string template, substituting values from row (left operand) and global context.
 - `!groupby` (in=1.5 out=1.5)
    Group rows into tables, by set of columns given as args.
-- `!require_input` (in=100 out=100)
+- `!require-input` (in=100 out=100)
    Ensure there is any input at all; if not, display the prompt and read input from the user.
 - `!join` (in=1 out=0)
    Join inputs with sep into a single output scalar.
 - `!json` (in=100 out=0)
    Convert Table into a json blob.
-- `!json_parse` (in=0 out=1.5)
+- `!json-parse` (in=0 out=1.5)
    Convert a json blob into a Table.
 - `!literal` (in=None out=0)
    Set prompt as top-level input, without formatting.
 - `!llm` (in=0 out=0)
    Send chat messages to `model` (default: gpt-3.5-turbo).  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all named args directly to API.
-- `!llm_embedding` (in=0 out=0.5)
+- `!llm-embedding` (in=0 out=0.5)
    Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string from `model`: a measure of text-relatedness, to be used with e.g. !cluster.
 - `!match` (in=0 out=0)
    Return a bool with whether value matched regex. Used with !filter.
-- `!metrics_accuracy` (in=1.5 out=0)
+- `!metrics-accuracy` (in=1.5 out=0)
    None
-- `!metrics_precision` (in=1.5 out=0)
+- `!metrics-precision` (in=1.5 out=0)
    None
-- `!metrics_recall` (in=1.5 out=0)
+- `!metrics-recall` (in=1.5 out=0)
    None
 - `!name` (in=1.5 out=1.5)
    Rename current input column to given name.
 - `!nop` (in=None out=None)
    No operation.
-- `!not` (in=0 out=0)
-   Return the opposite logical value.
-- `!pdf_extract` (in=0 out=0)
+- `!pdf-extract` (in=0 out=0)
    Extract contents of pdf to value.
 - `!print` (in=0 out=None)
    Print to stdout.
 - `!python` (in=None out=None)
    exec() Python toplevel statements.
-- `!python_expr` (in=0.5 out=0)
+- `!python-expr` (in=0.5 out=0)
    Add columns for Python expressions.
-- `!python_input` (in=0 out=1.5)
+- `!python-input` (in=0 out=1.5)
    eval() Python expression and use as toplevel input table.
 - `!ravel` (in=100 out=1.5)
    All of the leaf scalars in the value column become a single 1-D array.
 - `!read` (in=0 out=0)
    Return contents of local filename.
-- `!read_bytes` (in=0 out=0)
+- `!read-bytes` (in=0 out=0)
    Return contents of URL or local filename as bytes.
 - `!ref` (in=1.5 out=1.5)
    Move column on table to end of columns list (becoming the new .value)
-- `!regex_capture` (in=0 out=0.5)
+- `!regex-capture` (in=0 out=0.5)
    Capture from prompt regex into named matching groups.
-- `!regex_translate` (in=0 out=0)
+- `!regex-translate` (in=0 out=0)
    Translate input according to regex translation rules in prompt, one per line, with regex and output separated by whitespace:
         Dr\.? Doctor
         Jr\.? Junior
@@ -248,29 +241,29 @@ Notes:
    Run the command described by args.  Return (retcode, stderr, stdout) columns.
 - `!sort` (in=1.5 out=1.5)
    Sort the table by the given columns.
-- `!grade_up` (in=1.5 out=1)
+- `!grade-up` (in=1.5 out=1)
    Assign ranks to unique elements in an array, incrementally increasing each by its corresponding rank value.
 - `!split` (in=0 out=1)
    Split text into chunks based on sep, keeping each chunk below maxsize.
-- `!split_into` (in=0 out=0.5)
+- `!split-into` (in=0 out=0.5)
    Split text by sep into the given column names.
 - `!take` (in=1.5 out=1.5)
    Return a table with first n rows of `t`
-- `!test_input` (in=100 out=1.5)
+- `!test-input` (in=100 out=1.5)
    In test mode, replace input with prompt.
-- `!test_equal` (in=0 out=None)
+- `!test-equal` (in=0 out=None)
    In test mode, error if value is not equal to prompt.
-- `!test_json` (in=100 out=None)
+- `!test-json` (in=100 out=None)
    Error if value Column is not equal to json blob in prompt.
-- `!url_split` (in=0 out=0.5)
+- `!url-split` (in=0 out=0.5)
    Split url into components (scheme, netloc, path, params, query, fragment).
-- `!url_defrag` (in=0 out=0)
+- `!url-defrag` (in=0 out=0)
    Remove fragment from url.
-- `!xml_xpath` (in=0 out=1)
+- `!xml-xpath` (in=0 out=1)
    Return a vector of XMLElements from parsing entries in value.
-- `!xml_xpaths` (in=0 out=0.5)
+- `!xml-xpaths` (in=0 out=0.5)
    Return a vector of XMLElements from parsing entries in value; kwargs become column_name=xpath.
-- `!aipl_ops` (in=0 out=0)
+- `!aipl-ops` (in=0 out=0)
    None
 
 

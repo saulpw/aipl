@@ -2,7 +2,7 @@
  !python-input>op
     aipl.operators.values()
  !format
-    - `!{op.__name__}` (in={op.rankin} out={op.rankout})
+    - `!{op.opname}` (in={op.rankin} out={op.rankout})
        {op.__doc__}
  !join sep=\n
 
