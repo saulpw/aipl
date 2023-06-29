@@ -70,7 +70,7 @@ def main():
     else:
         aipl.stdout = sys.stdout
 
-    aipl.globals = global_parameters
+    aipl.globals.update(global_parameters)
 
     # add input from stdin
     input_text = stdin_contents.strip()

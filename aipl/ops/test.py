@@ -6,14 +6,15 @@ import json
 
 from aipl import defop, AIPLException, Table
 
-@defop('test-input', None, None)  # immed
-def op_test_input(aipl, prompt=''):
-    'In test mode, error if value is not equal to prompt.'
+@defop('test-input', 100, 1.5, rankin2=0)  # immed
+def op_test_input(aipl, t:Table, prompt=''):
+    'In test mode, replace input with prompt.'
     if aipl.options.test:
-        aipl.forced_input = aipl.new_input(prompt)
+        return aipl.new_input(prompt)
+    return t
 
 
-@defop('test-equal', 0, None)
+@defop('test-equal', 0, None, rankin2=0)
 def op_test_equal(aipl, v:str, prompt=''):
     'In test mode, error if value is not equal to prompt.'
     if aipl.options.test:
@@ -21,7 +22,7 @@ def op_test_equal(aipl, v:str, prompt=''):
             raise AIPLException(f'assert failed! value not equal:\n' + v)
 
 
-@defop('test-json', 100, None)
+@defop('test-json', 100, None, rankin2=0)
 def op_test_json(aipl, t:Table, prompt:str=''):
     'Error if value Column is not equal to json blob in prompt.'
 

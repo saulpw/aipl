@@ -43,6 +43,7 @@ def StringifiableObject(s):
 
 @defop('xml-xpath', 0, 1)
 def op_xml_xpath(aipl, v:str, *args) -> List['XmlElement']:
+    "Return a vector of XMLElements from parsing entries in value."
     xml = _xml(v)
     for arg in args:
         for entry in xml.xpath(arg):
@@ -51,6 +52,7 @@ def op_xml_xpath(aipl, v:str, *args) -> List['XmlElement']:
 
 @defop('xml-xpaths', 0, 0.5)
 def op_xml_xpaths(aipl, v:str, **kwargs) -> List['XmlElement']:
+    "Return a vector of XMLElements from parsing entries in value; kwargs become column_name=xpath."
     xml = _xml(v)
     ret = {}
     for varname, xpath in kwargs.items():

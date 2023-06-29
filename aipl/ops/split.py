@@ -11,7 +11,7 @@ def op_split(aipl, v: str, sep:str=None, maxsize:int=0, trim=False) -> List[str]
     tot = 0
     for i, unit in enumerate(v.split(sep)):
         n = len(unit)
-        if tot+n > maxsize:
+        if tot+n > int(maxsize):
             if win:
                 yield (sep or ' ').join(win)
                 win = []
@@ -26,6 +26,7 @@ def op_split(aipl, v: str, sep:str=None, maxsize:int=0, trim=False) -> List[str]
 
 @defop('split-into', 0, 0.5)
 def op_split_into(aipl, v:str, *args, sep=None) -> dict:
+    'Split text by sep into the given column names.'
     return dict(zip(args, v.split(sep)))
 
 def test_split_join(aipl):

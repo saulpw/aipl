@@ -21,6 +21,7 @@ class Command:
     immediate:bool
     args:list
     kwargs:dict
+    prompt:str
     line:str
     linenum:int
 
@@ -43,11 +44,12 @@ def rank(v):
 
 class AIPL:
     operators = {}  # opname:str -> func(aipl, ..., *args, *kwargs)
+    aliases = {}  # aliasname:str -> builtinopname:str
     next_unique_key:int = 0
     cost_usd:float = 0.0
 
     def __init__(self, **kwargs):
-        self.globals = {}  # base context
+        self.globals = {'aipl':self}  # base context
         self.options = AttrDict(kwargs)
         self.forced_input = None  # via !test-input
         self.output_db = Database(self.options.outdbfn)
@@ -62,10 +64,13 @@ class AIPL:
         self.next_unique_key += 1
         return f'_{r}'
 
-    def step_breakpoint(self, t:Table, cmd:Command):
+    def step_breakpoint(self, cmd:Command, *inputs:List[Table]):
         breakpoint()
 
     def get_op(self, opname:str):
+        while opname in self.aliases:
+            opname = self.aliases[opname].opname
+
         return self.operators.get(opname, None)
 
     def parse(self, source:str) -> List[Command]:
@@ -75,6 +80,7 @@ class AIPL:
 
         commands = []
         for ast_command in ast:
+            prompt = ast_command.kwargs.pop('prompt', None)
             command = Command(
                 linenum=ast_command.linenum,
                 line="", # TODO Capture line contents (or not?)
@@ -82,21 +88,21 @@ class AIPL:
                 op=self.get_op(ast_command.opname),
                 immediate=ast_command.immediate,
                 varnames=ast_command.varnames,
+                prompt=prompt,
                 args=ast_command.args,
                 kwargs=ast_command.kwargs
             )
 
             if not command.op:
                 raise AIPLException(
-                    f'[line {command.linenum}] no such operator "!{command.opname}"',
-                    command)
+                    f'[line {command.linenum}] no such operator "!{command.opname}"')
 
             if command.immediate:
-                result = self.eval_op(command, Table(), contexts=[self.globals])
+                result = self.run_cmdlist([command], [])
                 if isinstance(result, Error):
                     if isinstance(result.exception, InnerPythonException):
                         result.exception.command = command
-                        raise result.exception
+                    raise result.exception
 
                 if command.varnames:
                     last_variable = command.varnames[-1]
@@ -115,11 +121,11 @@ class AIPL:
         return self.run(script, inputs)[-1]
 
     def run(self, script:str, inputs:list[Table]=None):
-        cmds = self.parse(script)
+        cmds = self.parse(script + '\n!nop')  # add nop at end to do final single-steps
 
         return self.run_cmdlist(cmds, inputs)
 
-    def pre_command(self, cmd:Command, t:Table):
+    def pre_command(self, cmd:Command, t:Table=Table(), *args):
         stderr(t, str(cmd))
 
     def run_cmdlist(self, cmds:List[Command], inputs:List[Table]):
@@ -128,33 +134,51 @@ class AIPL:
                 inputs.append(self.forced_input)
                 self.forced_input = None
 
-            self.pre_command(cmd, inputs[-1])
+            args = []
+            inputargs = []
+            for arg in cmd.args:
+                if isinstance(arg, str) and arg.startswith('<'):
+                    inputargs.append(self.globals[arg[1:]])
+                else:
+                    args.append(arg)
+
+            operands = [inputs[-1]] if inputs else []
+            if cmd.prompt is not None:
+                inputargs.append(Table(cmd.prompt))
+
+            if inputargs:
+                operands[cmd.op.arity-len(inputargs):] = inputargs
+
+            self.pre_command(cmd, *operands)
 
             if self.options.step:
                 for stepfuncname in self.options.step.split(','):
                     stepfunc = getattr(self, 'step_'+stepfuncname, None)
                     if stepfunc:
-                        stepfunc(inputs[-1], cmd)
+                        stepfunc(cmd, *operands)
                     else:
                         stderr(f'no aipl.step_{stepfuncname}!')
 
             try:
-                result = self.eval_op(cmd, inputs[-1], contexts=[self.globals])
+                result = self.eval_op(cmd, *operands, contexts=[self.globals])
                 if cmd.op.rankout is None:
                     continue # just keep former inputs
                 elif isinstance(result, Table):
-                    inputs[-1] = result
+                    inputs = [result]
                 else:
                     k = cmd.varnames[-1] if cmd.varnames else self.unique_key
-                    inputs[-1] = Table([{k:result}])
+                    inputs = [Table([{k:result}])]
 
             except AIPLException as e:
                 raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
             except Exception as e:
                 raise Exception(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
 
-        if isinstance(inputs[-1], Error):
-            raise inputs[-1].exception
+        for result in inputs:
+            if isinstance(result, Error):
+                if isinstance(result.exception, InnerPythonException):
+                    result.exception.command = command
+                raise result.exception
 
         return inputs
 
@@ -178,26 +202,24 @@ class AIPL:
                            cmd.op.outcols.split(),
                            varname)
 
-    def eval_op(self, cmd:Command, t:Table|LazyRow, contexts=[], newkey='') -> Table:
+    def eval_op(self, cmd:Command, *operands:List[Table|LazyRow], contexts=[], newkey='') -> Table:
         'Recursively evaluate cmd.op(t) with cmd args formatted with contexts'
 
         if cmd.op.arity == 0:
-            ret = self.call_cmd(cmd, contexts, newkey=newkey)
-            if cmd.op.rankout is None:
-                return ret
-
-        elif rank(t) <= cmd.op.rankin:
-            ret = self.call_cmd(cmd, contexts, t, newkey=newkey)
+            return self.call_cmd(cmd, contexts, newkey=newkey)
 
         else:
+            if len(operands) < cmd.op.arity:
+                operands = list(operands) + [Table() for i in range(cmd.op.arity-len(operands))]
+
+            t = operands[0]
+            if rank(t) <= cmd.op.rankin:
+                return self.call_cmd(cmd, contexts, *operands, newkey=newkey)
+
             if isinstance(t, Table):
-                ret = Table()
-                for c in t.columns:
-                    ret.add_column(copy(c))
+                ret = copy(t)
             else:
-                ret = Table()
-                for c in t.value.columns:
-                    ret.add_column(copy(c))
+                ret = copy(t.value)
 
             # !op>var1>var2 names the deepest column "var2" and the column one-level up (for rankout==1) "var1"
             if cmd.op.rankout is not None and len(cmd.varnames) > cmd.op.rankout and rank(t) == int(cmd.op.rankin+1):
@@ -206,7 +228,7 @@ class AIPL:
                 newkey = newkey or self.unique_key
 
             for row in t:
-                x = self.eval_op(cmd, row, contexts=contexts+[row], newkey=newkey)
+                x = self.eval_op(cmd, row, *operands[1:], contexts=contexts+[row], newkey=newkey)
 
                 if x is None:
                     continue
@@ -219,7 +241,7 @@ class AIPL:
                 else:
                     ret.add_column(Column(newkey))
 
-        return ret
+            return ret
 
 
 def update_dict(d:dict, elem, key:str='') -> dict:
@@ -238,8 +260,12 @@ def prep_input(operand:LazyRow|Table|Error, rankin:int|float) -> Scalar|List[Sca
     if rankin is None:
         return None
     if rankin == 0:
-        assert isinstance(operand, LazyRow), type(operand)
-        return operand.value
+        if isinstance(operand, Table) and operand.rank == 0:
+            return operand.scalar
+        elif isinstance(operand, LazyRow):
+            return operand.value
+        else:
+            assert False, type(operand)
     elif rankin == 0.5:
         assert isinstance(operand, LazyRow)
         return operand
@@ -332,6 +358,7 @@ def prep_output(aipl,
 
 
 ranktypes = dict(
+    none = None,
     all = 100,
     scalar = 0,
     row = 0.5,
@@ -342,32 +369,53 @@ ranktypes = dict(
 def defop(opname:str,
           rankin:None|int|float|str=0,
           rankout:None|int|float|str=0,
-          arity:int=1,
+          *,
+          rankin2:None|int|float|str=None,
           outcols:str='',
           preprompt=lambda x: x):
     '''
 
     '''
+    # arity implied by rankin
     if rankin is None:
-        arity = 0  # no explict arity for nonary or unary ops
+        arity = 0
+    elif rankin2 is None:
+        arity = 1
+    else:
+        arity = 2
 
     # replace string mnemonic with 'actual' rank
     rankin = ranktypes.get(rankin, rankin)
     rankout = ranktypes.get(rankout, rankout)
+    rankin2 = ranktypes.get(rankin2, rankin2)
 
     def _decorator(f):
         @wraps(f)
         def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
-            operands = [prep_input(operand, rankin) for operand in args[:arity]]
+            operands = []
+            if arity >= 1:
+                operands.append(prep_input(args[0], rankin))
+            if arity >= 2:
+                operands.append(prep_input(args[1], rankin2))
+
             return f(aipl, *operands, *args[arity:], **kwargs)
 
         name = clean_to_id(opname)
         _wrapped.rankin = rankin
         _wrapped.rankout = rankout
+        _wrapped.rankin2 = rankin2
         _wrapped.arity = arity
         _wrapped.outcols = outcols
         _wrapped.__name__ = name
-        _wrapped.preprompt = lambda prompt: preprompt(prompt)
+        _wrapped.preprompt = preprompt
         AIPL.operators[name] = _wrapped
         return _wrapped
     return _decorator
+
+
+def alias(alias_name:str, builtin_name:str, dialect:str=''):
+    'Create an alias `alias_name` for the op `builtin_name`'
+    assert alias_name not in AIPL.aliases
+    if builtin_name not in AIPL.operators:
+        raise AIPLException(f"{builtin_name} is not a valid operator for alias")
+    AIPL.aliases[clean_to_id(alias_name)] = AttrDict(opname=builtin_name, dialect=dialect)

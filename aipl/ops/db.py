@@ -13,7 +13,7 @@ def op_dbquery(aipl, row:'LazyRow', dbname:str, tblname:str, *colnames, **kwargs
         yield {colname:r[colname] for colname in colnames}
 
 
-@defop('dbdrop', None, None, 0)
+@defop('dbdrop', None, None)
 def op_dbdrop(aipl, tblname:str):
     'Drop database table.'
     aipl.output_db.sql(f'DROP TABLE IF EXISTS {tblname}')

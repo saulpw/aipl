@@ -48,8 +48,8 @@ class Column:
 
 class SubColumn(Column):
     'Use for tables that have nested rows from other tables in the row dict at *self.key*'
-    def __init__(self, key, name='', origcol=None):
-        super().__init__(key, name)
+    def __init__(self, key, origcol):
+        super().__init__(key, origcol.name)
         self.origcol = origcol
 
     def get_value(self, row:dict):
@@ -108,7 +108,10 @@ class LazyRow(Mapping):
             if v is None:
                 continue
             elif isinstance(v, Table):
-                v = [r._asdict() for r in v]
+                if v.rank == 0:
+                    v = v.scalar
+                else:
+                    v = [r._asdict() for r in v]
             elif not isinstance(v, (int, float, str)):
                 v = str(v)
 
@@ -131,15 +134,19 @@ class Table:
         self.rows = []  # list of dict
         self.columns = []  # list of Column
         self.parent = parent
+        self.scalar = None
 
-        for row in rows:
-            if isinstance(row, LazyRow):
-                self.rows.append(row._row)
-            elif isinstance(row, Mapping):
-                self.rows.append(row)
-                self.add_new_columns(row)
-            else:
-                raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")
+        if isinstance(rows, (list, tuple)):  # should be sequence-but-not-string
+            for row in rows:
+                if isinstance(row, LazyRow):
+                    self.rows.append(row._row)
+                elif isinstance(row, Mapping):
+                    self.rows.append(row)
+                    self.add_new_columns(row)
+                else:
+                    raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")
+        else:
+            self.scalar = rows
 
     def __len__(self):
         return len(self.rows)
@@ -155,6 +162,7 @@ class Table:
             ret.add_column(copy(c))
 
         ret.rows = []
+        ret.scalar = self.scalar
         return ret
 
     def axis(self, rank:int=0):
@@ -166,17 +174,20 @@ class Table:
 
     @property
     def values(self):
+        if self.scalar is not None:
+            return [self.scalar]
         return [r.value for r in self]
 
     @property
     def shape(self) -> List[int]:
-        if not self.rows:
-            return [0]
+        if self.scalar is not None:
+            return []
         dims = [len(self.rows)]
-        if self.columns:
-            firstrowval = self.current_col.get_value(self.rows[0])
-            if isinstance(firstrowval, Table):
-                dims += firstrowval.shape
+        if self.rows:
+            if self.columns:
+                firstrowval = self.current_col.get_value(self.rows[0])
+                if isinstance(firstrowval, Table):
+                    dims += firstrowval.shape
         return dims
 
     @property
@@ -205,9 +216,14 @@ class Table:
         return LazyRow(self, self.rows[k])
 
     def _asdict(self):
+        if self.scalar is not None:
+            return self.scalar
         return [r._asdict() for r in self]
 
     def __repr__(self):
+        if self.scalar is not None:
+            return str(self.scalar)
+
         shapestr = 'x'.join(map(str, self.shape))
         contentstr = ''
         if self.rows:
@@ -217,8 +233,11 @@ class Table:
         return f'<Table [{shapestr} {self.deepcolnames}] {contentstr}>'
 
     def __iter__(self):
-        for r in self.rows:
-            yield LazyRow(self, r)
+        if self.scalar is not None:
+            yield self.scalar
+        else:
+            for r in self.rows:
+                yield LazyRow(self, r)
 
     def add_new_columns(self, row:Row):
         for k in row.keys():
@@ -229,7 +248,7 @@ class Table:
         assert not col.name.startswith('__')
         if self.rows:
             assert col.get_value(self.rows[0]) is not UNWORKING
-        if col.key in self.colkeys or col.name in self.colnames:
+        if col.name in self.colnames:
             return
         self.columns.append(col)
 

@@ -6,13 +6,16 @@
        {op.__doc__}
  !join sep=\n
 
-!!read>summarize_aipl chains/summarize.aipl
-!!aipl-ops>opdocs
+!read>summarize_aipl
+chains/summarize.aipl
 
+!unbox !global summarize_aipl
 
-!sh aipl --help
-!name aipl_usage
+!aipl-ops>opdocs
+!unbox !global opdocs
 
+!sh
+aipl --help
 
 !format>opdocs
 {opdocs}
@@ -46,7 +49,7 @@
     ## Usage
 
     ```
-    {aipl_usage}
+    {stdout}
     ```
 
     ## Command Syntax
@@ -89,7 +92,7 @@
     For instance, here's how the `!join` operator might be defined:
 
     ```
-    @defop('join', rankin=1, rankout=0, arity=1)
+    @defop('join', rankin=1, rankout=0)
     def op_join(aipl:AIPL, v:List[str], sep=' ') -> str:
         'Concatenate text values with *sep* into a single string.'
         return sep.join(v)

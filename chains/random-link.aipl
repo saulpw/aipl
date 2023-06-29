@@ -1,7 +1,7 @@
 # pick a random link from the given webpages(s)
 
 !name baseurl
-!fetch-url
+!read
 !extract-links {baseurl}
 !sample 1
 !print

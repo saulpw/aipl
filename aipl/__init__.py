@@ -21,8 +21,6 @@ class AIPLCompileError(Exception):
 
 class AIPLException(Exception):
     'A nice error message to print to stderr and exit without a stacktrace.'
-    def __str__(self):
-        return f'{self.args[1]}: {self.args[0]}'
 
 
 class InnerPythonException(AIPLException):
@@ -30,9 +28,14 @@ class InnerPythonException(AIPLException):
     def __str__(self):
         exc, tb, codestr = self.args
         r = []
-        r.append(f'In "!{self.command.opname}" (line {self.command.linenum}):')
+        if hasattr(self, 'command'):  # added by other error handling
+            linenum = self.command.linenum
+            r.append(f'In "!{self.command.opname}" (line {self.command.linenum}):')
+        else:
+            linenum = 0
+
         for frame in tb:
-            r.append(f'Line ~{frame.lineno+self.command.linenum}, in {frame.name}')
+            r.append(f'Line ~{frame.lineno+linenum}, in {frame.name}')
             r.append('    ' + codestr.splitlines()[frame.lineno-1])
 
         r.append(f'{type(exc).__name__}: {exc}')
@@ -47,7 +50,7 @@ class UserAbort(BaseException):
 from .utils import stderr
 from .db import Database
 from .table import Table, Column, SubColumn, LazyRow
-from .interpreter import AIPL, defop, Command
+from .interpreter import AIPL, defop, Command, alias
 from .caching import expensive, dbcache
 from .parser import parse
 from .repl import repl

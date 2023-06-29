@@ -22,21 +22,20 @@ def inner_eval(obj, *args, **kwargs):
         raise InnerPythonException(exc_value, tb[1:], obj)
 
 
-@defop('python',None,None,0)
+@defop('python',None,None)
 def op_python(aipl, prompt:str=''):
     'exec() Python toplevel statements.'
     aipl.globals['defop'] = defop
     inner_exec(prompt, aipl.globals)
 
 
-@defop('python-expr', 0.5, 0)
+@defop('python-expr', 0.5, 0, rankin2=0)
 def op_python_expr(aipl, row, expr:str):
     'Add columns for Python expressions.'
     return inner_eval(expr, aipl.globals, row)
 
 
-@defop('python-input', 100, 1.5, outcols='pyval')
-def op_python_input(aipl, t:'Table', prompt:str=''):
+@defop('python-input', 0, 1.5)
+def op_python_input(aipl, prompt:str=''):
     'eval() Python expression and use as toplevel input table.'
-    aipl.globals.update(dict(aipl=aipl))
     return inner_eval(prompt, aipl.globals)

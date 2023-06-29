@@ -23,7 +23,7 @@ Here's a prime example, a multi-level summarizer in the "map-reduce" style of la
 # fetch url, split webpage into chunks, summarize each chunk, then summarize the summaries.
 
 # the inputs are urls
-!fetch-url
+!read
 
 # extract text from html
 !extract-text
@@ -41,7 +41,7 @@ article" or "this webpage" or "this section" or "the author". Ensure the tone
 is precise and concise, and provide an overview of the entire section:
 
 """
-{input}
+{_}
 """
 
 !llm model=gpt-3.5-turbo
@@ -63,7 +63,7 @@ and readable, while preserving important keywords and main content topics.
 Remove all unnecessary text like "The document" and "the author".
 
 """
-{input}
+{_}
 """
 
 !llm model=gpt-3.5-turbo
@@ -75,10 +75,10 @@ Remove all unnecessary text like "The document" and "the author".
 ## Usage
 
 ```
-usage: aipl [-h] [--debug] [--step STEP] [--step-breakpoint] [--step-rich]
-            [--step-vd] [--dry-run] [--cache-db CACHEDBFN] [--no-cache]
-            [--output-db OUTDBFN] [--split SEPARATOR]
-            script_or_global [script_or_global ...]
+usage: aipl [-h] [--debug] [--test] [--interactive] [--step STEP] [--step-breakpoint] [--step-rich]
+            [--step-vd] [--dry-run] [--cache-db CACHEDBFN] [--no-cache] [--output-db OUTDBFN]
+            [--split SEPARATOR]
+            [script_or_global ...]
 
 AIPL interpreter
 
@@ -88,6 +88,8 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --debug, -d           abort on exception
+  --test, -t            enable test mode
+  --interactive, -i     interactive REPL
   --step STEP           call aipl.step_<func>(cmd, input) before each step
   --step-breakpoint, -x
                         breakpoint() before each step
@@ -136,30 +138,34 @@ Notes:
 ## List of operators
 
 - `!abort` (in=None out=None)
-   None
-- `!assert_equal` (in=0 out=None)
-   Error if value is not equal to prompt.
-- `!assert_json` (in=100 out=None)
-   Error if value Column is not equal to json blob in prompt.
+   Abort the current chain.
 - `!cluster` (in=1 out=1)
    Cluster rows by embedding into n clusters; add label column.
 - `!columns` (in=1.5 out=1.5)
    Create new table containing only these columns.
 - `!comment` (in=None out=None)
    Do nothing (ignoring args and prompt).
+- `!cross` (in=0.5 out=1.5)
+   Construct cross-product of current input with given global table
+- `!global` (in=100 out=1.5)
+   Save toplevel input into globals.
+- `!unbox` (in=1.5 out=1.5)
+   None
+- `!csv_parse` (in=None out=1.5)
+   Converts a .csv into a table of rows.
 - `!dbopen` (in=None out=0)
-   
+   Open connection to database.
 - `!dbquery` (in=0.5 out=1.5)
-   
+   Query database table.
 - `!dbdrop` (in=None out=None)
    Drop database table.
 - `!dbinsert` (in=0.5 out=None)
    Insert each row into database table.
 - `!option` (in=None out=None)
-   None
+   Set option=value.
 - `!debug` (in=None out=None)
    set debug flag and call breakpoint() before each command
-- `!def` (in=None out=None)
+- `!def` (in=0 out=None)
    Define composite operator from cmds in prompt (must be indented).
 - `!errors` (in=0 out=0)
    True if value is an Error
@@ -171,14 +177,10 @@ Notes:
    Extract meaningful text from HTML
 - `!extract_links` (in=0 out=1.5)
    Extract (linktext, title, href) from <a> tags in HTML
-- `!fetch_url` (in=0 out=0.5)
-   Fetch URL as text HTML.
-- `!fetch_url_bytes` (in=0 out=0.5)
-   Fetch URL as raw bytes.
 - `!filter` (in=1.5 out=1.5)
    Return copy of table, keeping only rows whose value is Truthy.
 - `!format` (in=0.5 out=0)
-   Format prompt text as a Python string template, substituting values from row and global context.
+   Format prompt text (right operand) as a Python string template, substituting values from row (left operand) and global context.
 - `!groupby` (in=1.5 out=1.5)
    Group rows into tables, by set of columns given as args.
 - `!require_input` (in=100 out=100)
@@ -190,31 +192,41 @@ Notes:
 - `!json_parse` (in=0 out=1.5)
    Convert a json blob into a Table.
 - `!literal` (in=None out=0)
-   None
+   Set prompt as top-level input, without formatting.
 - `!llm` (in=0 out=0)
-   Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.
+   Send chat messages to `model` (default: gpt-3.5-turbo).  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all named args directly to API.
 - `!llm_embedding` (in=0 out=0.5)
-   Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string: a measure of text-relatedness, to be used with e.g. !cluster.
+   Get a [text embedding](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) for a string from `model`: a measure of text-relatedness, to be used with e.g. !cluster.
 - `!match` (in=0 out=0)
    Return a bool with whether value matched regex. Used with !filter.
+- `!metrics_accuracy` (in=1.5 out=0)
+   None
+- `!metrics_precision` (in=1.5 out=0)
+   None
+- `!metrics_recall` (in=1.5 out=0)
+   None
 - `!name` (in=1.5 out=1.5)
    Rename current input column to given name.
+- `!nop` (in=None out=None)
+   No operation.
 - `!not` (in=0 out=0)
-   None
+   Return the opposite logical value.
 - `!pdf_extract` (in=0 out=0)
-   None
+   Extract contents of pdf to value.
 - `!print` (in=0 out=None)
    Print to stdout.
 - `!python` (in=None out=None)
    exec() Python toplevel statements.
 - `!python_expr` (in=0.5 out=0)
    Add columns for Python expressions.
-- `!python_input` (in=100 out=1.5)
+- `!python_input` (in=0 out=1.5)
    eval() Python expression and use as toplevel input table.
 - `!ravel` (in=100 out=1.5)
    All of the leaf scalars in the value column become a single 1-D array.
-- `!read` (in=None out=0)
-   Open, read, and return contents in given local filename.
+- `!read` (in=0 out=0)
+   Return contents of local filename.
+- `!read_bytes` (in=0 out=0)
+   Return contents of URL or local filename as bytes.
 - `!ref` (in=1.5 out=1.5)
    Move column on table to end of columns list (becoming the new .value)
 - `!regex_capture` (in=0 out=0.5)
@@ -225,34 +237,40 @@ Notes:
         Jr\.? Junior
     
 - `!replace` (in=0 out=0)
-   None
+   Replace `find` in all leaf values with `repl`.
 - `!sample` (in=1.5 out=1.5)
    Sample n random rows from the input table.
 - `!save` (in=0 out=None)
    Save to given filename.
-- `!sh` (in=0 out=0.5)
+- `!sh` (in=0 out=1.5)
    Run the command described by args.  Return (retcode, stderr, stdout) columns.
-- `!shtty` (in=0.5 out=0.5)
+- `!shtty` (in=None out=0.5)
    Run the command described by args.  Return (retcode, stderr, stdout) columns.
 - `!sort` (in=1.5 out=1.5)
-   None
+   Sort the table by the given columns.
 - `!grade_up` (in=1.5 out=1)
-   None
+   Assign ranks to unique elements in an array, incrementally increasing each by its corresponding rank value.
 - `!split` (in=0 out=1)
    Split text into chunks based on sep, keeping each chunk below maxsize.
 - `!split_into` (in=0 out=0.5)
-   None
+   Split text by sep into the given column names.
 - `!take` (in=1.5 out=1.5)
    Return a table with first n rows of `t`
+- `!test_input` (in=100 out=1.5)
+   In test mode, replace input with prompt.
+- `!test_equal` (in=0 out=None)
+   In test mode, error if value is not equal to prompt.
+- `!test_json` (in=100 out=None)
+   Error if value Column is not equal to json blob in prompt.
 - `!url_split` (in=0 out=0.5)
    Split url into components (scheme, netloc, path, params, query, fragment).
 - `!url_defrag` (in=0 out=0)
    Remove fragment from url.
 - `!xml_xpath` (in=0 out=1)
-   None
+   Return a vector of XMLElements from parsing entries in value.
 - `!xml_xpaths` (in=0 out=0.5)
-   None
-- `!aipl_ops` (in=100 out=0)
+   Return a vector of XMLElements from parsing entries in value; kwargs become column_name=xpath.
+- `!aipl_ops` (in=0 out=0)
    None
 
 
@@ -262,7 +280,7 @@ It's pretty easy to define a new operator that can be used right away.
 For instance, here's how the `!join` operator might be defined:
 
 ```
-@defop('join', rankin=1, rankout=0, arity=1)
+@defop('join', rankin=1, rankout=0)
 def op_join(aipl:AIPL, v:List[str], sep=' ') -> str:
     'Concatenate text values with *sep* into a single string.'
     return sep.join(v)
