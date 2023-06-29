@@ -25,11 +25,11 @@ A single `>`, e.g. `>bar`, is used to assign a name to the bottommost column(s) 
 
 This completely tacit dataflow is great for unary (and nonary) operators.
 
-For binary operators, the second or "right" operand can be passed as a special argument, e.g. `!cross <foo`.  `foo` must have been a previous result named with `>>`.
+For binary operators, the second or "right" operand can be passed as a special argument, e.g. `!cross <<foo`.  `foo` must have been a previous result named with `>>`.
 
 Alternatively, the text on the lines following the operator, commonly called "the prompt", will be passed as the second operand.  For unary operators, if there is any non-whitespace text in the prompt, the prompt will override the default input and be passed as the first operand instead.  The result of this operator becomes the input, so the previous result must be named or it will be lost forever!!
 
-A lone `<` as as argument signifies that everything until the end of the line is taken to be the prompt.
+A lone `<` as an argument signifies that everything until the end of the line is taken to be the prompt.
 
 If `<` is at the end of a !command line, then a prompt is expected, so and the REPL will read text until EOF.
 (In non-REPL mode, `<\n!` would force the input operand to be an empty string.
@@ -73,5 +73,4 @@ If rows are augmented but never need to be copied, then generating both column- 
 
 ## Tacit context of previous results
 
-As a row is augmented by the continued application of operators, and its value changes, the tables it is part of
-
+[TBW]
