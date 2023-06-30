@@ -1,0 +1,15 @@
+!format>>feigenbaum
+4.66920
+!!python
+from aipl import defop
+from aipl.table import Table
+@defop('test', 1.5, 0)
+def op_test(aipl, t:Table) -> str:
+	return '42'
+
+!test
+!format>answer
+{feigenbaum[0].values[0]}
+!test-json
+[{"answer": "4.66920"}]
+!nop
