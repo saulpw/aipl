@@ -18,6 +18,7 @@ class Command:
     opname:str
     op:Callable
     varnames:List[str]
+    globals:List[str]
     immediate:bool
     args:list
     kwargs:dict
@@ -88,6 +89,7 @@ class AIPL:
                 op=self.get_op(ast_command.opname),
                 immediate=ast_command.immediate,
                 varnames=ast_command.varnames,
+                globals=ast_command.globals,
                 prompt=prompt,
                 args=ast_command.args,
                 kwargs=ast_command.kwargs
@@ -168,6 +170,9 @@ class AIPL:
                 else:
                     k = cmd.varnames[-1] if cmd.varnames else self.unique_key
                     inputs = [Table([{k:result}])]
+
+                for g in cmd.globals:
+                    self.globals[g] = inputs
 
             except AIPLException as e:
                 raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e

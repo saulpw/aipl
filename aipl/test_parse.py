@@ -9,7 +9,22 @@ def test_single_line():
 def test_simple_varname():
     command = parse("!split>output\n")
     assert command[0].opname == "split"
+    assert command[0].kwargs == {}
+    assert command[0].args == []
     assert command[0].varnames == ["output"]
+
+def test_varname_afterwards():
+    command = parse("!op arg >var")
+    assert command[0].opname == "op"
+    assert command[0].args == ["arg"]
+    assert command[0].varnames == ["var"]
+
+def test_global():
+    command = parse("!op arg >>global_name")
+    assert command[0].opname == "op"
+    assert command[0].args == ["arg"]
+    assert command[0].varnames == []
+    assert command[0].globals == ["global_name"]
 
 def test_split_newlines():
     command = parse("!split sep=\\n\n")
@@ -18,8 +33,6 @@ def test_split_newlines():
 
 def test_trailing_empty():
     commands = parse("!split\n\n!ravel\n")
-
-    print(commands)
 
     assert ops(commands) == ["split", "ravel"]
 
