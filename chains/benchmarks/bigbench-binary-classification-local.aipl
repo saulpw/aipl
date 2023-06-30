@@ -18,7 +18,7 @@ https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks
 ---
 Classify with 1 if yes, 0 if no.
 Classification: 
-!llm>classification model={model} max_tokens=1
+!llm-local>classification model={model} max_tokens=2
 
 # TODO: be able to look at responses per-model; currently can't tell what model had what classification
 # !format

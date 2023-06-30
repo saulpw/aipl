@@ -6,6 +6,8 @@ Requires OPENAI_API_KEY and OPENAI_API_ORG envvars to be set.
 
 from typing import List, Dict
 import os
+import subprocess
+from pathlib import Path
 
 from aipl import defop, expensive, stderr, AIPLException
 
@@ -169,3 +171,28 @@ def embedding_openai(aipl, v:str, **kwargs) -> dict:
     return dict(model=kwargs.get('model'),
                 used_tokens=used,
                 embedding=resp['data'][0]['embedding'])
+
+@defop('llm-local', 0, 0)
+@expensive(op_llm_mock)
+def completion_local(aipl, v:str, **kwargs) -> str:
+    if 'LLAMA_CPP_DIR' not in os.environ:
+        raise AIPLException('''LLAMA_CPP_DIR envvar must be set for !llm-local''')
+    llm_dir = Path(os.environ['LLAMA_CPP_DIR'])
+    model = kwargs.get('model')
+    if not model:
+        raise AIPLException('''local model must be defined''')
+    max_tokens = kwargs.get('max_tokens') or '-1'    
+    print(model, '\n>>>\n' + v, end='')
+    res = subprocess.run([
+            llm_dir/'main', 
+            '--model', llm_dir/'models'/model, 
+            '--n_predict', str(max_tokens), 
+            '--prompt', v,
+            '--temp', '0'
+        ],
+        capture_output=True)
+    if len(res.stdout) == 0:
+        raise Exception(res.stderr.decode())
+    output_without_prompt = res.stdout.decode().replace(v, '', 1)
+    print(output_without_prompt, '\n<<<')
+    return output_without_prompt
