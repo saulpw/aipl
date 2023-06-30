@@ -81,7 +81,10 @@ def op_json_parse(aipl, v:str, **kwargs) -> Table:
     'Convert a json blob into a Table.'
     r = json.loads(v)
     if not kwargs:
-        return pyobj_to_table(r)
+        if isinstance(r, dict):
+            return pyobj_to_table([r])
+        else:
+            return pyobj_to_table(r)
     else:
         for colname, findstr in kwargs.items():
             for ret in _json_find(r, findstr.split('.')):
