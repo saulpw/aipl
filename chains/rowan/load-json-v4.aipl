@@ -13,7 +13,6 @@ https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks
 !fetch-url
 
 # access 'examples' list in JSON blob
-# TODO in operator: use the column name as name in the table? otherwise why pass the example= in?
 !json-parse examples=examples
 
 # map each element to its 'input' attribute
@@ -28,5 +27,3 @@ https://raw.githubusercontent.com/google/BIG-bench/main/bigbench/benchmark_tasks
 !match {choice}:
 !filter
 !print
-
-# TODO: filter rows, not strings (is this possible?)
