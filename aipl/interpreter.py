@@ -197,7 +197,7 @@ class AIPL:
         kwargs = fmtkwargs(cmd.kwargs, contexts)
 
         try:
-            if 'break' in self.options.step.split(','):
+            if self.options.step and 'break' in self.options.step.split(','):
                 breakpoint()
 
             ret = cmd.op(self, *operands, *args, **kwargs)
