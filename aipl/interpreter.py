@@ -188,8 +188,18 @@ class AIPL:
         return inputs
 
     def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs, newkey=''):
+        operands = [prep_input(arg, rank)
+                      for arg,rank in zip(inputs,
+                                          [cmd.op.rankin, cmd.op.rankin2])
+                   ]
+        args = fmtargs(cmd.args, contexts)
+        kwargs = fmtkwargs(cmd.kwargs, contexts)
+
         try:
-            ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+            if 'break' in self.options.step.split(','):
+                breakpoint()
+
+            ret = cmd.op(self, *operands, *args, **kwargs)
         except Exception as e:
             if self.options.debug or self.options.test:
                 raise
@@ -395,27 +405,17 @@ def defop(opname:str,
     rankin2 = ranktypes.get(rankin2, rankin2)
 
     def _decorator(f):
-        @wraps(f)
-        def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
-            operands = []
-            if arity >= 1:
-                operands.append(prep_input(args[0], rankin))
-            if arity >= 2:
-                operands.append(prep_input(args[1], rankin2))
-
-            return f(aipl, *operands, *args[arity:], **kwargs)
-
         name = clean_to_id(opname)
-        _wrapped.rankin = rankin
-        _wrapped.rankout = rankout
-        _wrapped.rankin2 = rankin2
-        _wrapped.arity = arity
-        _wrapped.outcols = outcols
-        _wrapped.__name__ = name
-        _wrapped.opname = opname
-        _wrapped.preprompt = preprompt
-        AIPL.operators[name] = _wrapped
-        return _wrapped
+        f.rankin = rankin
+        f.rankout = rankout
+        f.rankin2 = rankin2
+        f.arity = arity
+        f.outcols = outcols
+        f.__name__ = name
+        f.opname = opname
+        f.preprompt = preprompt
+        AIPL.operators[name] = f
+        return f
     return _decorator
 
 
