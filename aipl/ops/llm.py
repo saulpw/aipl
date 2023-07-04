@@ -184,7 +184,6 @@ def completion_local(aipl, v:str, **kwargs) -> str:
         raise AIPLException('''local model must be defined''')
     if 'GPU_LAYERS' in os.environ and int(os.environ['GPU_LAYERS']) > 0:
         return completion_local_gpu(aipl, v, **kwargs)
-    print(os.environ)
     max_tokens = kwargs.get('max_tokens') or '-1'    
     print(model, '\n>>>\n' + v, end='')
     res = subprocess.run([
@@ -207,7 +206,7 @@ def completion_local_gpu(aipl, v:str, **kwargs) -> str:
     model = kwargs.get('model')
     layers = os.environ['GPU_LAYERS']
     max_tokens = kwargs.get('max_tokens') or '-1' 
-    print(model, '\n>>>\n' + v + f" (layers: {layers})", end='')
+    print(model, f"(layers: {layers})", '\n>>>\n' + v, end='')
     res = subprocess.run([
             llamacpp_dir/'main-gpu', 
             '--model', models_dir/model,
