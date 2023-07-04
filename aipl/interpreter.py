@@ -2,6 +2,7 @@ from typing import List, Mapping, Callable
 from copy import copy
 from dataclasses import dataclass
 from functools import wraps
+from itertools import cycle
 
 from aipl import Error, AIPLException, InnerPythonException
 from .table import Table, LazyRow, Column
@@ -300,6 +301,16 @@ def prep_input(operand:LazyRow|Table|Error, rankin:int|float) -> Scalar|List[Sca
     else:
         raise Exception("Unexpected rankin")
 
+def ziplift(a:Table, b:Table):
+    'Yield item pairs from `a` and `b`, with the number of elements from the shorter extended (lifted) to match the number of elements from the longer.'
+
+    ita = iter(a)
+    itb = iter(b)
+    if len(a) > len(b):
+        itb = cycle(itb)
+    elif len(a) < len(b):
+        ita = cycle(ita)
+    return zip(ita, itb)
 
 def prep_output(aipl,
                 in_row:LazyRow|Table,
@@ -323,7 +334,8 @@ def prep_output(aipl,
         if isinstance(in_row, LazyRow):
             ret.rows = [{'__parent': in_row, varname:v} for v in out]
         elif isinstance(in_row, Table):
-            ret.rows = [{'__parent': parent_row, varname:v} for parent_row, v in zip(in_row, out)]
+            out = list(out)
+            ret.rows = [{'__parent': parent_row, varname:v} for parent_row, v in ziplift(in_row, out)]
         else:
             assert False, 'unknown type for in_row'
         ret.add_column(Column(varname))
