@@ -26,6 +26,7 @@ openai_pricing = {
     "gpt-4": 0.06,
     "gpt-4-32k": 0.12,
     "gpt-3.5-turbo": 0.002,
+    "gpt-3.5-turbo-16k": 0.002,
     "text-ada-001": 0.0016,
     "text-babbage-001": 0.0024,
     "text-curie-001": 0.0120,
