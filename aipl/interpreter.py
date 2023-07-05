@@ -51,7 +51,13 @@ class AIPL:
     cost_usd:float = 0.0
 
     def __init__(self, **kwargs):
-        self.globals = {'aipl':self}  # base context
+        self.tables = {}  # named tables
+        self.globals = dict(  # base context, imports go into here for later use in the whole script
+            aipl=self,
+            defop=defop,
+            stderr=stderr,
+            Table=Table,
+        )
         self.options = AttrDict(kwargs)
         self.forced_input = None  # via !test-input
         self.output_db = Database(self.options.outdbfn)
@@ -141,7 +147,7 @@ class AIPL:
             inputargs = []
             for arg in cmd.args:
                 if isinstance(arg, str) and arg.startswith('<'):
-                    inputargs.append(self.globals[arg[1:]])
+                    inputargs.append(self.tables[arg[1:]])
                 else:
                     args.append(arg)
 
@@ -163,7 +169,7 @@ class AIPL:
                         stderr(f'no aipl.step_{stepfuncname}!')
 
             try:
-                result = self.eval_op(cmd, *operands, contexts=[self.globals])
+                result = self.eval_op(cmd, *operands, contexts=[self.globals, self.tables])
                 if cmd.op.rankout is None:
                     continue # just keep former inputs
                 elif isinstance(result, Table):
@@ -173,7 +179,7 @@ class AIPL:
                     inputs = [Table([{k:result}])]
 
                 for g in cmd.globals:
-                    self.globals[g] = inputs
+                    self.tables[g] = inputs
 
             except AIPLException as e:
                 raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e

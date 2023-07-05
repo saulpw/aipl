@@ -4,7 +4,7 @@ __test__ = '''
 !test-input
 a b c
 !split>col1
-!global t1
+!table t1
 !test-input
 d e f
 !split>col2
@@ -42,13 +42,6 @@ def op_cross(aipl, row:LazyRow, t:Table) -> Table:
         ret.add_column(SubColumn('right', c))
 
     return ret
-
-
-@defop('global', 100, 1.5)
-def op_global(aipl, t:Table, tname:str) -> Table:
-    'Save toplevel input into globals.'
-    aipl.globals[tname] = t
-    return t
 
 
 @defop('unbox', 1.5, 1.5)
