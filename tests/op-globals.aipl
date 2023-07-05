@@ -1,0 +1,14 @@
+import string
+
+@defop('capwords', 0)
+def _(aipl, v):
+    return string.capwords(v)
+
+!split
+abc def ghi
+
+!capwords
+!join sep=,
+
+!test-equal
+Abc,Def,Ghi
