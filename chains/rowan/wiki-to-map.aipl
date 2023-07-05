@@ -47,7 +47,7 @@ LOCATION: {location}
 GEOCODED: 
 !llm>geocoded
 
-!json 2
+!json indent=2
 
 !print
 !save locations.json
