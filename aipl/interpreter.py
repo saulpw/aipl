@@ -130,7 +130,9 @@ class AIPL:
         return self.run(script, inputs)[-1]
 
     def run(self, script:str, inputs:list[Table]=None):
-        cmds = self.parse(script + '\n!nop')  # add nop at end to do final single-steps
+        # lines before first cmdline are Python, to be executed immediately.
+        # also add nop at end to do final single-steps.
+        cmds = self.parse('!!python\n' + script + '\n!nop')
 
         return self.run_cmdlist(cmds, inputs)
 
