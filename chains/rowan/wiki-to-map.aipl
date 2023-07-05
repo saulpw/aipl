@@ -31,7 +31,7 @@ Please ONLY respond with a list of locations, nothing else--there is no need to 
 !split>location sep=,
 
 !format
-The following is a location. Please respond with your best guess at to its latitude and longitude. DO NOT respond with anything except <LATITUDE>, <LONGITUDE>. You may infer the country of origin. If it's absolutely not possible to geocode the location, respond with "None".
+The following is a location. Please respond with your best guess at to its latitude and longitude. DO NOT respond with anything except <LATITUDE>, <LONGITUDE>. You may infer the country of origin.
 
 For example:
 LOCATION: New York City, NY
@@ -83,6 +83,7 @@ for item in data:
                     lat, lon = [float(coord) for coord in geocoded.split(',')]
                 except:
                     print("skipping", location_name, geocoded)
+                    continue
                 marker = folium.Marker([lat, lon], icon=folium.Icon(color=color, icon="cloud"))
                 marker.add_child(folium.Tooltip(text=location_name, permanent=True))
                 marker.add_child(folium.Popup(paragraph, max_width=500))
