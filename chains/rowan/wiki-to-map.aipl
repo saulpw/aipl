@@ -1,3 +1,5 @@
+!test-input
+https://en.wikipedia.org/wiki/Antikythera_mechanism
 
 # load text of wikipedia article
 !read
