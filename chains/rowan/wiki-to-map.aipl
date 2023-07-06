@@ -84,7 +84,7 @@ for item in data:
                 try:
                     lat, lon = [float(coord) for coord in geocoded.split(',')]
                 except:
-                    print("skipping", location_name, geocoded)
+                    print("skipping", location_name, geocoded, file=sys.stderr)
                     continue
                 marker = folium.Marker([lat, lon], icon=folium.Icon(color=color, icon="cloud"))
                 marker.add_child(folium.Tooltip(text=location_name, permanent=True))
