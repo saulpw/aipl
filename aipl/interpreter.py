@@ -2,6 +2,7 @@ from typing import List, Mapping, Callable
 from copy import copy
 from dataclasses import dataclass
 from functools import wraps
+from itertools import cycle
 
 from aipl import Error, AIPLException, InnerPythonException
 from .table import Table, LazyRow, Column
@@ -50,7 +51,13 @@ class AIPL:
     cost_usd:float = 0.0
 
     def __init__(self, **kwargs):
-        self.globals = {'aipl':self}  # base context
+        self.tables = {}  # named tables
+        self.globals = dict(  # base context, imports go into here for later use in the whole script
+            aipl=self,
+            defop=defop,
+            stderr=stderr,
+            Table=Table,
+        )
         self.options = AttrDict(kwargs)
         self.forced_input = None  # via !test-input
         self.output_db = Database(self.options.outdbfn)
@@ -123,7 +130,9 @@ class AIPL:
         return self.run(script, inputs)[-1]
 
     def run(self, script:str, inputs:list[Table]=None):
-        cmds = self.parse(script + '\n!nop')  # add nop at end to do final single-steps
+        # lines before first cmdline are Python, to be executed immediately.
+        # also add nop at end to do final single-steps.
+        cmds = self.parse('!!python\n' + script + '\n!nop')
 
         return self.run_cmdlist(cmds, inputs)
 
@@ -140,7 +149,7 @@ class AIPL:
             inputargs = []
             for arg in cmd.args:
                 if isinstance(arg, str) and arg.startswith('<'):
-                    inputargs.append(self.globals[arg[1:]])
+                    inputargs.append(self.tables[arg[1:]])
                 else:
                     args.append(arg)
 
@@ -162,7 +171,7 @@ class AIPL:
                         stderr(f'no aipl.step_{stepfuncname}!')
 
             try:
-                result = self.eval_op(cmd, *operands, contexts=[self.globals])
+                result = self.eval_op(cmd, *operands, contexts=[self.globals, self.tables])
                 if cmd.op.rankout is None:
                     continue # just keep former inputs
                 elif isinstance(result, Table):
@@ -172,7 +181,7 @@ class AIPL:
                     inputs = [Table([{k:result}])]
 
                 for g in cmd.globals:
-                    self.globals[g] = inputs
+                    self.tables[g] = inputs
 
             except AIPLException as e:
                 raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e
@@ -188,8 +197,18 @@ class AIPL:
         return inputs
 
     def call_cmd(self, cmd:Command, contexts:List[Mapping], *inputs, newkey=''):
+        operands = [prep_input(arg, rank)
+                      for arg,rank in zip(inputs,
+                                          [cmd.op.rankin, cmd.op.rankin2])
+                   ]
+        args = fmtargs(cmd.args, contexts)
+        kwargs = fmtkwargs(cmd.kwargs, contexts)
+
         try:
-            ret = cmd.op(self, *inputs, *fmtargs(cmd.args, contexts), **fmtkwargs(cmd.kwargs, contexts))
+            if self.options.step and 'break' in self.options.step.split(','):
+                breakpoint()
+
+            ret = cmd.op(self, *operands, *args, **kwargs)
         except Exception as e:
             if self.options.debug or self.options.test:
                 raise
@@ -290,6 +309,16 @@ def prep_input(operand:LazyRow|Table|Error, rankin:int|float) -> Scalar|List[Sca
     else:
         raise Exception("Unexpected rankin")
 
+def ziplift(a:Table, b:Table):
+    'Yield item pairs from `a` and `b`, with the number of elements from the shorter extended (lifted) to match the number of elements from the longer.'
+
+    ita = iter(a)
+    itb = iter(b)
+    if len(a) > len(b):
+        itb = cycle(itb)
+    elif len(a) < len(b):
+        ita = cycle(ita)
+    return zip(ita, itb)
 
 def prep_output(aipl,
                 in_row:LazyRow|Table,
@@ -313,7 +342,8 @@ def prep_output(aipl,
         if isinstance(in_row, LazyRow):
             ret.rows = [{'__parent': in_row, varname:v} for v in out]
         elif isinstance(in_row, Table):
-            ret.rows = [{'__parent': parent_row, varname:v} for parent_row, v in zip(in_row, out)]
+            out = list(out)
+            ret.rows = [{'__parent': parent_row, varname:v} for parent_row, v in ziplift(in_row, out)]
         else:
             assert False, 'unknown type for in_row'
         ret.add_column(Column(varname))
@@ -395,27 +425,17 @@ def defop(opname:str,
     rankin2 = ranktypes.get(rankin2, rankin2)
 
     def _decorator(f):
-        @wraps(f)
-        def _wrapped(aipl, *args, **kwargs) -> LazyRow|Table:
-            operands = []
-            if arity >= 1:
-                operands.append(prep_input(args[0], rankin))
-            if arity >= 2:
-                operands.append(prep_input(args[1], rankin2))
-
-            return f(aipl, *operands, *args[arity:], **kwargs)
-
         name = clean_to_id(opname)
-        _wrapped.rankin = rankin
-        _wrapped.rankout = rankout
-        _wrapped.rankin2 = rankin2
-        _wrapped.arity = arity
-        _wrapped.outcols = outcols
-        _wrapped.__name__ = name
-        _wrapped.opname = opname
-        _wrapped.preprompt = preprompt
-        AIPL.operators[name] = _wrapped
-        return _wrapped
+        f.rankin = rankin
+        f.rankout = rankout
+        f.rankin2 = rankin2
+        f.arity = arity
+        f.outcols = outcols
+        f.__name__ = name
+        f.opname = opname
+        f.preprompt = preprompt
+        AIPL.operators[name] = f
+        return f
     return _decorator
 
 

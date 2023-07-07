@@ -25,7 +25,6 @@ def inner_eval(obj, *args, **kwargs):
 @defop('python',0,None)
 def op_python(aipl, prompt:str=''):
     'exec() Python toplevel statements.'
-    aipl.globals['defop'] = defop
     inner_exec(prompt, aipl.globals)
 
 

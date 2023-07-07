@@ -44,7 +44,7 @@ def op_rich(aipl, t:Table, *args, **kwargs):
 
 def install_rich(aipl, *args):
     import rich
-    AIPL.pre_command = lambda aipl, cmd, t=Table(), *args: stderr_rich(aipl, t, cmd)
+    AIPL.pre_command = lambda aipl, cmd, t=Table(), *args: stderr_rich(t, cmd)
 
 
 def _rich_table(t:Table, console, console_options):
