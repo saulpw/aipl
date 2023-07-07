@@ -172,14 +172,25 @@ def embedding_openai(aipl, v:str, **kwargs) -> dict:
     return dict(model=kwargs.get('model'),
                 used_tokens=used,
                 embedding=resp['data'][0]['embedding'])
+ 
+def get_model_and_binary_paths() -> List[str]:
+    if 'MODELS_DIR' not in os.environ:
+        raise AIPLException('''MODELS_DIR envvar must be set for !llm-local''')
+    models_dir = Path(os.environ['MODELS_DIR'])
+    # binaries can be set per-model and globally, with preference for local
+    if os.path.isfile(models_dir/'main'):
+        inference_binary = models_dir/'main'
+    elif 'INFERENCE_BINARY' in os.environ:
+        inference_binary = Path(os.environ['INFERENCE_BINARY'])
+    else:
+        raise AIPLException('''INFERENCE_BINARY envvar must be set for !llm-local''')
+    return models_dir, inference_binary
 
 @defop('llm-local', 0, 0)
 @expensive(op_llm_mock)
 def completion_local(aipl, v:str, **kwargs) -> str:
-    if 'LLAMA_CPP_DIR' not in os.environ or 'MODELS_DIR' not in os.environ:
-        raise AIPLException('''LLAMA_CPP_DIR and MODELS_DIR envvars must be set for !llm-local''')
-    llamacpp_dir = Path(os.environ['LLAMA_CPP_DIR'])
-    models_dir = Path(os.environ['MODELS_DIR'])
+    models_dir, inference_binary = get_model_and_binary_paths()
+
     model = kwargs.get('model')
     if not model:
         raise AIPLException('''local model must be defined''')
@@ -188,7 +199,7 @@ def completion_local(aipl, v:str, **kwargs) -> str:
     max_tokens = kwargs.get('max_tokens') or '-1'    
     stderr(model, '\n>>>\n' + v, end='')
     res = subprocess.run([
-            llamacpp_dir/'main', 
+            inference_binary, 
             '--model', models_dir/model, 
             '--n_predict', str(max_tokens), 
             '--prompt', v,
@@ -202,14 +213,14 @@ def completion_local(aipl, v:str, **kwargs) -> str:
     return output_without_prompt
 
 def completion_local_gpu(aipl, v:str, **kwargs) -> str:
-    llamacpp_dir = Path(os.environ['LLAMA_CPP_DIR'])
-    models_dir = Path(os.environ['MODELS_DIR'])
+    models_dir, inference_binary = get_model_and_binary_paths()
+
     model = kwargs.get('model')
     layers = os.environ['GPU_LAYERS']
     max_tokens = kwargs.get('max_tokens') or '-1' 
     stderr(model, f"(layers: {layers})", '\n>>>\n' + v, end='')
     res = subprocess.run([
-            llamacpp_dir/'main-gpu', 
+            inference_binary,
             '--model', models_dir/model,
             '--n_predict', str(max_tokens),
             '--prompt', v,
