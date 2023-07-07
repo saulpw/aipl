@@ -186,7 +186,7 @@ def completion_local(aipl, v:str, **kwargs) -> str:
     if 'GPU_LAYERS' in os.environ and int(os.environ['GPU_LAYERS']) > 0:
         return completion_local_gpu(aipl, v, **kwargs)
     max_tokens = kwargs.get('max_tokens') or '-1'    
-    print(model, '\n>>>\n' + v, end='')
+    stderr(model, '\n>>>\n' + v, end='')
     res = subprocess.run([
             llamacpp_dir/'main', 
             '--model', models_dir/model, 
@@ -198,7 +198,7 @@ def completion_local(aipl, v:str, **kwargs) -> str:
     if len(res.stdout) == 0:
         raise Exception(res.stderr.decode())
     output_without_prompt = res.stdout.decode().replace(v, '', 1)
-    print(output_without_prompt, '\n<<<')
+    stderr(output_without_prompt, '\n<<<')
     return output_without_prompt
 
 def completion_local_gpu(aipl, v:str, **kwargs) -> str:
@@ -207,7 +207,7 @@ def completion_local_gpu(aipl, v:str, **kwargs) -> str:
     model = kwargs.get('model')
     layers = os.environ['GPU_LAYERS']
     max_tokens = kwargs.get('max_tokens') or '-1' 
-    print(model, f"(layers: {layers})", '\n>>>\n' + v, end='')
+    stderr(model, f"(layers: {layers})", '\n>>>\n' + v, end='')
     res = subprocess.run([
             llamacpp_dir/'main-gpu', 
             '--model', models_dir/model,
@@ -222,5 +222,5 @@ def completion_local_gpu(aipl, v:str, **kwargs) -> str:
     if len(res.stdout) == 0:
         raise Exception(res.stderr.decode())
     output_without_prompt = res.stdout.decode().replace(v, '', 1)
-    print(output_without_prompt, '\n<<<')
+    stderr(output_without_prompt, '\n<<<')
     return output_without_prompt
