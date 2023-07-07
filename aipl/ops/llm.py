@@ -176,17 +176,20 @@ def embedding_openai(aipl, v:str, **kwargs) -> dict:
 @defop('llm-local', 0, 0)
 @expensive(op_llm_mock)
 def completion_local(aipl, v:str, **kwargs) -> str:
-    if 'LLAMA_CPP_DIR' not in os.environ:
-        raise AIPLException('''LLAMA_CPP_DIR envvar must be set for !llm-local''')
-    llm_dir = Path(os.environ['LLAMA_CPP_DIR'])
+    if 'LLAMA_CPP_DIR' not in os.environ or 'MODELS_DIR' not in os.environ:
+        raise AIPLException('''LLAMA_CPP_DIR and MODELS_DIR envvars must be set for !llm-local''')
+    llamacpp_dir = Path(os.environ['LLAMA_CPP_DIR'])
+    models_dir = Path(os.environ['MODELS_DIR'])
     model = kwargs.get('model')
     if not model:
         raise AIPLException('''local model must be defined''')
+    if 'GPU_LAYERS' in os.environ and int(os.environ['GPU_LAYERS']) > 0:
+        return completion_local_gpu(aipl, v, **kwargs)
     max_tokens = kwargs.get('max_tokens') or '-1'    
-    print(model, '\n>>>\n' + v, end='')
+    stderr(model, '\n>>>\n' + v, end='')
     res = subprocess.run([
-            llm_dir/'main', 
-            '--model', llm_dir/'models'/model, 
+            llamacpp_dir/'main', 
+            '--model', models_dir/model, 
             '--n_predict', str(max_tokens), 
             '--prompt', v,
             '--temp', '0'
@@ -195,5 +198,29 @@ def completion_local(aipl, v:str, **kwargs) -> str:
     if len(res.stdout) == 0:
         raise Exception(res.stderr.decode())
     output_without_prompt = res.stdout.decode().replace(v, '', 1)
-    print(output_without_prompt, '\n<<<')
+    stderr(output_without_prompt, '\n<<<')
+    return output_without_prompt
+
+def completion_local_gpu(aipl, v:str, **kwargs) -> str:
+    llamacpp_dir = Path(os.environ['LLAMA_CPP_DIR'])
+    models_dir = Path(os.environ['MODELS_DIR'])
+    model = kwargs.get('model')
+    layers = os.environ['GPU_LAYERS']
+    max_tokens = kwargs.get('max_tokens') or '-1' 
+    stderr(model, f"(layers: {layers})", '\n>>>\n' + v, end='')
+    res = subprocess.run([
+            llamacpp_dir/'main-gpu', 
+            '--model', models_dir/model,
+            '--n_predict', str(max_tokens),
+            '--prompt', v,
+            '--temp', '0',
+            '--gpu-layers', layers,
+            '--threads', '14',
+            '--batch-size', '512'
+        ],
+        capture_output=True)
+    if len(res.stdout) == 0:
+        raise Exception(res.stderr.decode())
+    output_without_prompt = res.stdout.decode().replace(v, '', 1)
+    stderr(output_without_prompt, '\n<<<')
     return output_without_prompt
