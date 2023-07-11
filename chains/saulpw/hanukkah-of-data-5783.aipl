@@ -1,0 +1,85 @@
+@defop('sql', 0, 1.5)
+def sql(aipl, q:str, db:str):
+    import sqlite3
+    con = sqlite3.connect(db)
+    con.row_factory = sqlite3.Row
+    return [
+        {k:r[k] for k in r.keys()}
+            for r in con.execute(q).fetchall()
+    ]
+
+
+# !download < https://hanukkah.bluebird.sh/5783/noahs-sqlite.zip
+
+!read
+https://hanukkah.bluebird.sh/5783/0
+!extract-text
+!format
+This is the intro to a set of database puzzles:
+"""
+{_}
+"""
+Give only the answer to the puzzle question, without any surrounding text.
+
+!llm model=gpt-4
+!format
+unzip -f -P {_} noahs-sqlite.zip
+!sh
+
+
+# read all the puzzles
+!split>puznum sep=" "
+1 2 3 4 5 6 7 8
+!format
+https://hanukkah.bluebird.sh/5783/{_}
+!read
+!extract-text
+
+!format
+I have a sqlite database. Here are the first few rows from each of the tables:
+
+- customers
+customerid,name,address,citystatezip,birthdate,phone
+1001,Jack Quinn,201 E Park St,"Los Angeles, CA 91343",1960-05-14,805-287-8515
+1002,David Powell,224C Tysens Ln,"Staten Island, NY 10306",1978-04-04,516-768-1652
+1003,Carrie Green,1608 W 53rd Way,"Tampa, FL 33614",1969-01-21,727-209-0470
+
+- orders
+orderid,customerid,ordered,shipped,items,total
+1001,4308,2017-01-31 00:32:19,2017-01-31 07:15:00,,25.52
+1002,11683,2017-01-31 00:58:31,2017-01-31 18:00:00,,35.33
+1003,5676,2017-01-31 01:34:40,2017-01-31 09:00:00,,30.79
+
+- products
+sku,desc,wholesale_cost
+DLI0002,Smoked Whitefish Sandwich,9.33
+PET0005,"Vegan Cat Food, Turkey & Chicken",4.35
+HOM0018,Power Radio (red),21.81
+
+- orders_items
+orderid,sku,qty,unit_price
+1001,COL0820,1,25.52
+1002,TOY8907,1,12.92
+1002,KIT5813,1,7.99
+
+The schema of the sqlite database exactly matches the schema above.
+
+Here is a database puzzle to be solved using the above schema.
+
+"""
+{_}
+"""
+
+Give only a SQLite SELECT query to answer the question.
+
+!llm>query model=gpt-4
+
+!sql db=noahs.sqlite
+!format
+---
+{puznum}
+{query}
+
+{_}
+---
+!print
