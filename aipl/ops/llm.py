@@ -20,21 +20,9 @@ def _parse_msg(s:str):
     else:  # if s.startswith('@@@u'):
         return dict(role='user', content=s)
 
-def count_tokens(s:str, model:str=''):
-    try:
-        import tiktoken
-        enc = tiktoken.encoding_for_model(model)
-        return len(enc.encode(s))
-    except ModuleNotFoundError as e:
-#        stderr(str(e))
-        return len(s)//4
-    except KeyError as e:
-        # just estimate
-        return len(s)//4
-
 def op_llm_mock(aipl, v:str, **kwargs) -> str:
     model = kwargs.get('model')
-    used = count_tokens(v, model=model)
+    used = clients.count_tokens(v, model=model)
     cost = clients.openai_pricing[model]*used/1000
     aipl.cost_usd += cost
     return f'<llm {model} answer>'
