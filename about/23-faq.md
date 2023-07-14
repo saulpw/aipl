@@ -18,7 +18,7 @@ You want something quick-and-dirty to experiment with.  You want to be able to w
 
 But you need something bigger than prompting directly to ChatGPT within the browser. It's fine for testing one thing, and you can do the pre- and post-processing yourself by hand.  For anything greater than N=1, though, you're already wanting something more reproducible.
 
-For instance, here's a script to summarize any number of webpages: https://github.com/saulpw/aipl/blob/develop/chains/summarize.aipl
+For instance, here's a script to summarize any number of webpages: https://github.com/saulpw/aipl/blob/develop/examples/summarize.aipl
 
 At the tiny sets (N=10 or N=100) we use to validate our ideas, 
 

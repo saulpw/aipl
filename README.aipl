@@ -7,7 +7,7 @@
  !join sep=\n
 
 !read>summarize_aipl
-chains/summarize.aipl
+examples/summarize.aipl
 
 !unbox !global summarize_aipl
 
