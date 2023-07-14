@@ -68,7 +68,7 @@ class LazyRow(Mapping):
         return len(self._table.columns)
 
     def __iter__(self):
-        assert isinstance(self.value, Table), type(self.value)
+        assert isinstance(self.value, Table), f"can't iterate {type(self.value).__name__}"
         return iter(self.value)
 
     def __getitem__(self, k):
