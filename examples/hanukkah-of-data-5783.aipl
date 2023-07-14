@@ -11,6 +11,10 @@ def sql(aipl, q:str, db:str):
 
 # !download < https://hanukkah.bluebird.sh/5783/noahs-sqlite.zip
 
+!split>model>>models
+gpt-3.5-turbo
+gpt-4
+
 !read
 https://hanukkah.bluebird.sh/5783/0
 !extract-text
@@ -21,7 +25,9 @@ This is the intro to a set of database puzzles:
 """
 Give only the answer to the puzzle question, without any surrounding text.
 
-!llm model=gpt-4
+!cross <models
+
+!llm model={model}
 !format
 unzip -f -P {_} noahs-sqlite.zip
 !sh
@@ -35,7 +41,7 @@ https://hanukkah.bluebird.sh/5783/{_}
 !read
 !extract-text
 
-!format
+!format >text >>text
 I have a sqlite database. Here are the first few rows from each of the tables:
 
 - customers
@@ -72,9 +78,10 @@ Here is a database puzzle to be solved using the above schema.
 
 Give only a SQLite SELECT query to answer the question.
 
-!llm>query model=gpt-4
+!cross <models <text
+!llm>query model={model}
 
-!sql db=noahs.sqlite
+#!sql db=noahs.sqlite
 !format
 ---
 {puznum}
@@ -82,4 +89,4 @@ Give only a SQLite SELECT query to answer the question.
 
 {_}
 ---
-!print
+!save hod-{puznum}.sql
