@@ -90,6 +90,9 @@ class LazyRow(Mapping):
     def items(self):
         return self._asdict().items()
 
+    def keys(self):
+        return self._asdict().keys()
+
     def _asdict(self, named_only=False):
         'if named_only=False, add current_col as "{CURRENT_COLNAME}" if it is hidden.  otherwise ignore it too'
         d = {}
