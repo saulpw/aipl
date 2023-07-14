@@ -31,18 +31,17 @@ def op_llm_mock(aipl, v:str, **kwargs) -> str:
 @expensive(op_llm_mock)
 def route_llm_query(aipl, v:str, **kwargs) -> str:
     'Send chat messages to `model` (default: gpt-3.5-turbo).  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all named args directly to API.'
-    model = kwargs.get('model')
     client_str = kwargs.get('client')
     if client_str is None:
         if os.environ['LLM_CLIENT_ENDPOINT']:
-            client = clients.StandardClient(os.environ['LLM_CLIENT_ENDPOINT'])
+            client = clients.SelfHostedChatClient()
         else:
-            client = clients.StandardClient()
+            client = clients.OpenAIClient()
     else:
-        if client_str == 'custom':
-            client = clients.StandardClient(os.environ['LLM_CLIENT_ENDPOINT'])
+        if client_str == 'selfhosted':
+            client = clients.SelfHostedChatClient()
         elif client_str == 'openai':
-            client = clients.StandardClient()
+            client = clients.OpenAIClient()
         elif client_str == 'gooseai':
             client = clients.GooseClient()
         else:
