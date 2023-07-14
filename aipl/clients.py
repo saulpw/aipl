@@ -76,8 +76,10 @@ class StandardClient:
             model=model
         )
         params.update(kwargs)
-        msgs = [_parse_msg(m) for m in v.splitlines()]
+        # msgs = [_parse_msg(m) for m in v.splitlines()]
+        msgs = [_parse_msg(v)]
 
+        print(openai.api_base, model, msgs)
         resp = openai.ChatCompletion.create(
             messages=msgs,
             **params
@@ -147,9 +149,8 @@ class SelfHostedChatClient(StandardClient):
             self.default_model = os.environ['DEFAULT_SELFHOSTED_MODEL']
 
 if __name__ == "__main__":
-    max_tokens = 256
-    prompt = '''Marry, kiss, kill (and why): HAL 9000, Mr. Smith (from The Matrix), GLaDOS.
-Marry:'''
+    max_tokens = 10
+    prompt = '''A lesser-known robot character from sci-fi is'''
 
     print('openai\n', prompt, OpenAIClient().completion(None, prompt, max_tokens=max_tokens))
     print('gooseai\n', prompt, GooseClient().completion(None, prompt, max_tokens=max_tokens))
