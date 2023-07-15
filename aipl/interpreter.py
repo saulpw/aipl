@@ -181,7 +181,7 @@ class AIPL:
                     inputs = [Table([{k:result}])]
 
                 for g in cmd.globals:
-                    self.tables[g] = inputs[0]
+                    self.tables[g] = inputs[-1]
 
             except AIPLException as e:
                 raise AIPLException(f'AIPL Error (line {cmd.linenum} !{cmd.opname}): {e}') from e

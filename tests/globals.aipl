@@ -9,7 +9,7 @@ def op_test(aipl, t:Table) -> str:
 
 !test
 !format>answer
-{feigenbaum[0].values[0]}
+{feigenbaum[0].value}
 !test-json
 [{"answer": "4.66920"}]
 !nop
