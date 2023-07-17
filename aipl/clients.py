@@ -77,14 +77,15 @@ class StandardClient:
             model=model
         )
         params.update(kwargs)
-        # TODO: there must be a less hacky way of doing this
+        
+        # TODO: there must be a less hacky way of doing these
         params['temperature'] = float(params['temperature'])
-        del params['client']
+        if 'client' in params:
+            del params['client']
         
         # msgs = [_parse_msg(m) for m in v.splitlines()]
         msgs = [_parse_msg(v)]
 
-        print(openai.api_base, model, msgs)
         resp = openai.ChatCompletion.create(
             messages=msgs,
             **params

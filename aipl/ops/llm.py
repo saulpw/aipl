@@ -33,7 +33,7 @@ def route_llm_query(aipl, v:str, **kwargs) -> str:
     'Send chat messages to `model` (default: gpt-3.5-turbo).  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all named args directly to API.'
     client_str = kwargs.get('client')
     if client_str is None:
-        if os.environ['LLM_CLIENT_ENDPOINT']:
+        if 'LLM_CLIENT_ENDPOINT' in os.environ:
             client = clients.SelfHostedChatClient()
         else:
             client = clients.OpenAIClient()
