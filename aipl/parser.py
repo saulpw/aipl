@@ -3,6 +3,7 @@ import textwrap
 import sys
 from dataclasses import dataclass
 import ast
+from collections import defaultdict
 from lark import Lark, Transformer, Discard, Token, Tree
 
 aipl_grammar = Lark(r'''
@@ -23,12 +24,13 @@ OPNAME: IDENTIFIER
 _EMPTY_LINE: "\n"
 
 varname: ">" IDENTIFIER
-inputname: "<<" IDENTIFIER
 globalname: ">>" IDENTIFIER
+input_col: "<" IDENTIFIER
+input_table: "<<" IDENTIFIER
 
 arg_list: arg*
 
-arg: ws (KEY "=" literal | literal | varname | globalname | inputname)
+arg: ws (KEY "=" literal | literal | varname | globalname | input_col | input_table)
 
 ?literal: BARE_STRING | ESCAPED_STRING
 BARE_STRING: /[^ \t\n!"'><]\S*/
@@ -52,7 +54,8 @@ class AstCommand:
     opname:str
     varnames:List[str]
     globals: List[str]
-    inputnames: List[str]
+    input_tables: List[str]
+    input_cols: List[str]
     immediate:bool
     args:list
     kwargs:dict
@@ -78,18 +81,19 @@ class ToAst(Transformer):
         return output
 
     def command(self, tree):
-        command_sign, opname, (varnames, globalnames, inputnames, args, kwargs) = tree
+        command_sign, opname, arguments = tree
 
         return AstCommand(
             opname=opname,
             line=None, # TODO Not yet preserving line contents.
             linenum=command_sign.line,
             immediate=command_sign.value == '!!',
-            varnames=varnames,
-            globals=globalnames,
-            inputnames=inputnames,
-            args=args,
-            kwargs=kwargs,
+            varnames=arguments['varnames'],
+            globals=arguments['globalnames'],
+            input_cols=arguments['input_cols'],
+            input_tables=arguments['input_tables'],
+            args=arguments['args'],
+            kwargs=dict(arguments['kwargs']),
         )
 
     def OPNAME(self, token):
@@ -102,44 +106,33 @@ class ToAst(Transformer):
         return command
 
     def arg_list(self, arg_list):
-        args = []
-        varnames = []
-        globalnames = []
-        inputnames = []
-        kwargs = {}
+        arguments = defaultdict(list)
 
         for key, arg in arg_list:
-            if key is None:
-                args.append(arg)
-            elif key == '>':
-                varnames.append(arg)
-            elif key == '>>':
-                globalnames.append(arg)
-            elif key == '<':
-                inputnames.append(arg)
-            else:
-                kwargs[clean_to_id(key)] = arg
+            arguments[key].append(arg)
 
-        return varnames, globalnames, inputnames, args, kwargs
-
+        return arguments
 
     def varname(self, tree):
-        return ('>', tree[0])
+        return ('varnames', tree[0])
 
     def globalname(self, tree):
-        return ('>>', tree[0])
+        return ('globalnames', tree[0])
 
-    def inputname(self, tree):
-        return ("<", tree[0])
+    def input_table(self, tree):
+        return ("input_tables", tree[0])
+
+    def input_col(self, tree):
+        return ("input_cols", tree[0])
 
     def arg(self, tree):
         if isinstance(tree[0], tuple):
             return tree[0]
 
         if isinstance(tree[0], Token) and tree[0].type == 'KEY':
-            return (tree[0].value, tree[1])
+            return ('kwargs', (clean_to_id(tree[0].value), tree[1]))
 
-        return (None, tree[0])
+        return ('args', tree[0])
 
     def prompt(self, lines):
         prompt = textwrap.dedent(''.join(token.value for token in lines)).strip()
