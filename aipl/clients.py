@@ -62,20 +62,25 @@ class StandardClient:
                 aipl.cost_usd += cost
 
             stderr(f'Used {used} tokens (estimate {len(result)//4} tokens).  Cost: ${cost:.03f}')
-        elif self.client_type == 'custom':
+        elif self.client_type == 'selfhosted':
             stderr('Used TODO tokens. Cost: $¯\_(ツ)_/¯')
     
     def completion(self, aipl, v:str, **kwargs) -> str:
         'Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.'
         model = kwargs.get('model') or self.default_model
+        temperature = kwargs.get('temperature') or 0
         params = dict(
-            temperature=0,
+            temperature=float(temperature),
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0,
             model=model
         )
         params.update(kwargs)
+        # TODO: there must be a less hacky way of doing this
+        params['temperature'] = float(params['temperature'])
+        del params['client']
+        
         # msgs = [_parse_msg(m) for m in v.splitlines()]
         msgs = [_parse_msg(v)]
 
