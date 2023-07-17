@@ -8,7 +8,7 @@ a b c
 !test-input
 d e f
 !split>col2
-!cross <t1
+!cross <<t1
 !format
   {col1}/{col2}
 !ravel
