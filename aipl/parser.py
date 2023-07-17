@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 import textwrap
 import sys
 from dataclasses import dataclass
@@ -50,8 +50,9 @@ COMMENT_LINE: /^#[^\n]*\n/m
 
 
 @dataclass
-class AstCommand:
+class Command:
     opname:str
+    op: Callable|None
     varnames:List[str]
     globals: List[str]
     input_tables: List[str]
@@ -59,8 +60,11 @@ class AstCommand:
     immediate:bool
     args:list
     kwargs:dict
-    line:str
     linenum:int
+    prompt:str
+
+    def __str__(self):
+        return f'-> {self.opname} (line {self.linenum})'
 
 class ToAst(Transformer):
     def line(self, tree):
@@ -68,7 +72,7 @@ class ToAst(Transformer):
             return tree
         (commands, prompt) = tree
         if prompt:
-            commands[-1].kwargs['prompt'] = prompt
+            commands[-1].prompt = prompt
         return commands
 
     def commands(self, tree):
@@ -83,9 +87,9 @@ class ToAst(Transformer):
     def command(self, tree):
         command_sign, opname, arguments = tree
 
-        return AstCommand(
+        return Command(
             opname=opname,
-            line=None, # TODO Not yet preserving line contents.
+            op=None,
             linenum=command_sign.line,
             immediate=command_sign.value == '!!',
             varnames=arguments['varnames'],
@@ -94,6 +98,7 @@ class ToAst(Transformer):
             input_tables=arguments['input_tables'],
             args=arguments['args'],
             kwargs=dict(arguments['kwargs']),
+            prompt=None,
         )
 
     def OPNAME(self, token):

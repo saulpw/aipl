@@ -47,7 +47,7 @@ def test_no_final_newline():
 def test_no_final_newline_prompt():
     commands = parse("!split\nsome text")
     assert commands[0].opname == "split"
-    assert commands[0].kwargs == {"prompt": "some text"}
+    assert commands[0].prompt == "some text"
 
 
 def test_random_spaces():
@@ -55,7 +55,7 @@ def test_random_spaces():
     assert ops(commands) == ["a", "b"]
     assert commands[0].args == []
     assert commands[0].kwargs == {}
-    assert commands[1].kwargs == {"prompt": "c  d\n\nd\n e"}
+    assert commands[1].prompt == "c  d\n\nd\n e"
 
 
 def test_args():
@@ -80,7 +80,7 @@ def test_nested_parse():
     '''))
 
     assert ops(commands) == ["def", "split_join"]
-    assert commands[0].kwargs == {'prompt': "!split\n\n!join"}
+    assert commands[0].prompt == "!split\n\n!join"
 
 def test_quoted():
     commands = parse(r'!fn "arg1" "\"\n"')
@@ -112,13 +112,24 @@ def test_inline_prompt():
     commands = parse("!split sep=: << a:b:c")
     assert commands[0].opname == "split"
     assert commands[0].args == []
-    assert commands[0].kwargs == {"sep": ":", "prompt": "a:b:c"}
+    assert commands[0].kwargs == {"sep": ":"}
+    assert commands[0].prompt == "a:b:c"
+
+def test_multiple_commands():
+    commands = parse("!a !b !c << a:b:c")
+    assert commands[0].opname == "a"
+    assert commands[1].opname == "b"
+    assert commands[2].opname == "c"
+    assert commands[2].args == []
+    assert commands[2].kwargs == {}
+    assert commands[2].prompt == "a:b:c"
 
 def test_inline_prompt_with_newline():
     commands = parse("!split sep=: << a:b:c\nd:e:f\ng: :h\n")
     assert commands[0].opname == "split"
     assert commands[0].args == []
-    assert commands[0].kwargs == {"sep": ":", "prompt": "a:b:c\nd:e:f\ng: :h"}
+    assert commands[0].kwargs == {"sep": ":"}
+    assert commands[0].prompt == "a:b:c\nd:e:f\ng: :h"
 
 
 def ops(commands):
