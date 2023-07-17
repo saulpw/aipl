@@ -20,6 +20,7 @@ class Command:
     op:Callable
     varnames:List[str]
     globals:List[str]
+    inputnames:List[str]
     immediate:bool
     args:list
     kwargs:dict
@@ -96,6 +97,7 @@ class AIPL:
                 op=self.get_op(ast_command.opname),
                 immediate=ast_command.immediate,
                 varnames=ast_command.varnames,
+                inputnames=ast_command.inputnames,
                 globals=ast_command.globals,
                 prompt=prompt,
                 args=ast_command.args,
@@ -145,13 +147,7 @@ class AIPL:
                 inputs.append(self.forced_input)
                 self.forced_input = None
 
-            args = []
-            inputargs = []
-            for arg in cmd.args:
-                if isinstance(arg, str) and arg.startswith('<'):
-                    inputargs.append(self.tables[arg[1:]])
-                else:
-                    args.append(arg)
+            inputargs = [self.tables[arg] for arg in cmd.inputnames]
 
             operands = [inputs[-1]] if inputs else []
             if cmd.prompt is not None:

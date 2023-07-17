@@ -23,15 +23,15 @@ OPNAME: IDENTIFIER
 _EMPTY_LINE: "\n"
 
 varname: ">" IDENTIFIER
-
+inputname: "<" IDENTIFIER
 globalname: ">>" IDENTIFIER
 
 arg_list: arg*
 
-arg: ws (KEY "=" literal | literal | varname | globalname)
+arg: ws (KEY "=" literal | literal | varname | globalname | inputname)
 
 ?literal: BARE_STRING | ESCAPED_STRING
-BARE_STRING: /[^ \t\n!"'>]\S*/
+BARE_STRING: /[^ \t\n!"'><]\S*/
 
 ESCAPED_STRING: /(["']).*?(?<!\\)\1/
 
@@ -39,8 +39,8 @@ KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
 
-prompt: "\n" STRING_LINE*
-STRING_LINE: /^[^!#\n][^\n]*(\n|$)/m | "\n"
+prompt: ("< " | "\n") STRING_LINE*
+STRING_LINE: /[^!#\n][^\n]*(\n|$)/m | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
 %ignore COMMENT_LINE
@@ -52,6 +52,7 @@ class AstCommand:
     opname:str
     varnames:List[str]
     globals: List[str]
+    inputnames: List[str]
     immediate:bool
     args:list
     kwargs:dict
@@ -77,7 +78,7 @@ class ToAst(Transformer):
         return output
 
     def command(self, tree):
-        command_sign, opname, (varnames, globalnames, args, kwargs) = tree
+        command_sign, opname, (varnames, globalnames, inputnames, args, kwargs) = tree
 
         return AstCommand(
             opname=opname,
@@ -86,6 +87,7 @@ class ToAst(Transformer):
             immediate=command_sign.value == '!!',
             varnames=varnames,
             globals=globalnames,
+            inputnames=inputnames,
             args=args,
             kwargs=kwargs,
         )
@@ -103,6 +105,7 @@ class ToAst(Transformer):
         args = []
         varnames = []
         globalnames = []
+        inputnames = []
         kwargs = {}
 
         for key, arg in arg_list:
@@ -112,10 +115,12 @@ class ToAst(Transformer):
                 varnames.append(arg)
             elif key == '>>':
                 globalnames.append(arg)
+            elif key == '<':
+                inputnames.append(arg)
             else:
                 kwargs[clean_to_id(key)] = arg
 
-        return varnames, globalnames, args, kwargs
+        return varnames, globalnames, inputnames, args, kwargs
 
 
     def varname(self, tree):
@@ -123,6 +128,9 @@ class ToAst(Transformer):
 
     def globalname(self, tree):
         return ('>>', tree[0])
+
+    def inputname(self, tree):
+        return ("<", tree[0])
 
     def arg(self, tree):
         if isinstance(tree[0], tuple):
