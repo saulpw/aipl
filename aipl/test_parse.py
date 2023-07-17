@@ -95,5 +95,26 @@ def test_numbers():
     assert commands[0].args == [1, 2.0, 3.0e10, -3, -2e-7]
 
 
+def test_inputnames():
+    commands = parse("!split <b sep=: <a")
+    assert commands[0].opname == "split"
+    assert commands[0].args == []
+    assert commands[0].kwargs == {"sep": ":"}
+    assert commands[0].inputnames == ["b", "a"]
+
+
+def test_inline_prompt():
+    commands = parse("!split sep=: < a:b:c")
+    assert commands[0].opname == "split"
+    assert commands[0].args == []
+    assert commands[0].kwargs == {"sep": ":", "prompt": "a:b:c"}
+
+def test_inline_prompt_with_newline():
+    commands = parse("!split sep=: < a:b:c\nd:e:f\ng: :h\n")
+    assert commands[0].opname == "split"
+    assert commands[0].args == []
+    assert commands[0].kwargs == {"sep": ":", "prompt": "a:b:c\nd:e:f\ng: :h"}
+
+
 def ops(commands):
     return [command.opname for command in commands]
