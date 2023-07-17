@@ -79,16 +79,3 @@ def embedding_openai(aipl, v:str, **kwargs) -> dict:
     return dict(model=kwargs.get('model'),
                 used_tokens=used,
                 embedding=resp['data'][0]['embedding'])
- 
-def get_model_and_binary_paths() -> List[str]:
-    if 'MODELS_DIR' not in os.environ:
-        raise AIPLException('''MODELS_DIR envvar must be set for !llm-local''')
-    models_dir = Path(os.environ['MODELS_DIR'])
-    # binaries can be set per-model and globally, with preference for local
-    if os.path.isfile(models_dir/'main'):
-        inference_binary = models_dir/'main'
-    elif 'INFERENCE_BINARY' in os.environ:
-        inference_binary = Path(os.environ['INFERENCE_BINARY'])
-    else:
-        raise AIPLException('''INFERENCE_BINARY envvar must be set for !llm-local''')
-    return models_dir, inference_binary
