@@ -10,8 +10,7 @@ sex:m,f,y,n
 !split>member sep=,
 !ravel
 
-!format prompt="{category}: {member}"
-
+!format << {category}: {member}
 !join sep=\n
 !test-equal
 pizza toppings: tomato

@@ -8,28 +8,11 @@ from aipl import Error, AIPLException, InnerPythonException
 from .table import Table, LazyRow, Column
 from .db import Database
 from .utils import stderr, fmtargs, fmtkwargs, AttrDict
-from .parser import clean_to_id
+from .parser import clean_to_id, Command
 from . import parser
 
 
 Scalar = int|float|str
-
-@dataclass
-class Command:
-    opname:str
-    op:Callable
-    varnames:List[str]
-    globals:List[str]
-    inputnames:List[str]
-    immediate:bool
-    args:list
-    kwargs:dict
-    prompt:str
-    line:str
-    linenum:int
-
-    def __str__(self):
-        return f'-> {self.opname} (line {self.linenum})'
 
 
 class UserAbort(BaseException):
@@ -88,21 +71,8 @@ class AIPL:
         ast = parser.parse(source)
 
         commands = []
-        for ast_command in ast:
-            prompt = ast_command.kwargs.pop('prompt', None)
-            command = Command(
-                linenum=ast_command.linenum,
-                line="", # TODO Capture line contents (or not?)
-                opname=ast_command.opname,
-                op=self.get_op(ast_command.opname),
-                immediate=ast_command.immediate,
-                varnames=ast_command.varnames,
-                inputnames=ast_command.input_tables,
-                globals=ast_command.globals,
-                prompt=prompt,
-                args=ast_command.args,
-                kwargs=ast_command.kwargs
-            )
+        for command in ast:
+            command.op = self.get_op(command.opname)
 
             if not command.op:
                 raise AIPLException(
@@ -147,7 +117,7 @@ class AIPL:
                 inputs.append(self.forced_input)
                 self.forced_input = None
 
-            inputargs = [self.tables[arg] for arg in cmd.inputnames]
+            inputargs = [self.tables[arg] for arg in cmd.input_tables]
 
             operands = [inputs[-1]] if inputs else []
             if cmd.prompt is not None:
