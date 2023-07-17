@@ -97,7 +97,7 @@ class AIPL:
                 op=self.get_op(ast_command.opname),
                 immediate=ast_command.immediate,
                 varnames=ast_command.varnames,
-                inputnames=ast_command.inputnames,
+                inputnames=ast_command.input_tables,
                 globals=ast_command.globals,
                 prompt=prompt,
                 args=ast_command.args,

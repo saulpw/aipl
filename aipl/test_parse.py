@@ -94,14 +94,19 @@ def test_numbers():
     commands = parse("!fn 1 2.0 3.0e10 -3 -2e-7")
     assert commands[0].args == [1, 2.0, 3.0e10, -3, -2e-7]
 
+def test_input_cols():
+    commands = parse("!split <b sep=: <a")
+    assert commands[0].opname == "split"
+    assert commands[0].args == []
+    assert commands[0].kwargs == {"sep": ":"}
+    assert commands[0].input_cols == ["b", "a"]
 
-def test_inputnames():
+def test_input_globals():
     commands = parse("!split <<b sep=: <<a")
     assert commands[0].opname == "split"
     assert commands[0].args == []
     assert commands[0].kwargs == {"sep": ":"}
-    assert commands[0].inputnames == ["b", "a"]
-
+    assert commands[0].input_tables == ["b", "a"]
 
 def test_inline_prompt():
     commands = parse("!split sep=: << a:b:c")
