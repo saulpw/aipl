@@ -39,11 +39,8 @@
 # find topic and subreddit
 !sample n=3
 
-# get the text extraction from above
-!ref text
-
-# split into LLM-sized chunks
-!split
+# split the text extraction from above into LLM-sized chunks
+!split <text
 
 # take the first chunk
 !take 1

@@ -117,14 +117,22 @@ class AIPL:
                 inputs.append(self.forced_input)
                 self.forced_input = None
 
-            inputargs = [self.tables[arg] for arg in cmd.input_tables]
+            input_tables = [self.tables[arg] for arg in cmd.input_tables]
 
             operands = [inputs[-1]] if inputs else []
             if cmd.prompt is not None:
-                inputargs.append(Table(cmd.prompt))
+                input_tables.append(Table(cmd.prompt))
 
-            if inputargs:
-                operands[cmd.op.arity-len(inputargs):] = inputargs
+            if input_tables:
+                operands[cmd.op.arity-len(input_tables):] = input_tables
+
+            for input_col_name in cmd.input_cols:
+                t = operands[-1]
+                col = t.get_column(input_col_name)
+                if col not in t.columns:
+                    raise AIPLException(f'no such column {input_col_name!r}')
+                t.columns.remove(col)
+                t.add_column(col)
 
             self.pre_command(cmd, *operands)
 

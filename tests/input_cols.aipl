@@ -1,0 +1,8 @@
+!split sep=: >abc << a:b:c
+!format>dundered << _{_}_
+
+!join sep='' <abc
+!test-equal << abc
+# Should work (but doesn't):
+# !join sep='' <dundered
+# !test-equal << _a__b__c_
