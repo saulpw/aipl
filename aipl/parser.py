@@ -4,7 +4,7 @@ import sys
 from dataclasses import dataclass
 import ast
 from collections import defaultdict
-from lark import Lark, Transformer, Discard, Token, Tree
+from lark import Lark, Transformer, Discard, Token
 
 aipl_grammar = Lark(r'''
 start: line*
