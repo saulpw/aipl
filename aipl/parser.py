@@ -23,7 +23,7 @@ OPNAME: IDENTIFIER
 _EMPTY_LINE: "\n"
 
 varname: ">" IDENTIFIER
-inputname: "<" IDENTIFIER
+inputname: "<<" IDENTIFIER
 globalname: ">>" IDENTIFIER
 
 arg_list: arg*
@@ -39,7 +39,7 @@ KEY: IDENTIFIER
 
 IDENTIFIER: /[A-Za-z0-9_-]+/
 
-prompt: ("< " | "\n") STRING_LINE*
+prompt: ("<< " | "\n") STRING_LINE*
 STRING_LINE: /[^!#\n][^\n]*(\n|$)/m | "\n"
 
 COMMENT_LINE: /^#[^\n]*\n/m
