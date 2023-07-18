@@ -58,7 +58,7 @@ aipl --help
 
     - comments start with `#` as the first character of a line, and ignore the whole line.
     - commands start with `!` as the first character of a line.
-    - everything else is part of the prompt template for the previous `!` command.
+    - everything else is given as the verbatim input to the previous `!` command.
 
     Commands can take positional and/or keyword arguments, separated by whitespace.
 
