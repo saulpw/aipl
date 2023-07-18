@@ -1,23 +1,24 @@
 
 ## An AIPL script is essentially a list of operators.
 
-When an AIPL script is executed, each operator is applied in sequence over all rows in the input.
+When an AIPL script is executed, each `!operator` is applied in sequence over all rows in the input.
 
-Each operator uses 0, 1, or 2 operands to perform a certain operation and produce a resulting value.  These are called "nonary", "unary", and "binary" operators.
+Each operator uses 0 ("nonary"), 1 ("unary"), or 2 ("binary") operands on which to perform a certain operation and produce a resulting value.
 Some operators may be "ambinary", and are able to be applied as either unary or binary operators.
 
 ## The input
 
 There is always a "most recent" value, which is the toplevel result of the previously applied operator.
-This value is commonly called the "input", and it provides the set of default operands for the next operator if it is unary, or the default "left" operands if the next operator is binary.
+This value is commonly referred to as the "input", and it provides the set of default operands for the next unary operator, or the default "left" operands for the next binary operator.
 
-(An operator that does not produce a result is a "tap", presumably having some desirable side-effect.  It may use its input operands but must not modify them.)
+##### Note
+An operator that does not produce a result is a "tap", presumably having some desirable side-effect.  It may use its input operands but must not modify them.
 
 ## The output
 
 The operator is applied across the input rows, and these outputs are aggregated into a single "result", which immediately becomes the next "input".
 
-The result can be assigned to a name with a special argument that starts with `>>`, e.g. `!join>>foo`.
+The resulting table can be assigned to a name with `>>`, e.g. `!join>>foo`. It can be referred by name anywhere in the latter part of the script.
 
 A single `>`, e.g. `>bar`, is used to assign a name to the bottommost column(s) of scalars, which are then available for formatting as `{bar}` in arguments and elsewhere.
 
@@ -25,13 +26,13 @@ A single `>`, e.g. `>bar`, is used to assign a name to the bottommost column(s) 
 
 This completely tacit dataflow is great for unary (and nonary) operators.
 
-For binary operators, the second or "right" operand can be passed as a special argument, e.g. `!cross <<foo`.  `foo` must have been a previous result named with `>>`.
+For binary operators, the second or "right" operand can be passed as a special argument, e.g. `!cross <<foo`, where `foo` must have been a previous result named with `>>`.
 
-Alternatively, the text on the lines following the operator, commonly called "the prompt", will be passed as the second operand.  For unary operators, if there is any non-whitespace text in the prompt, the prompt will override the default input and be passed as the first operand instead.  The result of this operator becomes the input, so the previous result must be named or it will be lost forever!!
+Alternatively, the text on the lines below the operator, commonly called "the prompt", will be passed as the second operand.  For unary operators, if there is any non-whitespace text in the prompt, the prompt will override the default input and be passed as the first operand instead.  The result of this operator becomes the input, so the previous result must be named or it will be lost forever!!
 
 A lone `<` as an argument signifies that everything until the end of the line is taken to be the prompt.
 
-If `<` is at the end of a !command line, then a prompt is expected, so and the REPL will read text until EOF.
+If `<` is at the end of a !command line, then a prompt is expected, and the REPL will read text until EOF.
 (In non-REPL mode, `<\n!` would force the input operand to be an empty string.
 
 ## Tacit looping
@@ -50,7 +51,7 @@ A column will be added to the tables containing those rows, such that the row an
 
 ### Binary operators
 
-The right operand must be a scalar or a toplevel output (for now).
+The left operand is the operator's "prompt" in the script or the current "input". The right operand must be a scalar or a toplevel output (for now).
 If needed, looping over the right operand must be done manually by the operator.
 
 ## Rows and columns
