@@ -31,7 +31,7 @@ def iterate_tables(t:Table, rankin=1):
 
 @defop('cross', 0.5, 1.5, rankin2=100)
 def op_cross(aipl, row:LazyRow, t:Table) -> Table:
-    'Construct cross-product of current input with given global table'
+    'Construct cross-product of left and right inputs (pass right input via `<<tablename`).'
     ret = Table()
     for tright in iterate_tables(t):
         for rightrow in tright:
@@ -42,9 +42,3 @@ def op_cross(aipl, row:LazyRow, t:Table) -> Table:
         ret.add_column(SubColumn('right', c))
 
     return ret
-
-
-@defop('unbox', 1.5, 1.5)
-def op_unbox(aipl, t:Table):
-    assert len(t) == 1
-    return Table(t[0].value)
