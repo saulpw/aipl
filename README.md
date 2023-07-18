@@ -365,29 +365,13 @@ The identifiers available to Python format strings come from a chain of contexts
    - from each nested table, in priority from innermost to outermost
 - row will also defer to their "parent" row if they don't have the column
 
-# Future
+## More information
 
-## new operators
+Come chat with us on Discord [bluebird.sh/chat](https://bluebird.sh/chat) or Mastodon [@saulpw@fosstodon.org](https://fosstodon.org/@saulpw).
 
-- `!dbtable`: use entire table as input
-- `!dbquery`: sql template -> table
-
-## single-step debugging
-
-- show results of each step in e.g. VisiData
-- output as Pandas dataframe
-
-## simple website scraping
-
-- recursively apply `!extract-links` and `!fetch-url` to scrape an entire website
-  - need operators to remove already-scraped urls and urls outside a particular domain/urlbase
+If you want to get updates about I'm playing with, you can [sign up for my AI mailing list](https://landing.mailerlite.com/webforms/landing/y9b3w8).
 
 ## License
 
-I don't know yet.
+Licensed under MIT.
 
-You can use this and play with it, and if you want to do anything more serious with it, please get in touch.
-The [rest](https://bluebird.sh) [of my](https://xd.saul.pw) [work](https://visidata.org) is fiercely open source, but I also appreciate a good capitalist scheme.
-Come chat with me on Discord [saul.pw/chat](saul.pw/chat) or Mastodon [@saulpw@fosstodon.org](https://fosstodon.org/@saulpw) and let's jam.
-
-If you want to get updates about I'm playing with, you can [sign up for my AI mailing list](https://landing.mailerlite.com/webforms/landing/y9b3w8).
