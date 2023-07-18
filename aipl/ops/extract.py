@@ -7,8 +7,9 @@ from aipl import defop
 @defop('extract-text-all', 0, 0)
 def op_extract_text_all(aipl, html:str, **kwargs) -> str:
     'Extract all text from HTML'
-    import trafilatura
-    return trafilatura.html2txt(html, **kwargs)
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, 'html.parser')
+    return soup.get_text()
 
 
 @defop('extract-text', 0, 0)
@@ -40,3 +41,11 @@ def op_extract_links(aipl, html:str, baseurl='', **kwargs) -> List[dict]:
         if baseurl:
             href = urljoin(baseurl, href)
         yield dict(linktext=link.text, title=link.get('title', ''), href=href)
+
+
+@defop('extract-selector', 0, 1)
+def _(aipl, html:str, selector:str) -> List[dict]:
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, 'html.parser')
+    for el in soup.select(selector):
+        yield str(el)
