@@ -375,7 +375,7 @@ ranktypes = dict(
     table = 1.5,
 )
 
-def defop(opname:str,
+def defop(opname:str=None,
           rankin:None|int|float|str=0,
           rankout:None|int|float|str=0,
           *,
@@ -399,18 +399,35 @@ def defop(opname:str,
     rankin2 = ranktypes.get(rankin2, rankin2)
 
     def _decorator(f):
+        nonlocal opname
+        if opname is None:
+            opname = f.__name__
         name = clean_to_id(opname)
-        f.rankin = rankin
-        f.rankout = rankout
-        f.rankin2 = rankin2
-        f.arity = arity
-        f.outcols = outcols
-        f.__name__ = name
-        f.opname = opname
-        f.preprompt = preprompt
-        AIPL.operators[name] = f
+        AIPL.operators[name] = Operator(
+            rankin = rankin,
+            rankout = rankout,
+            rankin2 = rankin2,
+            arity = arity,
+            outcols = outcols,
+            opname = opname,
+            preprompt = preprompt,
+            func = f)
         return f
     return _decorator
+
+@dataclass
+class Operator:
+    rankin: int
+    rankout: int
+    rankin2: int|None
+    arity: int
+    outcols: str
+    opname: str
+    preprompt: Callable
+    func: Callable
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
 
 
 def alias(alias_name:str, builtin_name:str, dialect:str=''):

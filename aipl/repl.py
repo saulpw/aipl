@@ -36,7 +36,7 @@ def repl(aipl, inputs:list[Table]):
         try:
             cmds = parse(cmdtext)
             op = aipl.get_op(cmds[0].opname)
-            if 'prompt' in inspect.signature(op).parameters:
+            if 'prompt' in inspect.signature(op.func).parameters:
                 while True:
                     line = sys.stdin.readline()
                     if not line.strip():
