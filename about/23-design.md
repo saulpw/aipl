@@ -1,7 +1,7 @@
 
 # Design
 
-AIPL is intended as a simple platform for quick proof of concept data pipelines to be implemented and tested.
+AIPL is intended as a simple platform for quick proof of concept AI-based data pipelines to be implemented and tested.
 
 ## Why?
 
@@ -41,7 +41,7 @@ At the very least, AIPL should be a useful tool to learn, explore, and prototype
 
 ## What is "implicit looping"?
 
-a concept borrowed from APL.
+It's a concept borrowed from APL.
 
 Yes, APL, that language from the 60s that looks like this:
 
@@ -59,7 +59,7 @@ Now before you run away screaming, there are 3 big ideas in APL, and why Iverson
 
 APL uses a special set of non-text symbols, a custom alphabet that nearly predates ASCII itself.
 This is why it looks like alien gibberish to the uninitiated, and why APL has all but died out.
-[Iverson's paper and talk for the Turing Award is entitled [Notation as a Tool of Thought]()
+[Iverson's paper and talk for the Turing Award is entitled Notation as a Tool of Thought
 so "notation" is ironically the focus *and* the fallacy of APL.]
 
 The symbology is math-based (as APL is a language for teaching and doing linear algebra), and is elegantly designed. but the idea is unfortunately a non-starter for modern adoption.
@@ -80,7 +80,7 @@ When done well, these legos are composable without anything else necessary to bi
 
 ---
 
-Thus, AIPL borrows implicit looping and tacit programming from APL, and lets go of its alien symbology.
+So AIPL borrows implicit looping and tacit programming from APL, and lets go of its alien symbology.
 AIPL also borrows some of APL's vocabulary, but since data pipelines are a much different domain than math (and much more has been developed in the data domain over the past 50 years), we need to develop a different set of operators.
 
 So AIPL is also a *vocabulary discovery platform*.
@@ -101,10 +101,7 @@ Don't over-engineer your experiments and your prototypes.
 Just put legos together in a logical order and see how the whole chain works.
 Tune, iterate, and discover quickly if your idea is viable or not.
 
-# The Design
-
-
-# Design
+# The data table
 
 Operators take 0, 1, or 2 "operands with dimensionality", and any number of scalar (int/float/str) parameters.
 
@@ -129,24 +126,4 @@ These operators must use the consistent pattern for iterating over the table's d
 
 Tables are more complex than simple vectors.
 But ideally, an operator could be defined only by its smallest operation, and a decorator(?) would do the consistent iteration.
-
-split iterates over its input, and where it finds a string, returns a 1 column table.
-where it finds an int/float, it errors or returns the int.
-where it finds a table, it recurses.
-
-take:
-   where it finds a simple table, returns a table with only N rows
-
-join:
-   a simple table of strings, returns a string
-
-parse-url:
-   a url string, returns a table with 1 row
-
-unravel:
-   a table of simple tables, returns a simple table
-
-filter:
-   a table with a bool value column; returns a table without that column, with only rows for which that column was true
-
 

@@ -14,15 +14,15 @@ Before reaching that stage, you need to know how your idea can be done with AI i
 You may need to explore which of the available models might be better or cheaper, figure out how exactly you would have to organize the pipeline so that you can get the results you need, and engineer the literal prompts themselves.
 You might even have to scrap the idea altogether if you can't get GPT (or whatever LLM) to respond accurately--and if that's the case, you want to find that out quickly, before investing any real resources.
 
-You want something quick-and-dirty to experiment with.  You want to be able to whip up a prototype in a couple hours.
+You want something quick-and-dirty to experiment with. You want to be able to whip up a prototype in a couple hours.
 
 But you need something bigger than prompting directly to ChatGPT within the browser. It's fine for testing one thing, and you can do the pre- and post-processing yourself by hand.  For anything greater than N=1, though, you're already wanting something more reproducible.
 
 For instance, here's a script to summarize any number of webpages: https://github.com/saulpw/aipl/blob/develop/examples/summarize.aipl
 
-At the tiny sets (N=10 or N=100) we use to validate our ideas, 
-
 To do this in Python would involve being explicit about iteration, caching, error-handling, and the result would be a more unwieldy script, with the requisite quoting and/or escaping, code out-of-order and perhaps code scattered across multiple files, even the boilerplate--these things add friction for someone who knows Python, and make it impossible for a non-coder.
+
+At the tiny sets (N=10 or N=100) we use to validate our ideas, we want our focus to be on the experiments themselves as much as possible.
 
 There's a progression of computational tools: from calculators, to spreadsheets, to notebooks, to scripts, to programs, to systems.  Each level gives you more power and flexibility, but requires more attention and skill.
 
