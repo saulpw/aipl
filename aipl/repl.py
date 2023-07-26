@@ -48,9 +48,3 @@ def repl(aipl, inputs:list[Table]):
             print(e.args[0])
         except Exception as e:
             traceback.print_exc()
-
-def needs_prompt(op):
-    try:
-        return 'prompt' in inspect.signature(op.func).parameters
-    except ValueError:
-        return False
