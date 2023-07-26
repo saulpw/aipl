@@ -4,15 +4,16 @@
  !format
     - `!{op.opname}` (in={op.rankin} out={op.rankout})
        {op.__doc__}
+ !sort
  !join sep=\n
 
 !read>summarize_aipl
 examples/summarize.aipl
 
-!unbox !global summarize_aipl
+!unbox>>summarize_aipl
 
 !aipl-ops>opdocs
-!unbox !global opdocs
+!unbox>>opdocs
 
 !sh
 aipl --help

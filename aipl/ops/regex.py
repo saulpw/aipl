@@ -27,7 +27,7 @@ def preprompt_translate(prompt:str=''):
 
 @defop('regex-translate', 0, 0, preprompt=preprompt_translate)
 def regex_translate(aipl, v:str, prompt:list):
-    '''Translate input according to regex translation rules in prompt, one per line, with regex and output separated by whitespace:
+    r'''Translate input according to regex translation rules in prompt, one per line, with regex and output separated by whitespace:
         \bDr\.?\b Doctor
         \bJr\.?\b Junior
     '''
