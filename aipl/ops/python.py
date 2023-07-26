@@ -40,18 +40,15 @@ def op_python_input(aipl, prompt:str=''):
     'eval() Python expression and use as toplevel input table.'
     return inner_eval(prompt, aipl.globals)
 
-def defop_simple(f, opname=None, **kwargs):
-    defop(opname=opname or f.__name__, **kwargs)(lambda aipl, *args, **kwargs: f(*args, **kwargs))
+defop(int)
+defop(repr)
+defop(range, rankout='vector')
+defop(operator.add)
+defop(operator.sub)
+defop(operator.mul)
+defop(operator.truediv)
 
-defop_simple(int)
-defop_simple(repr)
-defop_simple(range, rankout='vector')
-defop_simple(operator.add)
-defop_simple(operator.sub)
-defop_simple(operator.mul)
-defop_simple(operator.truediv)
-
-defop_simple(len, rankin='vector')
-defop_simple(len, opname='strlen')
+defop(len, rankin='vector')
+defop(len, opname='strlen')
 
 # , rankin2=0)
