@@ -387,14 +387,17 @@ def defop(operation:str|Callable|None=None,
     '''
     Define a new operator.
 
-    Can be used as a decorator with this:
+    Can be used as a decorator:
 
     @defop('op_name', rankin='vector')
     def myop(...):
 
     Or just as a function:
     defop(function, rankout='vector')
-    defof(function, opname='alternative_name')
+    defop(function, opname='alternative_name')
+
+    aipl will be passed to the function if the first argument is called
+    'aipl'.
     '''
     # arity implied by rankin
     if rankin is None:
