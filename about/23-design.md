@@ -59,7 +59,7 @@ Now before you run away screaming, there are 3 big ideas in APL, and why Iverson
 
 APL uses a special set of non-text symbols, a custom alphabet that nearly predates ASCII itself.
 This is why it looks like alien gibberish to the uninitiated, and why APL has all but died out.
-[Iverson's paper and talk for the Turing Award is entitled Notation as a Tool of Thought
+[Iverson's paper and talk for the Turing Award is entitled [Notation as a Tool of Thought](https://dl.acm.org/doi/pdf/10.1145/358896.358899),
 so "notation" is ironically the focus *and* the fallacy of APL.]
 
 The symbology is math-based (as APL is a language for teaching and doing linear algebra), and is elegantly designed. but the idea is unfortunately a non-starter for modern adoption.
