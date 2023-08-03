@@ -1,4 +1,5 @@
 openai
+litellm==0.1.226
 scikit-learn
 numpy
 trafilatura  # for html extraction

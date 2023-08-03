@@ -1,5 +1,6 @@
 from aipl import defop, expensive, stderr, AIPLException
 import openai
+import litellm
 import os
 
 # from the horse's mouth, 2023-05-30
@@ -137,6 +138,45 @@ class GooseClient(StandardClient):
             aipl.cost_usd += cost
         stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.03f}')
         return response
+
+class liteLLMClient(StandardClient):
+    def __init__(self):
+        self.client_type = 'litellm'
+        self.default_model = 'gpt-3.5-turbo'
+
+    # supported litellm models: https://litellm.readthedocs.io/en/latest/supported/
+    # use Azure, OpenAI, Anthropic, Cohere, Google, Replicate LLMs
+    def completion(self, aipl, v:str, **kwargs) -> str:
+        'Send chat messages to litelm models.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.'
+        model = kwargs.get('model') or self.default_model
+        temperature = kwargs.get('temperature') or 0
+        params = dict(
+            temperature=float(temperature),
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            model=model
+        )
+        params.update(kwargs)
+        
+        params['temperature'] = float(params['temperature'])
+        if 'client' in params:
+            del params['client']
+        
+        # msgs = [_parse_msg(m) for m in v.splitlines()]
+        msgs = [_parse_msg(v)]
+
+        resp = litellm.completion(
+            messages=msgs,
+            **params
+        )
+        try:
+            result = resp['choices'][0]['message']['content']
+        except:
+            raise AIPLException(resp)
+        self.compute_cost(aipl, resp, model)
+        
+        return result
 
 class OpenAIClient(StandardClient):
     def __init__(self):
