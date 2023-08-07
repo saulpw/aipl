@@ -1,5 +1,4 @@
 import sys
-import inspect
 import readline
 import traceback
 
@@ -36,7 +35,7 @@ def repl(aipl, inputs:list[Table]):
         try:
             cmds = parse(cmdtext)
             op = aipl.get_op(cmds[0].opname)
-            if 'prompt' in inspect.signature(op).parameters:
+            if op.needs_prompt:
                 while True:
                     line = sys.stdin.readline()
                     if not line.strip():

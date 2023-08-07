@@ -3,6 +3,7 @@ from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 from itertools import cycle
+import inspect
 
 from aipl import Error, AIPLException, InnerPythonException
 from .table import Table, LazyRow, Column
@@ -375,15 +376,28 @@ ranktypes = dict(
     table = 1.5,
 )
 
-def defop(opname:str,
+def defop(operation:str|Callable|None=None,
           rankin:None|int|float|str=0,
           rankout:None|int|float|str=0,
           *,
           rankin2:None|int|float|str=None,
           outcols:str='',
-          preprompt=lambda x: x):
+          preprompt=lambda x: x,
+          opname:str|None=None):
     '''
+    Define a new operator.
 
+    Can be used as a decorator:
+
+    @defop('op_name', rankin='vector')
+    def myop(...):
+
+    Or just as a function:
+    defop(function, rankout='vector')
+    defop(function, opname='alternative_name')
+
+    aipl will be passed to the function if the first argument is called
+    'aipl'.
     '''
     # arity implied by rankin
     if rankin is None:
@@ -399,18 +413,59 @@ def defop(opname:str,
     rankin2 = ranktypes.get(rankin2, rankin2)
 
     def _decorator(f):
-        name = clean_to_id(opname)
-        f.rankin = rankin
-        f.rankout = rankout
-        f.rankin2 = rankin2
-        f.arity = arity
-        f.outcols = outcols
-        f.__name__ = name
-        f.opname = opname
-        f.preprompt = preprompt
-        AIPL.operators[name] = f
+        if opname:
+            name = opname
+        elif isinstance(operation, str):
+            name = operation
+        else:
+            name = getattr(f, '__name__', None) or str(f)
+        name = clean_to_id(name)
+        AIPL.operators[name] = Operator(
+            rankin = rankin,
+            rankout = rankout,
+            rankin2 = rankin2,
+            arity = arity,
+            outcols = outcols,
+            opname = opname,
+            preprompt = preprompt,
+            func = f)
         return f
-    return _decorator
+
+    if callable(operation):
+        return _decorator(operation)
+    else:
+        return _decorator
+
+@dataclass
+class Operator:
+    rankin: int
+    rankout: int
+    rankin2: int|None
+    arity: int
+    outcols: str
+    opname: str
+    preprompt: Callable
+    func: Callable
+
+    def __call__(self, aipl, *args, **kwargs):
+        if self._needs_aipl:
+            return self.func(aipl, *args, **kwargs)
+        else:
+            return self.func(*args, **kwargs)
+
+    @property
+    def needs_prompt(self):
+        try:
+            return 'prompt' in inspect.signature(self.func).parameters
+        except ValueError:
+            return False
+
+    @property
+    def _needs_aipl(self):
+        try:
+            return list(inspect.signature(self.func).parameters)[0] == 'aipl'
+        except ValueError:
+            return False
 
 
 def alias(alias_name:str, builtin_name:str, dialect:str=''):

@@ -1,5 +1,6 @@
 import sys
 import traceback
+import operator
 
 from aipl import defop, InnerPythonException
 
@@ -38,3 +39,16 @@ def op_python_expr(aipl, row, expr:str):
 def op_python_input(aipl, prompt:str=''):
     'eval() Python expression and use as toplevel input table.'
     return inner_eval(prompt, aipl.globals)
+
+defop(int)
+defop(repr)
+defop(range, rankout='vector')
+defop(operator.add)
+defop(operator.sub)
+defop(operator.mul)
+defop(operator.truediv)
+
+defop(len, rankin='vector')
+defop(len, opname='strlen')
+
+# , rankin2=0)
