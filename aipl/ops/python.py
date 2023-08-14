@@ -1,6 +1,7 @@
 import sys
 import traceback
 import operator
+import time
 
 from aipl import defop, InnerPythonException
 
@@ -41,14 +42,13 @@ def op_python_input(aipl, prompt:str=''):
     return inner_eval(prompt, aipl.globals)
 
 defop(int)
+defop(float)
 defop(repr)
 defop(range, rankout='vector')
+defop(sum, rankin='vector')
 defop(operator.add)
 defop(operator.sub)
 defop(operator.mul)
 defop(operator.truediv)
-
 defop(len, rankin='vector')
 defop(len, opname='strlen')
-
-# , rankin2=0)
