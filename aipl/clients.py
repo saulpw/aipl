@@ -39,7 +39,8 @@ def _parse_msg(s:str):
         return dict(role='assistant', content=s)
     else:  # if s.startswith('@@@u'):
         return dict(role='user', content=s)
-    
+
+
 def count_tokens(s:str, model:str=''):
     try:
         import tiktoken
@@ -52,7 +53,8 @@ def count_tokens(s:str, model:str=''):
         # just estimate
         return len(s)//4
 
-class StandardClient:    
+
+class StandardClient:
     def compute_cost(self, aipl, resp, model):
         if self.client_type == 'openai':
             used = resp['usage']['total_tokens']
@@ -64,7 +66,7 @@ class StandardClient:
             stderr(f'Used {used} tokens (estimate {len(result)//4} tokens).  Cost: ${cost:.03f}')
         elif self.client_type == 'selfhosted':
             stderr('Used TODO tokens. Cost: $¯\_(ツ)_/¯')
-    
+
     def completion(self, aipl, v:str, **kwargs) -> str:
         'Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.'
         model = kwargs.get('model') or self.default_model
@@ -77,12 +79,12 @@ class StandardClient:
             model=model
         )
         params.update(kwargs)
-        
+
         # TODO: there must be a less hacky way of doing these
         params['temperature'] = float(params['temperature'])
         if 'client' in params:
             del params['client']
-        
+
         # msgs = [_parse_msg(m) for m in v.splitlines()]
         msgs = [_parse_msg(v)]
 
@@ -95,8 +97,9 @@ class StandardClient:
         except:
             raise AIPLException(resp)
         self.compute_cost(aipl, resp, model)
-        
+
         return result
+
 
 class GooseClient(StandardClient):
     def __init__(self):
@@ -138,12 +141,14 @@ class GooseClient(StandardClient):
         stderr(f'Used {used} tokens (estimate {len(v)//4} tokens).  Cost: ${cost:.03f}')
         return response
 
+
 class OpenAIClient(StandardClient):
     def __init__(self):
         if 'OPENAI_API_KEY' not in os.environ or 'OPENAI_API_ORG' not in os.environ:
             raise AIPLException('''OPENAI_API_KEY and OPENAI_API_ORG envvars must be set for openai client type''')
         self.client_type = 'openai'
         self.default_model = 'gpt-3.5-turbo'
+
 
 class SelfHostedChatClient(StandardClient):
     def __init__(self):
@@ -153,6 +158,7 @@ class SelfHostedChatClient(StandardClient):
         self.client_type = 'selfhosted'
         if 'DEFAULT_SELFHOSTED_MODEL' in os.environ:
             self.default_model = os.environ['DEFAULT_SELFHOSTED_MODEL']
+
 
 if __name__ == "__main__":
     max_tokens = 10
