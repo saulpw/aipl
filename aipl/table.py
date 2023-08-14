@@ -141,13 +141,7 @@ class Table:
 
         if isinstance(rows, (list, tuple)):  # should be sequence-but-not-string
             for row in rows:
-                if isinstance(row, LazyRow):
-                    self.rows.append(row._row)
-                elif isinstance(row, Mapping):
-                    self.rows.append(row)
-                    self.add_new_columns(row)
-                else:
-                    raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")
+                self.append(row)
         else:
             self.scalar = rows
 
@@ -253,7 +247,11 @@ class Table:
             assert col.get_value(self.rows[0]) is not UNWORKING
         if col.name in self.colnames:
             return
-        self.columns.append(col)
+
+        if col.name.startswith('_cost'):
+            self.columns.insert(0, col)
+        else:
+            self.columns.append(col)
 
     def get_column(self, name:str) -> Column:
         if name == CURRENT_COLNAME:
@@ -264,3 +262,12 @@ class Table:
                 return c
 
         return None
+
+    def append(self, row:dict):
+        if isinstance(row, LazyRow):
+            self.rows.append(row._row)
+        elif isinstance(row, Mapping):
+            self.rows.append(row)
+            self.add_new_columns(row)
+        else:
+            raise TypeError(f"row must be Mapping or LazyRow not {type(row)}")

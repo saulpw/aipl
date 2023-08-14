@@ -3,6 +3,7 @@ from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 from itertools import cycle
+import time
 import inspect
 
 from aipl import Error, AIPLException, InnerPythonException
@@ -146,7 +147,8 @@ class AIPL:
                         stderr(f'no aipl.step_{stepfuncname}!')
 
             try:
-                result = self.eval_op(cmd, *operands, contexts=[self.globals, self.tables])
+                annotated_result = self.eval_op(cmd, *operands, contexts=[self.globals, self.tables])
+                result = annotated_result['result']
                 if cmd.op.rankout is None:
                     continue # just keep former inputs
                 elif isinstance(result, Table):
@@ -179,30 +181,37 @@ class AIPL:
         args = fmtargs(cmd.args, contexts)
         kwargs = fmtkwargs(cmd.kwargs, contexts)
 
+
         try:
             if self.options.step and 'break' in self.options.step.split(','):
                 breakpoint()
-
+            start_t = time.time()
             ret = cmd.op(self, *operands, *args, **kwargs)
         except Exception as e:
             if self.options.debug or self.options.test:
                 raise
             return Error(cmd.linenum, cmd.opname, e)
 
+        end_t = time.time()
+
         if cmd.op.rankout is not None and cmd.varnames:
             varname = cmd.varnames[-1]
         else:
             varname = newkey or self.unique_key
 
-        return prep_output(self,
+        result = prep_output(self,
                            inputs[0] if inputs else None,
                            ret,
                            cmd.op.rankout,
                            cmd.op.outcols.split(),
                            varname)
 
-    def eval_op(self, cmd:Command, *operands:List[Table|LazyRow], contexts=[], newkey='') -> Table:
-        'Recursively evaluate cmd.op(t) with cmd args formatted with contexts'
+        annotated_ret = dict(result=result, cost_usd=self.cost_usd, cost_ms=int((end_t-start_t)*1000))
+        self.cost_usd = 0
+        return annotated_ret
+
+    def eval_op(self, cmd:Command, *operands:List[Table|LazyRow], contexts=[], newkey='') -> dict:
+        'Recursively evaluate cmd.op(t) with cmd args formatted with contexts.  Return dict(result:Table, cost_usd:float, cost_ms:int)'
 
         if cmd.op.arity == 0:
             return self.call_cmd(cmd, contexts, newkey=newkey)
@@ -226,13 +235,21 @@ class AIPL:
             else:
                 newkey = newkey or self.unique_key
 
+            start_t = time.time()
+            cost_usd = 0
             for row in t:
-                x = self.eval_op(cmd, row, *operands[1:], contexts=contexts+[row], newkey=newkey)
+                annotated_x = self.eval_op(cmd, row, *operands[1:], contexts=contexts+[row], newkey=newkey)
+                x = annotated_x['result']
 
                 if x is None:
                     continue
 
-                ret.rows.append(update_dict(row._row, x, newkey))
+                subresult = update_dict(row._row, x, newkey)
+                cost_usd += annotated_x['cost_usd']
+                subresult.setdefault('_costs', Table()).append(dict(usd=annotated_x['cost_usd'], ms=annotated_x['cost_ms']))
+                ret.rows.append(subresult)
+
+                ret.add_column(Column('_costs'))
 
                 if isinstance(x, Mapping):
                     for k in x.keys():
@@ -240,7 +257,9 @@ class AIPL:
                 else:
                     ret.add_column(Column(newkey))
 
-            return ret
+            end_t = time.time()
+
+            return dict(result=ret, cost_usd=cost_usd, cost_ms=int((end_t-start_t)*1000))
 
 
 def update_dict(d:dict, elem, key:str='') -> dict:
@@ -449,9 +468,11 @@ class Operator:
 
     def __call__(self, aipl, *args, **kwargs):
         if self._needs_aipl:
-            return self.func(aipl, *args, **kwargs)
+            r = self.func(aipl, *args, **kwargs)
         else:
-            return self.func(*args, **kwargs)
+            r = self.func(*args, **kwargs)
+
+        return r
 
     @property
     def needs_prompt(self):
