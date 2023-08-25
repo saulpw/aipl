@@ -171,7 +171,7 @@ With the `!cross` operator (and one more language feature), we can.  Let's put t
 
 And replace the `!llm` with this:
 
-    !cross <models
+    !cross <<models
     !llm model={model}
 
 What's happening here?  `!cross` is our first binary operator: it takes **two** inputs, whereas our previous operators are all unary (only taking one input).  `!cross` returns the cross product of these two inputs. This will result in two subtables, each one with one of the models and the prompt.
@@ -179,8 +179,8 @@ What's happening here?  `!cross` is our first binary operator: it takes **two** 
 So we make a new input and use `>>models` to remember the whole table for later.  (`>model` names the column of values, so we can refer to it in arg formatting).
 
 Then we go about our usual business constructing this main table.
-Just before running `!llm`, we use `!cross` to do the cross-join, and we use `<models` to pass the second input.
-(We can also use `<foo` to replace the one input of a unary operator; or we could pass the second input of a binary operator using the "verbatim input", which is not really useful for `!cross`.  But it could be useful for other binary operators.)
+Just before running `!llm`, we use `!cross` to do the cross-join, and we use `<<models` to pass the second input.
+(We can also use `<<foo` to replace the one input of a unary operator; or we could pass the second input of a binary operator using the "verbatim input", which is not really useful for `!cross`.  But it could be useful for other binary operators.)
 
 ## what next?
 
