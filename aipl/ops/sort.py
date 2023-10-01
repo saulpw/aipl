@@ -19,9 +19,8 @@ def op_grade_up(aipl, t:Table, *args):
     return sorted(range(len(values)), key=values.__getitem__)
 
 @defop('incr', 1.5, 1.5)
-def op_incr(aipl, t:Table, step= 1, *args):
-    'Add column with incremental values'
-    base = 1
+def op_incr(aipl, t:Table, step:int= 1, base:int=1, *args):
+    'Add column that starts at base `base` incrementing by `step` for each row in `t`.'
     incr_values = [base + x*step for x in range(len(t.rows))]
     ret = copy(t)
     ret.rows = []
