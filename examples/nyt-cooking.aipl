@@ -1,0 +1,71 @@
+#!/usr/bin/env bin/aipl
+
+# Simple script that takes URLs of recipes from NYT cooking and converst to a markdown recipe format (specifically for Obsidian)
+# Output is one markdown file per recipe
+
+# extract recipe name from URL, for use in file name
+@defop('getname', 0.5, 0)
+def getname(aipl, d):
+    s = d['path'].split('-')
+    return ' '.join(s[1:])
+
+# sample URLs
+!split>url
+https://cooking.nytimes.com/recipes/1019883-chicken-piccata
+https://cooking.nytimes.com/recipes/1013317-zucchini-and-carrot-fritters-with-yogurt-mint-dip
+https://cooking.nytimes.com/recipes/1022534-green-chile-chicken-tacos
+
+!url-split
+!getname>name
+
+!fetch-url <url
+!extract-text
+
+# Obsidian recipe format below comes from this tutorial: https://forum.obsidian.md/t/obsidian-as-recipe-manager-and-shopping-list-tutorial/40799
+# NB: in order to preserve markdown formatting, a leading space is needed before the # so that aipl doesn't interpret it as a comment string
+!format
+Here is an Obsidian template I use for recipes:
+
+ ### Recipe Name 
+
+>Notes: 
+
+Time:
+Serves:
+
+ ### Ingredients
+ #ingredients 
+- [x] first ingredient
+- [x] second ingredient
+- [x] third ingredient
+
+---
+ #### Intro:
+
+
+---
+ #### Directions
+
+
+ #### FINISH:
+
+
+And here is a poorly typed recipe that I would like you to re-format in the style of the above template please. 
+Please put any tips in the Notes section.
+Just return the reformatted recipe, no extra words.
+
+{_}
+
+!llm model=gpt-3.5-turbo
+
+# tack on some metadata
+!format
+---
+alias:
+source: {url}
+tags: recipe
+---
+{_}
+
+# and we're done!
+!save {name}.md
