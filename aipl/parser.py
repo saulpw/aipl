@@ -179,7 +179,9 @@ def clean_to_id(s:str) -> str:
 if __name__ == '__main__':
     for file in sys.argv[1:]:
         print("Parsing: ", file)
-        parse_tree = aipl_grammar.parse(open(file).read())
+        # prepend `!!python` to the input to correctly handle any leading python code
+        # see also: AIPL.run() method in interpreter.py
+        parse_tree = aipl_grammar.parse('!!python\n' + open(file).read())
         print("Parse tree: ", parse_tree.pretty())
         for command in ToAst().transform(parse_tree):
             print(command)
