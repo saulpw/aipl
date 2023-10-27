@@ -64,7 +64,8 @@ class Command:
     prompt:str
 
     def __str__(self):
-        return f'-> {self.opname} (line {self.linenum})'
+        return f'-> {self.opname} (line {self.linenum-1})'  # first line is implicit !!python
+
 
 class ToAst(Transformer):
     def line(self, tree):
