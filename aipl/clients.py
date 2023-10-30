@@ -65,7 +65,7 @@ class StandardClient:
 
             stderr(f'Used {used} tokens (estimate {len(result)//4} tokens).  Cost: ${cost:.03f}')
         elif self.client_type == 'selfhosted':
-            stderr('Used TODO tokens. Cost: $¯\_(ツ)_/¯')
+            stderr('Used TODO tokens. Cost: $¯\\_(ツ)_/¯')
 
     def completion(self, aipl, v:str, **kwargs) -> str:
         'Send chat messages to GPT.  Lines beginning with @@@s or @@@a are sent as system or assistant messages respectively (default user).  Passes all [named args](https://platform.openai.com/docs/guides/chat/introduction) directly to API.'
