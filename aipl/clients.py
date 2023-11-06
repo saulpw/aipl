@@ -85,8 +85,24 @@ class StandardClient:
         if 'client' in params:
             del params['client']
 
-        # msgs = [_parse_msg(m) for m in v.splitlines()]
-        msgs = [_parse_msg(v)]
+        role = 'user'
+        def _get_role_msg(s:str):
+            if s.startswith('@@@s'):
+                return 'system', s[4:]
+            elif s.startswith('@@@a'):
+                return 'assistant', s[4:]
+            elif s.startswith('@@@u'):
+                return 'user', s[4:]
+            else:
+                return role, s
+
+        msgs = []
+        for m in v.splitlines():
+            role, msg = _get_role_msg(m)
+            if msgs and msgs[-1]['role'] == role:
+                msgs[-1]['content'] += '\n' + msg
+            else:
+                msgs.append(dict(role=role, content=msg))
 
         resp = openai.ChatCompletion.create(
             messages=msgs,
