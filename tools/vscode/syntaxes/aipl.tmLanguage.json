@@ -3,50 +3,75 @@
     "name": "aipl",
     "patterns": [
         {
+            "include": "#comments"
+        },     
+        {
+            "include": "#operators"
+        },
+        {
+            "include": "#vars"
+        },
+        {
+            "include": "#strings"
+        }
+    ],
+    "repository": {
+        "comments": {
             "begin": "#",
+            "end": "\\n",
             "beginCaptures": {
                 "0": {
                     "name": "punctuation.definition.comment.aipl"
                 }
             },
-            "end": "\\n",
             "name": "comment.line.number-sign.aipl",
-            "patterns": [
+			"patterns": [{
+                "name": "keyword.other.documentation.task.aipl",
+                "match": "(\\bTODO\\b|\\bFIXME\\b|\\bNOTE\\b|@todo)$"
+            }]
+		},
+        "operators": {
+			"patterns": [{
+                "begin": "^!",
+                "end": "(\\s|\\n|>|>>|<|<<)",
+
+                "patterns": [{
+                    "match": "(abort|cluster|columns|comment|cross|global|unbox|csv-parse|dbopen|dbquery|dbdrop|dbinsert|option|debug|def|extract-text-all|extract-text|extract-links|filter|format|groupby|require-input|join|json|json-parse|literal|llm|llm-embedding|match|metrics-accuracy|metrics-precision|metrics-recall|name|nop|pdf-extract|print|python|python-expr|python-input|ravel|read|read-bytes|ref|regex-capture|regex-translate|replace|sample|save|sh|shtty|sort|grade-up|split|split-into|take|test-input|test-equal|rest-json|url-split|url-defrag|xml-path|xml-xpaths|aipl-ops)\\b",
+                    "name": "keyword.control.aipl"                    
+                },
                 {
-                    "match": "(\\bTODO\\b|\\bFIXME\\b|\\bNOTE\\b|@todo)",
-                    "name": "keyword.other.documentation.task.aipl"
-                }
-            ]
-        },
-        
-        {
-            "begin": "!",
-            "beginCaptures": {
-                "0": {
-                    "name": "punctuation.definition.command.aipl"
-                }
+                    "match": "[A-Za-z0-9_-]+\\b",
+                    "name": "entity.name.function.aipl"
+                }]
+			}]
+       },
+       "vars": {
+        "patterns": [{
+                "match": "(>|>>|<|<<)[A-Za-z0-9_-]+",
+                "name": "variable.other.aipl"
             },
-            "end": "\\s|\\n",
-            "name": "keyword.control.command.aipl",
-            "patterns": [
-                {
-                    "begin": ">",
-                    "end": "\\s|$",
-                    "beginCaptures": {
-                        "0": {
-                            "name": "punctuation.separator.command.aipl"
-                        }
-                    },
-                    "endCaptures": {
-                        "0": {
-                            "name": "variable.parameter.command.aipl"
-                        }
-                    }
-                }
-            ]
-        }
-        
-    ],
-    "repository": {},
+            {
+                "match": "\\{[A-Za-z0-9_-]+\\}",
+                "name": "variable.other.aipl"
+            }]
+        },
+       "strings":{
+        "patterns": [{
+                "name": "string.quoted.single.aipl",
+                "begin": "^[^!#]",
+                "end": "(?=^(!|#))"
+            },
+            {
+                "name":"string.quoted.single.aipl",
+                "begin": "'",
+                "end": "'"
+            },
+            {
+                "name":"string.quoted.double.aipl",
+                "begin": "\"",
+                "end": "\""
+            }]
+       }
+    },
     "scopeName": "source.aipl"
 }
