@@ -1,0 +1,5 @@
+!sh
+echo -n foo
+!ravel
+!test-equal
+foo

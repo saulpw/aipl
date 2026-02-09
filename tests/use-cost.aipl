@@ -1,0 +1,10 @@
+!format>foo
+.1 .2 .3
+!split
+!float>given_time
+!sleep
+!columns given_time=given_time costs=_costs
+!ravel rank=1
+!sum >total_ms
+!json
+!print
