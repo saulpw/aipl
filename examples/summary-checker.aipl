@@ -1,0 +1,93 @@
+# Summarization checker to verify accuracy of text generation
+
+- title: summary checker
+- abstract: Try to verify the accuracy of text generation by splitting it into a list of facts, then checking if those facts are true or not, and rewriting the text to make it more truthful.
+
+- openai.temperature=0
+
+## create facts
+
+Given some text, extract a list of facts from the text.
+
+Format your output as a bulleted list.
+
+Text:
+"""
+{summary}
+"""
+
+Facts:
+
+## check facts
+
+You are an expert fact checker. You have been hired by a major news organization to fact check a very important story.
+
+Here is a bullet point list of facts:
+"""
+{create_facts}
+"""
+
+For each fact, determine whether it is true or false about the subject. If you are unable to determine whether the fact is true or false, output "Undetermined".
+If the fact is false, explain why.
+
+# revise summary
+
+Below are some assertions that have been fact checked and are labeled as true or false.  If the answer is false, a suggestion is given for a correction.
+
+Checked Assertions:
+"""
+{check_facts}
+"""
+
+Original Summary:
+"""
+{summary}
+"""
+
+Using these checked assertions, rewrite the original summary to be completely true.
+
+The output should have the same structure and formatting as the original summary.
+
+Summary:
+
+# are all true
+
+Below are some assertions that have been fact checked and are labeled as true or false.
+
+If all of the assertions are true, return "True". If any of the assertions are false, return "False".
+
+Here are some examples:
+===
+
+Checked Assertions: """
+- The sky is red: False
+- Water is made of lava: False
+- The sun is a star: True
+"""
+Result: False
+
+===
+
+Checked Assertions: """
+- The sky is blue: True
+- Water is wet: True
+- The sun is a star: True
+"""
+Result: True
+
+===
+
+Checked Assertions: """
+- The sky is blue - True
+- Water is made of lava- False
+- The sun is a star - True
+"""
+Result: False
+
+===
+
+Checked Assertions:"""
+{revise_summary}
+"""
+Result:
+

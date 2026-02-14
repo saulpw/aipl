@@ -1,0 +1,23 @@
+
+# Find top documents that match input and send them to GPT along with input, and print its response.
+
+!rename question
+
+!llm-embedding model=text-embedding-ada-002
+!rename needle
+
+!table embeddings
+
+!dot-product right=needle
+!sort reverse=1
+!take n=5
+
+!join sep=\n\n---\n\n
+
+!llm
+You are a helpful assistant. This is documentation pertaining to the user query:
+
+{input}
+
+Answer this question. Be terse.
+{question}

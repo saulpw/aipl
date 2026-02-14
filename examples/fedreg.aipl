@@ -1,0 +1,16 @@
+!!python
+@defop('date', rankin=0, rankout=0.5)
+def _date(aipl, s:str) -> dict:
+    import dateutil.parser
+    dt = dateutil.parser.parse(s)
+    return dict(year=dt.year, month=dt.month, day=dt.day)
+
+!sh << date +"%Y-%m-%d"
+!date
+!format
+https://www.govinfo.gov/bulkdata/FR/{year}/{month:02d}/FR-{year}-{month:02d}-{day:02d}.xml
+!read
+#!parse-xml //DOC
+
+
+

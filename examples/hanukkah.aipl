@@ -1,0 +1,58 @@
+
+!llm
+
+This is the introduction to a set of database puzzles:
+
+"""
+Noah’s Market
+
+Your granduncle Noah owns “Noah’s Market”, an old-fashioned mom-and-pop everything store in NYC. In recent years it’s become quite an operation, with over a thousand products and customers all over the U.S. They still have the same Manhattan storefront, and they’re still running on the same database your cousin Alex set up at the start of 2017.
+
+You were in Noah’s buying some bagels, when your Aunt Sarah pulled you aside and asked if you could help her with something.
+
+“You know how Noah’s been talking recently about that rug we used to have?”
+
+She looked over at Noah, who was talking to a customer: “Such a beautiful rug, with the most intricate design! I miss having it in my living room. It has this vibrant beehive buzzing along the edge…”
+
+Sarah said, “Noah gave it to me a few years ago for safekeeping. It was so old and filthy, that I had to send it to the cleaners. Now that Noah’s retiring and I’ll be taking over the store, he wants that old rug back, so he can put it in his new den.
+
+“The problem is, after I sent it to the cleaners, I forgot about it. I apparently never went to pick it up. I combed the apartment yesterday and I finally found this claim ticket. ‘All items must be picked up within 90 days.’ it says on it.
+
+“Well I took it back to the cleaners, but they didn’t have the rug. They did have the other half of the ticket, though! The ticket had ‘2017 spec JD’ written on it. The clerk was super busy and said they didn’t have time for an ancient claim ticket.
+
+“I’d really like to find this rug, before Noah comes over for our family dinner on the last day of Hanukkah. I would normally ask Alex to help me with this, but Alex said they wouldn’t be able to get to it until after the new year. I think it’s because Alex is spending all day working on those Advent of Code problems.
+
+“Do you think you could help me track down the rug?”
+"""
+
+I already have the database downloaded and can use SQL in my environment. Here are some example rows in csv format:
+
+- customers
+customerid,name,address,citystatezip,birthdate,phone
+1001,Jack Quinn,201 E Park St,"Los Angeles, CA 91343",1960-05-14,805-287-8515
+1002,David Powell,224C Tysens Ln,"Staten Island, NY 10306",1978-04-04,516-768-1652
+1003,Carrie Green,1608 W 53rd Way,"Tampa, FL 33614",1969-01-21,727-209-0470
+
+- orders
+orderid,customerid,ordered,shipped,items,total
+1001,4308,2017-01-31 00:32:19,2017-01-31 07:15:00,,25.52
+1002,11683,2017-01-31 00:58:31,2017-01-31 18:00:00,,35.33
+1003,5676,2017-01-31 01:34:40,2017-01-31 09:00:00,,30.79
+
+- products
+sku,desc,wholesale_cost
+DLI0002,Smoked Whitefish Sandwich,9.33
+PET0005,"Vegan Cat Food, Turkey & Chicken",4.35
+HOM0018,Power Radio (red),21.81
+
+- orders_items
+orderid,sku,qty,unit_price
+1001,COL0820,1,25.52
+1002,TOY8907,1,12.92
+1002,KIT5813,1,7.99
+
+
+Give your answer as a SELECT query to answer the question.
+
+{input}
+

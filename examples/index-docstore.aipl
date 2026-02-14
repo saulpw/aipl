@@ -1,0 +1,8 @@
+# add embeddings for given urls to docstore
+
+!fetch-url
+!extract-text
+!split maxsize=1000 sep=\n\n
+!llm-embedding
+
+!dbinsert table=embeddings url={url} embedding={input}

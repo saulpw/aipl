@@ -1,0 +1,4 @@
+!open << XODOSMetadata.zip/MS-DOS.xml
+!xpath //Game
+!json
+!print

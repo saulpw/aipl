@@ -1,0 +1,11 @@
+!name inputurl
+!fetch-url
+!extract-links baseurl={inputurl}
+!flatten
+!name puzzleurl
+!match {inputurl}*.pdf$
+!filter
+!vd
+#!fetch-url
+#!extract-links baseurl={url}
+#!flatten

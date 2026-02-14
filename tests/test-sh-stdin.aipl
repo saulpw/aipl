@@ -1,0 +1,5 @@
+!sh stdin=ABCDefgh
+tr [:upper:] [:lower:]
+
+!assert-equal
+abcdefgh
