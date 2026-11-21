@@ -1,0 +1,37 @@
+# testing !json-parse with column=path kwargs (#42)
+# results are nested one level under "_", once per input row
+
+!test-input>>blob
+{"name": "strategyqa", "description": "Answer questions", "keywords": ["logic", "qa"], "meta": {"version": 2}, "examples": [{"input": "q1", "target": 1}, {"input": "q2", "target": 0}]}
+
+# multiple kwargs: one row, one column per kwarg, scalars stay scalar
+!json-parse name=name description=description version=meta.version missing=nosuchkey
+!test-json
+[{"_": [{"name": "strategyqa", "description": "Answer questions", "version": 2}]}]
+
+# the extracted columns can be selected afterwards
+!columns description name
+!test-json
+[{"_": [{"description": "Answer questions", "name": "strategyqa"}]}]
+
+# single scalar kwarg: one row instead of one row per character
+!json-parse <<blob name=name
+!test-json
+[{"_": [{"name": "strategyqa"}]}]
+
+# a list of scalars becomes a nested table; a path through a list collects all matches
+!json-parse <<blob name=name keywords=keywords inputs=examples.input
+!test-json
+[{"_": [{"name": "strategyqa", "keywords": [{"keywords": "logic"}, {"keywords": "qa"}], "inputs": [{"inputs": "q1"}, {"inputs": "q2"}]}]}]
+
+# single kwarg selecting a list of objects still returns one row per item
+!json-parse <<blob examples=examples
+!test-json
+[{"_": [{"input": "q1", "target": 1}, {"input": "q2", "target": 0}]}]
+
+# no kwargs: lists of scalars no longer crash
+!test-input
+{"name": "x", "tags": ["a", "b"]}
+!json-parse
+!test-json
+[{"_": [{"name": "x", "tags": [{"tags": "a"}, {"tags": "b"}]}]}]
