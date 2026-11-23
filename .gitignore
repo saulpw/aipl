@@ -3,3 +3,4 @@ __pycache__
 aipl-cache.sqlite
 wip/
 tags
+.meta
