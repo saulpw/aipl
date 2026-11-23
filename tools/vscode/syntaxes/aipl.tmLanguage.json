@@ -2,51 +2,97 @@
     "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
     "name": "aipl",
     "patterns": [
-        {
-            "begin": "#",
+        { "include": "#comment" },
+        { "include": "#command-line" },
+        { "include": "#prompt" }
+    ],
+    "repository": {
+        "comment": {
+            "begin": "^#",
+            "end": "$",
             "beginCaptures": {
-                "0": {
-                    "name": "punctuation.definition.comment.aipl"
-                }
+                "0": { "name": "punctuation.definition.comment.aipl" }
             },
-            "end": "\\n",
             "name": "comment.line.number-sign.aipl",
             "patterns": [
                 {
-                    "match": "(\\bTODO\\b|\\bFIXME\\b|\\bNOTE\\b|@todo)",
+                    "match": "\\b(TODO|FIXME|NOTE)\\b|@todo\\b",
                     "name": "keyword.other.documentation.task.aipl"
                 }
             ]
         },
-        
-        {
-            "begin": "!",
+        "command-line": {
+            "begin": "^(?=!)",
+            "end": "$",
+            "patterns": [
+                { "include": "#operator" },
+                { "include": "#inline-prompt" },
+                { "include": "#redirect" },
+                { "include": "#kwarg" },
+                { "include": "#quoted" },
+                { "include": "#placeholder" }
+            ]
+        },
+        "operator": {
+            "match": "(!!?)([A-Za-z0-9_-]+)",
+            "captures": {
+                "1": { "name": "punctuation.definition.command.aipl" },
+                "2": { "name": "keyword.control.command.aipl" }
+            }
+        },
+        "inline-prompt": {
+            "begin": "(<<) ",
+            "end": "$",
             "beginCaptures": {
-                "0": {
-                    "name": "punctuation.definition.command.aipl"
-                }
+                "1": { "name": "punctuation.separator.prompt.aipl" }
             },
-            "end": "\\s|\\n",
-            "name": "keyword.control.command.aipl",
+            "contentName": "string.unquoted.prompt.aipl",
+            "patterns": [
+                { "include": "#placeholder" }
+            ]
+        },
+        "redirect": {
+            "match": "(>>|>|<<|<)([A-Za-z0-9_-]+)",
+            "captures": {
+                "1": { "name": "punctuation.separator.redirect.aipl" },
+                "2": { "name": "variable.other.aipl" }
+            }
+        },
+        "kwarg": {
+            "match": "([A-Za-z0-9_-]+)(=)",
+            "captures": {
+                "1": { "name": "variable.parameter.aipl" },
+                "2": { "name": "keyword.operator.assignment.aipl" }
+            }
+        },
+        "quoted": {
             "patterns": [
                 {
-                    "begin": ">",
-                    "end": "\\s|$",
-                    "beginCaptures": {
-                        "0": {
-                            "name": "punctuation.separator.command.aipl"
-                        }
-                    },
-                    "endCaptures": {
-                        "0": {
-                            "name": "variable.parameter.command.aipl"
-                        }
-                    }
+                    "begin": "\"",
+                    "end": "(?<!\\\\)\"",
+                    "name": "string.quoted.double.aipl",
+                    "patterns": [ { "include": "#placeholder" } ]
+                },
+                {
+                    "begin": "'",
+                    "end": "(?<!\\\\)'",
+                    "name": "string.quoted.single.aipl",
+                    "patterns": [ { "include": "#placeholder" } ]
                 }
             ]
+        },
+        "prompt": {
+            "begin": "^(?=[^!#\\n])",
+            "end": "$",
+            "contentName": "string.unquoted.prompt.aipl",
+            "patterns": [
+                { "include": "#placeholder" }
+            ]
+        },
+        "placeholder": {
+            "match": "\\{[A-Za-z_][A-Za-z0-9_-]*(?:[:!][^{}\\s]*)?\\}",
+            "name": "variable.other.placeholder.aipl"
         }
-        
-    ],
-    "repository": {},
+    },
     "scopeName": "source.aipl"
 }
