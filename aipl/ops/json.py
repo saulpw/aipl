@@ -92,7 +92,8 @@ def _json_find_value(r, colname:str, findstr:str):
 @defop('json-parse', 0, 1.5)
 def op_json_parse(aipl, v:str, **kwargs) -> Table:
     '''Convert a json blob into a Table.
-       With kwargs, each colname=path.to.field extracts that field into column *colname* of a single row.
+       With kwargs, each colname=path.to.field extracts that field into column *colname* of a single row;
+       an object is flattened into columns *colname*_key, as without kwargs.
        A single kwarg that selects a list returns that list as a Table, one row per item.'''
     r = json.loads(v)
     if not kwargs:
@@ -101,10 +102,10 @@ def op_json_parse(aipl, v:str, **kwargs) -> Table:
         else:
             return pyobj_to_table(r, aipl.unique_key)
 
-    row = {colname: _json_find_value(r, colname, findstr) for colname, findstr in kwargs.items()}
-    if len(row) == 1:
-        (ret,) = row.values()
+    values = {colname: _json_find_value(r, colname, findstr) for colname, findstr in kwargs.items()}
+    if len(values) == 1:
+        (ret,) = values.values()
         if isinstance(ret, Table):
             return ret
 
-    return Table([row])
+    return Table([FlatteningDict(values)])

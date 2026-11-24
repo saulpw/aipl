@@ -29,6 +29,15 @@
 !test-json
 [{"_": [{"input": "q1", "target": 1}, {"input": "q2", "target": 0}]}]
 
+# a kwarg selecting an object is flattened into colname_key columns, as without kwargs
+!json-parse <<blob meta=meta
+!test-json
+[{"_": [{"meta_version": 2}]}]
+
+!json-parse <<blob name=name meta=meta
+!test-json
+[{"_": [{"name": "strategyqa", "meta_version": 2}]}]
+
 # no kwargs: lists of scalars no longer crash
 !test-input
 {"name": "x", "tags": ["a", "b"]}
