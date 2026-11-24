@@ -53,15 +53,18 @@ def test_flattening_dict():
     r = FlatteningDict(dict(a=dict(b=1, c=2), d=4, e=dict(f=dict(g=5))))
     assert r == dict(a_b=1, a_c=2, d=4, e_f_g=5)
 
-def pyobj_to_table(r) -> Table|dict|int|float|str:
+def pyobj_to_table(r, key:str='value') -> Table|dict|int|float|str:
+    '''Convert a parsed json object into a Table (for lists), a dict (for objects), or a scalar.
+       Non-object items in a list become rows with a single column named *key*.'''
     if r is None:
         return None
     elif isinstance(r, (list, tuple)):
         keys = set()
         ret = Table()
         for inobj in r:
-            outobj = pyobj_to_table(inobj)
-            assert isinstance(outobj, dict)
+            outobj = pyobj_to_table(inobj, key)
+            if not isinstance(outobj, dict):
+                outobj = {key: outobj}
             ret.rows.append(outobj)
             keys |= set(outobj.keys())
 
@@ -70,22 +73,39 @@ def pyobj_to_table(r) -> Table|dict|int|float|str:
         return ret
     elif isinstance(r, dict):
         # = {'__parent': parent_row} if parent_row is not None else {}
-        return FlatteningDict({k:pyobj_to_table(v) for k, v in r.items()})
+        return FlatteningDict({k:pyobj_to_table(v, k) for k, v in r.items()})
     else:
         assert isinstance(r, (str, int, float)), type(r)
         return r
 
 
+def _json_find_value(r, colname:str, findstr:str):
+    'Return the value at dotted path *findstr* in *r*: a single match as-is, multiple matches as a Table with column *colname*.'
+    matches = list(_json_find(r, findstr.split('.')))
+    if not matches:
+        return None
+    if len(matches) == 1:
+        return pyobj_to_table(matches[0], colname)
+    return pyobj_to_table(matches, colname)
+
+
 @defop('json-parse', 0, 1.5)
 def op_json_parse(aipl, v:str, **kwargs) -> Table:
-    'Convert a json blob into a Table.'
+    '''Convert a json blob into a Table.
+       With kwargs, each colname=path.to.field extracts that field into column *colname* of a single row;
+       an object is flattened into columns *colname*_key, as without kwargs.
+       A single kwarg that selects a list returns that list as a Table, one row per item.'''
     r = json.loads(v)
     if not kwargs:
         if isinstance(r, dict):
-            return pyobj_to_table([r])
+            return pyobj_to_table([r], aipl.unique_key)
         else:
-            return pyobj_to_table(r)
-    else:
-        for colname, findstr in kwargs.items():
-            for ret in _json_find(r, findstr.split('.')):
-                return pyobj_to_table(ret)
+            return pyobj_to_table(r, aipl.unique_key)
+
+    values = {colname: _json_find_value(r, colname, findstr) for colname, findstr in kwargs.items()}
+    if len(values) == 1:
+        (ret,) = values.values()
+        if isinstance(ret, Table):
+            return ret
+
+    return Table([FlatteningDict(values)])
