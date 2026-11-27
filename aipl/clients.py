@@ -2,17 +2,30 @@ from aipl import defop, expensive, stderr, AIPLException
 import openai
 import os
 
-# from the horse's mouth, 2023-05-30
+DEFAULT_OPENAI_MODEL = 'gpt-3.5-turbo'
+
+# USD per 1K tokens as (input, output), from https://openai.com/pricing (2026-11).
+# Retired models keep their last published price; legacy completion models had
+# a single price for input and output.
 openai_pricing = {
-    "gpt-4": 0.06,
-    "gpt-4-32k": 0.12,
-    "gpt-3.5-turbo": 0.002,
-    "gpt-3.5-turbo-16k": 0.002,
-    "text-ada-001": 0.0016,
-    "text-babbage-001": 0.0024,
-    "text-curie-001": 0.0120,
-    "text-davinci-003": 0.1200
+    "gpt-4": (0.03, 0.06),
+    "gpt-4-32k": (0.06, 0.12),
+    "gpt-3.5-turbo": (0.0005, 0.0015),
+    "gpt-3.5-turbo-16k": (0.003, 0.004),
+    "text-embedding-ada-002": (0.0001, 0),
+    "text-ada-001": (0.0016, 0.0016),
+    "text-babbage-001": (0.0024, 0.0024),
+    "text-curie-001": (0.0120, 0.0120),
+    "text-davinci-003": (0.1200, 0.1200),
 }
+
+
+def openai_cost(model:str, prompt_tokens:int, completion_tokens:int=0):
+    'Return the cost in USD of a call to OpenAI *model*, or None if its pricing is not known.'
+    if model not in openai_pricing:
+        return None
+    input_price, output_price = openai_pricing[model]
+    return (input_price*prompt_tokens + output_price*completion_tokens)/1000
 
 # base price covers the first 25 tokens, then it's the per-token price (2023-06-06)
 gooseai_models = {
@@ -57,13 +70,18 @@ def count_tokens(s:str, model:str=''):
 class StandardClient:
     def compute_cost(self, aipl, resp, model):
         if self.client_type == 'openai':
-            used = resp['usage']['total_tokens']
-            result = resp['choices'][0]['message']['content']
-            cost = openai_pricing[model]*used/1000
+            prompt_tokens = resp['usage']['prompt_tokens']
+            completion_tokens = resp['usage']['completion_tokens']
+            used = f'{prompt_tokens} prompt + {completion_tokens} completion tokens'
+            cost = openai_cost(model, prompt_tokens, completion_tokens)
+            if cost is None:
+                stderr(f'Used {used}.  Cost: unknown for model {model}')
+                return
+
             if aipl: # makes it easier to run unit tests
                 aipl.cost_usd += cost
 
-            stderr(f'Used {used} tokens (estimate {len(result)//4} tokens).  Cost: ${cost:.03f}')
+            stderr(f'Used {used}.  Cost: ${cost:.03f}')
         elif self.client_type == 'selfhosted':
             stderr('Used TODO tokens. Cost: $¯\\_(ツ)_/¯')
 
@@ -163,7 +181,7 @@ class OpenAIClient(StandardClient):
         if 'OPENAI_API_KEY' not in os.environ or 'OPENAI_API_ORG' not in os.environ:
             raise AIPLException('''OPENAI_API_KEY and OPENAI_API_ORG envvars must be set for openai client type''')
         self.client_type = 'openai'
-        self.default_model = 'gpt-3.5-turbo'
+        self.default_model = DEFAULT_OPENAI_MODEL
 
 
 class SelfHostedChatClient(StandardClient):

@@ -21,10 +21,14 @@ def _parse_msg(s:str):
         return dict(role='user', content=s)
 
 def op_llm_mock(aipl, v:str, **kwargs) -> str:
-    model = kwargs.get('model')
-    used = clients.count_tokens(v, model=model)
-    cost = clients.openai_pricing[model]*used/1000
-    aipl.cost_usd += cost
+    model = kwargs.get('model') or clients.DEFAULT_OPENAI_MODEL
+    prompt_tokens = clients.count_tokens(v, model=model)
+    # The response length is not known before the call, so assume it is
+    # max_tokens if given, otherwise as long as the prompt.
+    completion_tokens = int(kwargs.get('max_tokens') or prompt_tokens)
+    cost = clients.openai_cost(model, prompt_tokens, completion_tokens)
+    if cost is not None:
+        aipl.cost_usd += cost
     return f'<llm {model} answer>'
 
 @defop('llm', 0, 0)
@@ -74,7 +78,12 @@ def embedding_openai(aipl, v:str, **kwargs) -> dict:
     resp = openai.Embedding.create(input=v, **kwargs)
 
     used = resp['usage']['total_tokens']
-    stderr(f'Used {used} tokens')
+    cost = clients.openai_cost(kwargs.get('model'), used)
+    if cost is None:
+        stderr(f'Used {used} tokens')
+    else:
+        aipl.cost_usd += cost
+        stderr(f'Used {used} tokens.  Cost: ${cost:.03f}')
 
     return dict(model=kwargs.get('model'),
                 used_tokens=used,
